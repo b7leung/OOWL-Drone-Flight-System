@@ -64,7 +64,10 @@ class DroneVideo(object):
 		#	]
 		
 		hsv_boundaries = [
-			([1, 140, 160],[7, 230, 255])
+			([0, 150, 200],[7, 255, 255])
+			]
+
+		hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])
 			]
 
 		hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -72,9 +75,12 @@ class DroneVideo(object):
 		#create numpy arrays from these colors
 		lower= array(hsv_boundaries[0][0],dtype = "uint8")
 		upper= array(hsv_boundaries[0][1],dtype = "uint8")
-		
+		lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
+		upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 		#find colors within the boundaries for each color
-		mask = cv2.inRange(hsv_image,lower,upper)
+		mask1 = cv2.inRange(hsv_image,lower,upper)
+		mask2 = cv2.inRange(hsv_image,lower2,upper2)
+		mask = cv2.bitwise_or(mask1,mask2,mask=None)
 		output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
 
 		numcols = len(mask)
@@ -108,7 +114,7 @@ class DroneVideo(object):
 				else: 
 					xspeed=-1-(1/xspeed)
 				
-			#	print(xspeed)#roll speed
+				print(xspeed)#roll speed
 			else: xspeed=0
 			if cy < ylower or cy > yupper:
 				yspeed=float(alphay*(centery-cy)) #pos val means object is above, neg means object is below
@@ -120,7 +126,7 @@ class DroneVideo(object):
 			else:
 				yspeed=0 
 #incorrect but sameform controller.SetCommand(self.roll,self.pitch,self.yaw_velocity,self.z_velocity)
-		print(output[180][300])
+
 		bgr_output=cv2.cvtColor(output, cv2.COLOR_HSV2BGR)
 		cv2.imshow("Processed Video", hstack([image, bgr_output]))
 		
