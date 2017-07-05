@@ -48,11 +48,9 @@ class DroneVideo(object):
 		#get size of image
 		height, width, channels = cv_image.shape
 		size = cv_image.size
-#		print height, width, channels, size
 		#Save the Video
 		self.out.write(cv_image)
 		#Display the Video		
-#		cv2.imshow("Drone Video", cv_image)
 		self.DetectColor(cv_image)
 		cv2.waitKey(3)
 
@@ -60,21 +58,24 @@ class DroneVideo(object):
 		
 		# define the list of boundaries (order is BGR values)
 		#starts with detecting red, blue yellow and then gray
-		boundaries = [
-			([0,18,220],[150,150,255])
-			]
 		
+		#bgr_boundaries = [
+		#	([0,18,220],[150,150,255])
+		#	]
+		
+		hsv_boundaries = [
+			([1, 140, 160],[7, 230, 255])
+			]
 
-		#loop over 3 different boundaries
-	
+		hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
 		#create numpy arrays from these colors
-		lower= array(boundaries[0][0],dtype = "uint8")
-		upper= array(boundaries[0][1],dtype = "uint8")
+		lower= array(hsv_boundaries[0][0],dtype = "uint8")
+		upper= array(hsv_boundaries[0][1],dtype = "uint8")
+		
 		#find colors within the boundaries for each color
-		mask = cv2.inRange(image,lower,upper)
-		output = cv2.bitwise_and(image,image, mask = mask)
-		#apply a mask to the colors
-		#show the images
+		mask = cv2.inRange(hsv_image,lower,upper)
+		output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
 
 		numcols = len(mask)
 		numrows = len(mask[0])
@@ -119,7 +120,9 @@ class DroneVideo(object):
 			else:
 				yspeed=0 
 #incorrect but sameform controller.SetCommand(self.roll,self.pitch,self.yaw_velocity,self.z_velocity)
-		cv2.imshow("Processed Video", hstack([image, output]))
+		print(output[180][300])
+		bgr_output=cv2.cvtColor(output, cv2.COLOR_HSV2BGR)
+		cv2.imshow("Processed Video", hstack([image, bgr_output]))
 		
 
 if __name__=='__main__':
