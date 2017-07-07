@@ -30,28 +30,32 @@ class DroneVideo(object):
 
 		super(DroneVideo, self).__init__()		
 		self.bridge=CvBridge()
-
+		
+		self.cv_image=None
 		#create a pulisher for opencv image
 #		self.image_pub = rospy.Publisher("image_topic_2", Image)
 
 		#Subscribe to the drones video feed
-		self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage)
-
+		self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage )
+		#cv2.imshow("Processed Video", self.cv_image)
 		#initialization for recording video
+		
 		fourcc=cv2.VideoWriter_fourcc(*'XVID')
 		self.out=cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))		
 
 	def ROStoCVImage(self,data):
 
 		#convert ROS Image to OpenCV Image
-		cv_image=self.bridge.imgmsg_to_cv2(data, "bgr8")
+		self.cv_image=self.bridge.imgmsg_to_cv2(data, "bgr8")
 		#get size of image
-		height, width, channels = cv_image.shape
-		size = cv_image.size
+		height, width, channels = self.cv_image.shape
+		size = self.cv_image.size
 		#Save the Video
-		self.out.write(cv_image)
+		self.out.write(self.cv_image)
 		#Display the Video		
-		self.DetectColor(cv_image)
+		self.DetectColor(self.cv_image)
+		cv2.imshow("Processed Video", self.cv_image)
+		
 		cv2.waitKey(3)
 
 	def DetectColor(self,image):
@@ -83,8 +87,9 @@ class DroneVideo(object):
 		mask = cv2.bitwise_or(mask1,mask2,mask=None)
 		output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
 
-		numcols = len(mask)
-		numrows = len(mask[0])
+		#	def ApproximateSpeed(self):
+		numcols = len(output)
+		numrows = len(output[0])
 		centerx=numrows/2
 		centery=numcols/2
 
@@ -105,38 +110,36 @@ class DroneVideo(object):
 			cv2.arrowedLine(output,(centerx,11),(centerx,2),255,2)
 
 			if cx < xlower or cx > xupper:
-				xspeed=float(alphax*(centerx-cx)) #pos val means object is left, neg means object is right of cntr
+				xspeed=(centerx-cx)/float(centerx) #pos val means object is left, neg means object is right of cntr
 				
 				#print(xspeed)
 				
-				if xspeed > 0:
-					xspeed=1-(1/xspeed) #normalize value between -1 and 1
-				else: 
-					xspeed=-1-(1/xspeed)
+				#if xspeed > 0:
+					#xspeed=1-(1/xspeed) #normalize value between -1 and 1
+				#else: 
+					#xspeed=-1-(1/xspeed)
 				
-				print(xspeed)#roll speed
+				print("xspeed",xspeed)#roll speed
+			
 			else: xspeed=0
 			if cy < ylower or cy > yupper:
-				yspeed=float(alphay*(centery-cy)) #pos val means object is above, neg means object is below
-				if yspeed > 0:
-					yspeed=1-(1/yspeed) #normalize val between -1 and 1
-				else:
-					yspeed=-1-(1/yspeed)
-				print(yspeed)#pitch speed
+				yspeed=(centery-cy)/float(centery) #pos val means object is above, neg means object is below
+				#if yspeed > 0:
+					#yspeed=1-(1/yspeed) #normalize val between -1 and 1
+				#else:
+					#yspeed=-1-(1/yspeed)
+				print("yspeed",yspeed)#pitch speed
 			else:
 				yspeed=0 
-#incorrect but sameform controller.SetCommand(self.roll,self.pitch,self.yaw_velocity,self.z_velocity)
 
 		bgr_output=cv2.cvtColor(output, cv2.COLOR_HSV2BGR)
 		cv2.imshow("Processed Video", hstack([image, bgr_output]))
 		
-
+	
 if __name__=='__main__':
 	
 	display=DroneVideo()
         #initialize node
         rospy.init_node('drone_video')
         rospy.spin()
-        cv2.destroyAllWindows()
-
-
+cv2.destroyAllWindows()
