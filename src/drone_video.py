@@ -3,7 +3,7 @@
 import sys
 
 #import the ROS libraries and load the manifest file which through <depend packages=/// /> will give us access to the project dependences
-import roslib; roslib.load_manifest('ardrone_tutorials')
+import roslib; roslib.load_manifest('ardrone_lab')
 import rospy
 
 #Import types of messeges we want
