@@ -51,7 +51,7 @@ class DroneVideo(object):
         self.out.write(self.cv_image)
         #Display the Video      
         self.DetectColor(self.cv_image)
-        cv2.imshow("Processed Video", self.cv_image)
+        #cv2.imshow("Processed Video", self.cv_image)
         
         cv2.waitKey(3)
 
