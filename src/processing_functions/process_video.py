@@ -13,8 +13,8 @@ from drone_video import DroneVideo
 
 class ProcessVideo(DroneVideo):
 
-    def __init__(self,cv_image):
-
+    def __init__(self):
+        pass
 
     def DetectColor(self,image):
         
