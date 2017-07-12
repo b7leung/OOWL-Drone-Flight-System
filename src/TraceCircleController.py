@@ -14,17 +14,8 @@ class TraceCircleController(DroneVideo):
         self.process = ProcessVideo()
         if(key==s):
             STATE=detectOrange
-                
-        case(STATE):
-            detectOrange:
-                centerorangeinmiddle()
-                istaken=takepicture()
-                if(istaken==true) 
-                    STATE=followblue
-            followblue:
-                findcenteroftape()
-                correctangle()
-                moveleft()
+        
+
                 
 
 if __name__=='__main__':

@@ -9,19 +9,16 @@ import numpy
 import time
 from cv_bridge import CvBridge, CvBridgeError
 
-class ProcessVideo(DroneVideo):
+class ProcessVideo(object):
 
+    #returns segemented image that only leaves a pixels within specified color value, sets else to 0
     def DetectColor(self,image):
-        
-# define the list of boundaries (order is BGR values)
-#starts with detecting red, blue yellow and then gray
-        
-        
-	#orange hsv boundary
+          
+	#upper orange hsv boundary
         hsv_boundaries = [
             ([0, 150, 200],[7, 255, 255])
             ]
-	#second hsv boundary
+	#lower  hsv boundary
         hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])
             ]
 	
@@ -47,12 +44,18 @@ class ProcessVideo(DroneVideo):
         numcols = len(image)
         numrows = len(image[0])
         #preprocess image to make it easier to see lines
-        image = self.DetectColor(image) #segment color of tape
-        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR) #change hsv to bgr
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY) #change bgr to gray for edge detection
-        edges = cv2.Canny(gray,50,150,apertureSize = 3) #now we have binary image with edges of tape
-        lines = cv2.HoughLines(edges,1,np.pi/360,100) #lines contains rho and theta values
-        LINES = np.matrix(lines).mean(0)#average rho and theta values
+        #segment color of tape
+        image = self.DetectColor(image)
+        #change hsv to bgr
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+        #change bgr to gray for edge detection
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        #now we have binary image with edges of tape
+        edges = cv2.Canny(gray,50,150,apertureSize = 3)
+        #lines contains rho and theta values
+        lines = cv2.HoughLines(edges,1,np.pi/360,100)
+        #average rho and theta values
+        LINES = np.matrix(lines).mean(0)
         rho=LINES[0,0]
         degrees=LINES[0,1]
         
@@ -65,17 +68,21 @@ class ProcessVideo(DroneVideo):
         x2 = int(x0 - 1000*(-b))
         y2 = int(y0 - 1000*(a))
     
-        cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2) #"average fit line"
-        angle=(-1*((degrees*180)/np.pi)+90)#this is the correct angle relative to standard cordinate system for average line
-
+        #"average fit line"
+        cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+        #this is the correct angle relative to standard cordinate system for average line
+        angle=(-1*((degrees*180)/np.pi)+90)
         return image
         
+    #takes in a segmented image input and returns the center of mass in x and y coordinates
     def CenterofMass(self,image):
         numcols = len(image)
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
-
+        
+        #compute the center of moments for a single-channel gray image
+        #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
         M=cv2.moments(cv2.cvtColor(cv2.cvtColor(image,cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY),True) 
         if M["m00"]!=0:
             cx = int(M["m10"] / M["m00"])
@@ -83,13 +90,23 @@ class ProcessVideo(DroneVideo):
 	else:
 	    cx=centerx
 	    cy=centery
+        
+        #draw a circle on the center of mass on the segmented image and track it
+        cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1)
+        cv2.circle(image, (cx,cy), 40, 255)
+        cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
 
+        return (cx,cy)
+    
+    #takes in an image and the center of masses for its segmented version, 
+    #returns how much the drone should move in the (x,y) direction such that oject stay in middle
     def ApproximateSpeed(self, image, cx, cy):
         numcols = len(image)
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
 
+        #create a "window" for desired center of mass position
         xlower=centerx-60 #left xvalue
         ylower=centery-60 #"top" yvalue
         xupper=centerx+60 #right xvalue
@@ -97,33 +114,37 @@ class ProcessVideo(DroneVideo):
         alphax=.03
         alphay=.02
     
-        cv2.circle(self.output, (cx, cy), 7, (255, 255, 255), -1)
-        cv2.circle(self.output, (cx,cy), 40, 255)
-        cv2.rectangle(self.output,(xlower,ylower),(xupper,yupper),255,2)
-        cv2.arrowedLine(self.output,(centerx,11),(centerx,2),255,2)
 
-            if cx < xlower or cx > xupper:
-                #pos val means object is left, neg means object is right of cntr
-                xspeed=(centerx-cx)/float(centerx)              
-                
-                #if xspeed > 0:
-                    #xspeed=1-(1/xspeed) #normalize value between -1 and 1
-                #else: 
-                    #xspeed=-1-(1/xspeed)
-                
-                print("xspeed",xspeed)#roll speed
-            
-            else: xspeed=0
-            if cy < ylower or cy > yupper:
-                #pos val means object is above, neg means object is below
-                yspeed=(centery-cy)/float(centery)              #if yspeed > 0:
-                    #yspeed=1-(1/yspeed) #normalize val between -1 and 1
-                #else:
-                    #yspeed=-1-(1/yspeed)
-                print("yspeed",yspeed)#pitch speed
-            else:
-                yspeed=0
+        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
+       #if object is in desired area do not move (xspeed, yspeed == 0)
+        
+        if cx < xlower or cx > xupper:
+            #pos val means object is left, neg means object is right of cntr
+            xspeed=(centerx-cx)/float(centerx)              
+        else:
+            xspeed=0
+        
+        if cy < ylower or cy > yupper:
+            #pos val means object is above, neg means object is below
+            yspeed=(centery-cy)/float(centery)
+        else:
+            yspeed=0
+
         return (xspeed,yspeed)
+
+        #non-linear way to normalize value between -1 and 1    
+        #if xspeed > 0:
+            #xspeed=1-(1/xspeed)                 
+        #else: 
+            #xspeed=-1-(1/xspeed)
+                
+            
+
+        #if yspeed > 0:
+            #yspeed=1-(1/yspeed) #normalize val between -1 and 1
+        #else:
+            #yspeed=-1-(1/yspeed)
+    
     
     
 
