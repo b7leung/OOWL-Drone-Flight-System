@@ -33,7 +33,6 @@ class DroneVideo(object):
         
         #convert ROS Image to OpenCV Image
         self.cv_image=self.bridge.imgmsg_to_cv2(data, "bgr8")
-
         #get size of image
         height, width, channels = self.cv_image.shape
         size = self.cv_image.size
@@ -41,11 +40,23 @@ class DroneVideo(object):
         
 
     def ShowVideo(self):
+        
+        self.KeyListener()
 
-        #processing goes here 
+        self.EditVideo()
+
         cv2.imshow("video", self.cv_image)
         cv2.waitKey(3)
         
+    # processes the video before it is shown
+    # don't implement here; implement in subclasses (TraceCircleController)
+    def EditVideo(self):
+        pass
+
+    #defines any keys to listen to
+    # don't implement here; implement in subclasses (TraceCircleController)
+    def KeyListener(self):
+        pass
     
 if __name__=='__main__':
     

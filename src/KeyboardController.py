@@ -5,10 +5,6 @@ import rospy
 from drone_controller import BasicDroneController
 
 # global pygame color constants, in form (r,g,b) where 0 <= r/g/b <= 255
-WHITE = (255, 255, 255)
-BLACK = (0,0,0)
-DARK_BLUE= (0,0,128)
-RED = (255, 0, 0)
 GREY = (192,192,192)
 
 class KeyboardController(object):
@@ -21,7 +17,7 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load("KeyboardCommands.jpg")
+	background = pygame.image.load("/home/persekiana/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
 	self.screen.blit(background,[0,0])
 
         # setup controller + its variables
@@ -50,6 +46,7 @@ class KeyboardController(object):
                         print "Land"
                     elif event.key == pygame.K_ESCAPE:
                         self.controller.SendEmergency()
+                        rospy.logwarn("emergency land")
                         print "Emergency Land"
                     else:
                     
