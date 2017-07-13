@@ -11,16 +11,6 @@ DARK_BLUE= (0,0,128)
 RED = (255, 0, 0)
 GREY = (192,192,192)
 
-BUTTON_HEIGHT = 65
-BUTTON_LINE_THICKNESS =0
-BUTTON_COLOR = BLACK
-BUTTON_SPACING = 15
-Q_BUTTON_X = 30
-Q_BUTTON_Y = 30
-BUTTON_FONT = None
-LETTER_X_OFFSET = 7
-LETTER_Y_OFFSET = 5
-
 class KeyboardController(object):
 
 
@@ -31,8 +21,8 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-        global BUTTON_FONT
-        BUTTON_FONT = pygame.font.SysFont(None, 90)
+	background = pygame.image.load("KeyboardCommands.jpg")
+	self.screen.blit(background,[0,0])
 
         # setup controller + its variables
         self.controller = BasicDroneController()
@@ -41,24 +31,6 @@ class KeyboardController(object):
         self.roll = 0
         self.yaw_velocity = 0
         self.z_velocity = 0
-
-        # show button graphics on gui
-        """self.q_key_graphic = pygame.draw.rect(self.screen, BUTTON_COLOR,
-            (Q_BUTTON_X,Q_BUTTON_Y,BUTTON_HEIGHT,BUTTON_HEIGHT),BUTTON_LINE_THICKNESS)
-        q_text = BUTTON_FONT.render("Q", True, WHITE)
-        self.screen.blit(q_text,(self.q_key_graphic.x+LETTER_X_OFFSET,self.q_key_graphic.y+LETTER_Y_OFFSET))
-
-        self.w_key_graphic = pygame.draw.rect(self.screen, BUTTON_COLOR,
-            (self.q_key_graphic.x+BUTTON_HEIGHT+BUTTON_SPACING,Q_BUTTON_Y,BUTTON_HEIGHT,BUTTON_HEIGHT),BUTTON_LINE_THICKNESS)
-        w_text = BUTTON_FONT.render("W", True, WHITE)
-        self.screen.blit(w_text,(self.w_key_graphic.x+LETTER_X_OFFSET,self.w_key_graphic.y+LETTER_Y_OFFSET))
-
-        self.e_key_graphic = pygame.draw.rect(self.screen, BUTTON_COLOR,
-            (self.w_key_graphic.x+BUTTON_HEIGHT+BUTTON_SPACING,Q_BUTTON_Y,BUTTON_HEIGHT,BUTTON_HEIGHT),BUTTON_LINE_THICKNESS)
-        e_text = BUTTON_FONT.render("E", True, WHITE)
-        self.screen.blit(w_text,(self.w_key_graphic.x+LETTER_X_OFFSET,self.w_key_graphic.y+LETTER_Y_OFFSET))
-        """
-
 
         pygame.display.update()
         
