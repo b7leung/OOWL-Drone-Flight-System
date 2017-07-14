@@ -20,7 +20,7 @@ class TraceCircleController(DroneVideo):
         self.process = ProcessVideo()
         self.position = DronePosition()
         self.controller = BasicDroneController()
-    
+        
 
     # define any keys to listen to here
     def KeyListener(self):
@@ -39,6 +39,7 @@ class TraceCircleController(DroneVideo):
     # overriding superclass's EditVideo method
     # can change self.cv_image here, and changes will be reflected on the video
     def EditVideo(self):
+        self.cv_image = self.process.ShowLine(self.cv_image)
         pass
 
 

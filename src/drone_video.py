@@ -41,7 +41,7 @@ class DroneVideo(object):
 
     def ShowVideo(self):
         
-        self.KeyListener()
+        #self.KeyListener()
 
         self.EditVideo()
 

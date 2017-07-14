@@ -5,31 +5,34 @@ import rospy
 
 #import opencv and numpy for image processing
 import cv2
-import numpy
+from numpy import *
 import time
 from cv_bridge import CvBridge, CvBridgeError
 
 class ProcessVideo(object):
 
     #returns segemented image that only leaves a pixels within specified color value, sets else to 0
-    def DetectColor(self,image):
+    def DetectColor(self,image,color):
           
 	#upper orange hsv boundary
-        hsv_boundaries = [
-            ([0, 150, 200],[7, 255, 255])
-            ]
-	#lower  hsv boundary
-        hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])
-            ]
-	
+        if(color=='orange'):
+                hsv_boundaries = [ ([0, 150, 200],[7, 255, 255])]
+	        #lower  hsv boundary
+                hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])]
+                lower=array(hsv_boundaries[0][0], dtype = "uint8")
+                upper= array(hsv_boundaries[0][1],dtype = "uint8")
+                lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
+                upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
+
+        if(color=='blue'):
+                 hsv_boundaries = [ ([100,160,100],[115,255,255])]
+                 lower=array(hsv_boundaries[0][0], dtype = "uint8")
+                 upper= array(hsv_boundaries[0][1],dtype = "uint8")
+                 lower2=lower
+                 upper2=upper
+
 	#convert bgr to hsv image for color segmentation
         hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-	#create numpy arrays from boundaries of the color
-        lower= array(hsv_boundaries[0][0],dtype = "uint8")
-        upper= array(hsv_boundaries[0][1],dtype = "uint8")
-        lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
-        upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
         #find colors within the boundaries for each color set=1, else=0
         mask1 = cv2.inRange(hsv_image,lower,upper)
@@ -38,6 +41,7 @@ class ProcessVideo(object):
         mask = cv2.bitwise_or(mask1,mask2,mask=None)
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
+        output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
         return output #return the segmented image
 
     def ShowLine(self,image):
@@ -45,34 +49,45 @@ class ProcessVideo(object):
         numrows = len(image[0])
         #preprocess image to make it easier to see lines
         #segment color of tape
-        image = self.DetectColor(image)
+        
+        image = self.DetectColor(image,'blue')
+        original=image
         #change hsv to bgr
-        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+        #image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         #now we have binary image with edges of tape
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
-        lines = cv2.HoughLines(edges,1,np.pi/360,100)
-        #average rho and theta values
-        LINES = np.matrix(lines).mean(0)
-        rho=LINES[0,0]
-        degrees=LINES[0,1]
         
-        a = np.cos(degrees)
-        b = np.sin(degrees)
-        x0 = a*rho
-        y0 = b*rho
-        x1 = int(x0 + 1000*(-b))
-        y1 = int(y0 + 1000*(a))
-        x2 = int(x0 - 1000*(-b))
-        y2 = int(y0 - 1000*(a))
+        thresh=100
+        lines = cv2.HoughLines(edges,1,pi/360,thresh)
+        while(type(lines)==type(None) and thresh > 0):
+            lines = cv2.HoughLines(edges,1,pi/360,thresh)
+            thresh-=thresh
+        
+        #average rho and theta values
+        if(thresh!=0):
+            rospy.logwarn(lines)
+            LINES = matrix(lines).mean(0)
+            rospy.logwarn(LINES)
+            rho=LINES[0,0]
+            degrees=LINES[0,1]
+        
+            a = cos(degrees)
+            b = sin(degrees)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
     
-        #"average fit line"
-        cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        #this is the correct angle relative to standard cordinate system for average line
-        angle=(-1*((degrees*180)/np.pi)+90)
-        return image
+            #"average fit line"
+            cv2.line(original,(x1,y1),(x2,y2),(0,0,255),2)
+            #this is the correct angle relative to standard cordinate system for average line
+            angle=(-1*((degrees*180)/pi)+90)
+        return original
         
     #takes in a segmented image input and returns the center of mass in x and y coordinates
     def CenterofMass(self,image):
