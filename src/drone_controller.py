@@ -18,6 +18,9 @@ from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
 # An enumeration of Drone Statuses
 from drone_status import DroneStatus
 
+# import services
+from ardrone_autonomy.srv import *
+
 
 # Some Constants
 COMMAND_PERIOD = 100 #ms
@@ -64,6 +67,15 @@ class BasicDroneController(object):
     def SendEmergency(self):
         # Send an emergency (or reset) message to the ardrone driver
         self.pubReset.publish(Empty())
+    
+    def ToggleCamera(self):
+        #toggle the camera
+        try:
+            #toggle_camera = rospy.ServiceProxy('toggle_camera', ardrone_autonomy.srv.togglecam)
+            #toggle_camera()
+        except rospy.ServiceException, e:
+            print "ToggleCam service call failed"
+
 
     def SetCommand(self,roll=0,pitch=0,yaw_velocity=0,z_velocity=0):
         # Called by the main program to set the current command
