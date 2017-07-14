@@ -9,7 +9,16 @@ cv2.imwrite('test.jpg',edges)
 
 #print(len(edges))
 print(len(edges[1]))
-lines = cv2.HoughLines(edges,1,np.pi/360,100)
+thresh=1000
+lines = cv2.HoughLines(edges,1,np.pi/360,thresh)
+print(type(lines))
+x=None
+print("x",x)
+print(type(x))
+while(type(lines) == type(None) and thresh>0):
+    lines = cv2.HoughLines(edges,1,np.pi/360,thresh)
+    thresh -= 1
+    print("entered")
 L=np.matrix(lines).mean(0)
 
 size=len(lines)
@@ -45,5 +54,5 @@ y2 = int(y0 - 1000*(a))
         
 cv2.line(new,(x1,y1),(x2,y2),(0,0,255),2)
 cv2.imwrite('houghaverage.jpg',new)
-
-
+cv2.imshow("hough",new)
+cv2.waitKey(0)

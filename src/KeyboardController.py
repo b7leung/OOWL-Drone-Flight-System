@@ -17,7 +17,7 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load("/home/persekiana/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
+	background = pygame.image.load("/home/svcl/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
 	self.screen.blit(background,[0,0])
 
         # setup controller + its variables
