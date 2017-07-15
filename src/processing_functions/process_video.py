@@ -42,7 +42,8 @@ class ProcessVideo(object):
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
-        return output #return the segmented image
+        #return the segmented image
+        return output
 
     def ShowLine(self,image):
         numcols = len(image)
@@ -95,6 +96,7 @@ class ProcessVideo(object):
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
+
         
         #compute the center of moments for a single-channel gray image
         #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
@@ -109,7 +111,7 @@ class ProcessVideo(object):
         #draw a circle on the center of mass on the segmented image and track it
         cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1)
         cv2.circle(image, (cx,cy), 40, 255)
-        cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
+        #cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
 
         return (cx,cy)
     
@@ -122,12 +124,14 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        xlower=centerx-60 #left xvalue
-        ylower=centery-60 #"top" yvalue
-        xupper=centerx+60 #right xvalue
-        yupper=centery+60 #"bottom" yvalue
-        alphax=.03
-        alphay=.02
+        width=100
+        height=60
+        xlower=centerx-width #left xvalue
+        ylower=centery-height #"top" yvalue
+        xupper=centerx+width #right xvalue
+        yupper=centery+height #"bottom" yvalue
+        alphax=0.2
+        alphay=0.2
     
 
         #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -135,15 +139,28 @@ class ProcessVideo(object):
         
         if cx < xlower or cx > xupper:
             #pos val means object is left, neg means object is right of cntr
-            xspeed=(centerx-cx)/float(centerx)              
+            xspeed=(centerx-cx)/float(centerx)
+            xspeed=alphax*xspeed
+            
         else:
             xspeed=0
         
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
             yspeed=(centery-cy)/float(centery)
+            yspeed=alphay*yspeed
         else:
             yspeed=0
+            
+        rospy.logwarn("xspeed = ")
+        rospy.logwarn(str(xspeed))
+      #  rospy.logwarn(str(yspeed))
+        dx=int(round((-100*xspeed)+centerx))
+        dy=int(round((-100*yspeed)+centery))
+        
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+        cv2.arrowedLine(image,(dx,dy),(centerx,centery),255,3)
+
 
         return (xspeed,yspeed)
 
@@ -159,7 +176,23 @@ class ProcessVideo(object):
             #yspeed=1-(1/yspeed) #normalize val between -1 and 1
         #else:
             #yspeed=-1-(1/yspeed)
+
     
-    
-    
+    # given a segmented image hsvImage and a percentThreshold of 
+    # what percentage of that image should be between hues hueMin and hueMax,
+    # returns a boolean of whether or not the hsvImage and has enough of that
+    # hue in it to pass that threshold 
+    def isHueDominant(self, hsvImage, hueMin, hueMax, percentThreshold):
+        hsvChannels = cv2.split(hsvImage)
+        hue = hsvChannels[0]
+
+        percentOrange = float((len(hsvImage)*len(hsvImage[0]))-count_nonzero(hue<hueMax)) / (len(hsvImage)*len(hsvImage[0]) )
+
+        percentOrange = percentOrange * 100
+
+        if percentOrange > percentThreshold:
+            return True
+        else:
+            return False
+
 

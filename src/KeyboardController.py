@@ -17,7 +17,7 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load("/home/svcl/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
+	background = pygame.image.load("/home/persekiana/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
 	self.screen.blit(background,[0,0])
 
         # setup controller + its variables
@@ -27,6 +27,8 @@ class KeyboardController(object):
         self.roll = 0
         self.yaw_velocity = 0
         self.z_velocity = 0
+        # 1 = front camera; 0 = bottom camera
+        self.camera = 1
 
         pygame.display.update()
         
@@ -48,14 +50,21 @@ class KeyboardController(object):
                         self.controller.SendEmergency()
                         rospy.logwarn("emergency land")
                         print "Emergency Land"
+                    elif event.key == pygame.K_c:
+                        self.controller.ToggleCamera(self.camera)
+                        if self.camera == 1:
+                            self.camera = 0
+                        else:
+                            self.camera == 1
+                        print "toggle camera"
                     else:
                     
                         if event.key == pygame.K_w:
                             self.pitch = self.speed
-                            print "Pitch Forwards"
+                            rospy.logwarn( "Pitch Forwards")
                         elif event.key == pygame.K_s:
                             self.pitch = self.speed*-1
-                            print "Pitch Backwards"
+                            rospy.logwarn( "Pitch Backwards")
                         elif event.key == pygame.K_a:
                             self.roll = self.speed
                             print "Roll Left"
@@ -74,6 +83,7 @@ class KeyboardController(object):
                         elif event.key == pygame.K_f:
                             self.z_velocity = self.speed*-1
                             print "Decrease Altitude"
+                            
 
                         self.controller.SetCommand(self.roll, self.pitch, self.yaw_velocity, self.z_velocity)
 
@@ -83,6 +93,7 @@ class KeyboardController(object):
                     self.z_velocity = 0
                     self.yaw_velocity = 0
                     self.controller.SetCommand(self.roll, self.pitch, self.yaw_velocity, self.z_velocity)
+                    rospy.logwarn("key is up")
 
                 if event.type == pygame.QUIT:
                     gameExit = True

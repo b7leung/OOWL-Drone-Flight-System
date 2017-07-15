@@ -41,9 +41,8 @@ class DroneVideo(object):
 
     def ShowVideo(self):
         
-        #self.KeyListener()
-
         self.EditVideo()
+        self.KeyListener()
 
         cv2.imshow("video", self.cv_image)
         cv2.waitKey(3)
