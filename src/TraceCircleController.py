@@ -3,10 +3,13 @@
 import rospy
 import time
 
+from os.path import expanduser
+
 from drone_video import DroneVideo
 from drone_controller import BasicDroneController
 from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
+
 
 import cv2
 
@@ -24,6 +27,13 @@ class TraceCircleController(DroneVideo):
         self.controller = BasicDroneController()
         self.startControl = False
         self.startTime = time.clock()
+        startTimer = time.clock()
+
+        # setting up log file (also clears the previous one)
+        self.logFilePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/output.txt"
+        open(self.logFilePath, "w").close()
+        self.logFile=open( self.logFilePath,"a")
+        
 
     # define any keys to listen to here
     def KeyListener(self):
@@ -36,20 +46,15 @@ class TraceCircleController(DroneVideo):
             cx,cy=self.process.CenterofMass(orange_image)
             xspeed,yspeed=self.process.ApproximateSpeed(orange_image,cx,cy)
             
-            currentTime = time.clock()
-            timeElapsed = currentTime-self.startTime
-            #convert from seconds to milliseconds
-            timeElapsed = timeElapsed*1000.0
-            currentPrintLine = "time: " +str(timeElapsed)+ " cx: " + str(cx) + " cy: " + str(cy) + " xspeed: " + str(xspeed) + " yspeed: " + str(yspeed)
-            #self.time_info.write(currentPrintLine)
-            #file=open("/home/persekina/Output.txt","a")
-            file=open("Output.txt","a")
-            file.write("hello")
-            #file.close()
-            #self.time_info.flush()
-            rospy.logwarn(currentPrintLine)
+            # logging information; timeElapsed is in milliseconds
+            timeElapsed = (time.clock()-self.startTime)*1000
+            currentDroneInfo = "time: " +str(timeElapsed)+ " cx: " + str(cx) + " cy: " + str(cy) + " xspeed: " + str(xspeed) + " yspeed: " + str(yspeed) + "\n"
+            self.logFile.write(currentDroneInfo)
+            rospy.logwarn(currentDroneInfo)
 
-            self.controller.SetCommand(roll=xspeed,pitch=yspeed)
+            self.MoveFixedTime(xspeed,yspeed,0.2,0.5)
+            
+            #self.controller.SetCommand(roll=xspeed,pitch=yspeed)
             #self.position.DroneHover(xspeed,yspeed)
             self.cv_image=orange_image
 
@@ -93,7 +98,7 @@ if __name__=='__main__':
     rospy.init_node('TraceCircleController')
     trace = TraceCircleController()
     rospy.spin()
+    self.logFile.close()
 
-#self.time_info.close()
     
 
