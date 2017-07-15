@@ -101,17 +101,19 @@ class ProcessVideo(object):
         #compute the center of moments for a single-channel gray image
         #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
         M=cv2.moments(cv2.cvtColor(cv2.cvtColor(image,cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY),True) 
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+
         if M["m00"]!=0:
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
+            #Draw a circle only when an object is detected
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
+
 	else:
+            #Set Cx and Cy to zero
 	    cx=centerx
 	    cy=centery
-        
-        #draw a circle on the center of mass on the segmented image and track it
-        cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1)
-        cv2.circle(image, (cx,cy), 40, 255)
-        #cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
 
         return (cx,cy)
     
@@ -155,29 +157,26 @@ class ProcessVideo(object):
         rospy.logwarn("xspeed = ")
         rospy.logwarn(str(xspeed))
       #  rospy.logwarn(str(yspeed))
-        dx=int(round((-100*xspeed)+centerx))
-        dy=int(round((-100*yspeed)+centery))
         
-        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+        #draw the command speed as a vector point to center for visualization purposes
+        dx=int((-100*xspeed)+centerx)
+        dy=int((-100*yspeed)+centery)
         cv2.arrowedLine(image,(dx,dy),(centerx,centery),255,3)
 
-
         return (xspeed,yspeed)
+    
+    #this function will go a certain speed for a set amount of time
+    def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time)
+        current_time=time.clock()
 
-        #non-linear way to normalize value between -1 and 1    
-        #if xspeed > 0:
-            #xspeed=1-(1/xspeed)                 
-        #else: 
-            #xspeed=-1-(1/xspeed)
-                
+        if current_time > (startTimer+move_time):
+            xspeed=0
+            yspeed=0
+        if current_time > (start_timer+move_time+wait_time):
+            start_timer=time.clock()
+            self.controller.SetCommand(roll=xspeed,pitch=yspeed)
             
 
-        #if yspeed > 0:
-            #yspeed=1-(1/yspeed) #normalize val between -1 and 1
-        #else:
-            #yspeed=-1-(1/yspeed)
-
-    
     # given a segmented image hsvImage and a percentThreshold of 
     # what percentage of that image should be between hues hueMin and hueMax,
     # returns a boolean of whether or not the hsvImage and has enough of that
