@@ -44,7 +44,8 @@ class BasicDroneController(object):
 
         # Setup regular publishing of control packets
         self.command = Twist()
-        self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
+        #self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
+        self.commandTimer = None 
 
         # Land the drone if we are shutting down
         rospy.on_shutdown(self.SendLand)
@@ -68,14 +69,13 @@ class BasicDroneController(object):
         # Send an emergency (or reset) message to the ardrone driver
         self.pubReset.publish(Empty())
     
-    def ToggleCamera(self):
+    def ToggleCamera(self, camera):
         #toggle the camera
-        #try:
-            #toggle_camera = rospy.ServiceProxy('toggle_camera', ardrone_autonomy.srv.togglecam)
-            #toggle_camera()
-        #except rospy.ServiceException, e:
-            #print "ToggleCam service call failed"
-        pass
+        try:
+            toggle_camera = rospy.ServiceProxy('toggle_camera', ardrone_autonomy.srv.CamSelect)
+            toggle_camera(camera)
+        except rospy.ServiceException, e:
+            print "ToggleCam service call failed"
 
 
     def SetCommand(self,roll=0,pitch=0,yaw_velocity=0,z_velocity=0):
@@ -84,9 +84,13 @@ class BasicDroneController(object):
         self.command.linear.y  = roll
         self.command.linear.z  = z_velocity
         self.command.angular.z = yaw_velocity
+        self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
+
 
     def SendCommand(self,event):
         # The previously set command is then sent out periodically if the drone is flying
         if self.status == DroneStatus.Flying or self.status == DroneStatus.GotoHover or self.status == DroneStatus.Hovering:
             self.pubCommand.publish(self.command)
+            if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.commandlangular.z == 0 ):
+                self.commandTimer.shutdown()
 

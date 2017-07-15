@@ -27,6 +27,8 @@ class KeyboardController(object):
         self.roll = 0
         self.yaw_velocity = 0
         self.z_velocity = 0
+        # 1 = front camera; 0 = bottom camera
+        self.camera = 1
 
         pygame.display.update()
         
@@ -49,7 +51,11 @@ class KeyboardController(object):
                         rospy.logwarn("emergency land")
                         print "Emergency Land"
                     elif event.key == pygame.K_c:
-                        self.controller.ToggleCamera()
+                        self.controller.ToggleCamera(self.camera)
+                        if self.camera == 1:
+                            self.camera = 0
+                        else:
+                            self.camera == 1
                         print "toggle camera"
                     else:
                     

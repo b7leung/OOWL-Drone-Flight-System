@@ -166,7 +166,23 @@ class ProcessVideo(object):
             #yspeed=1-(1/yspeed) #normalize val between -1 and 1
         #else:
             #yspeed=-1-(1/yspeed)
+
     
-    
-    
+    # given a segmented image hsvImage and a percentThreshold of 
+    # what percentage of that image should be between hues hueMin and hueMax,
+    # returns a boolean of whether or not the hsvImage and has enough of that
+    # hue in it to pass that threshold 
+    def isHueDominant(self, hsvImage, hueMin, hueMax, percentThreshold):
+        hsvChannels = cv2.split(hsvImage)
+        hue = hsvChannels[0]
+
+        percentOrange = float((len(hsvImage)*len(hsvImage[0]))-count_nonzero(hue<hueMax)) / (len(hsvImage)*len(hsvImage[0]) )
+
+        percentOrange = percentOrange * 100
+
+        if percentOrange > percentThreshold:
+            return True
+        else:
+            return False
+
 

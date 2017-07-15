@@ -12,7 +12,7 @@
 	</node>
 	
 	<!-- Launches the keyboard controller -->
-	 <!-- <node name="KeyboardController" pkg="ardrone_lab" type="KeyboardController.py" required="true"/> --> -->
+	  <node name="KeyboardController" pkg="ardrone_lab" type="KeyboardController.py" required="true"/> --> 
 	<!-- Launches the video controller -->
 	<node name="TraceCircleController" pkg="ardrone_lab" type="TraceCircleController.py" required="true"/> -->
 </launch>

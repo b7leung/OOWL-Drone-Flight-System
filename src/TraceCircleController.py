@@ -7,8 +7,6 @@ from drone_controller import BasicDroneController
 from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
 
-import pygame
-
 import cv2
 
 class TraceCircleController(DroneVideo):
@@ -23,7 +21,7 @@ class TraceCircleController(DroneVideo):
         self.process = ProcessVideo()
         #self.position = DronePosition()
         self.controller = BasicDroneController()
-        self.state = 'IDLE'
+        self.startControl = False
 
     # define any keys to listen to here
     def KeyListener(self):
@@ -61,23 +59,34 @@ class TraceCircleController(DroneVideo):
             self.controller.SetCommand(roll=xspeed,pitch=yspeed)
             #self.position.DroneHover(xspeed,yspeed)
             self.cv_image=orange_image
+        elif key == ord('p'):
+            if self.startControl:
+                self.startControl= False
+            else:
+                self.startControl = True
+
 
 
 
     # overriding superclass's EditVideo method
     # can change self.cv_image here, and changes will be reflected on the video
     def EditVideo(self):
+
         self.cv_image=self.process.DetectColor(self.cv_image,'orange')
+
+        if self.startControl:
+
+            # if 0.2 % of what the drone sees is orange, then it will go forward
+            # orange corresponds to a hueMin of 0 and a hueMax of 50
+            orangeVisible =self.process.isHueDominant(self.cv_image, 0, 50, 0.2); 
+            if orangeVisible:
+                rospy.logwarn("go forward")
+                self.controller.SetCommand(pitch = 0.02)
+            else:
+                rospy.logwarn("stop")
+                self.controller.SetCommand(pitch = 0)
+
         #self.cv_image = self.process.ShowLine(self.cv_image)
-
-    def AutonomyProgram(self):
-        if self.state=='IDLE':pass
-        elif self.state=='START':pass
-        elif self.state=='HOVERORANGE':pass
-        elif self.state=='STABILIZE':pass
-        elif self.state=='FOLLOWBLUE':pass
-
-
 
 if __name__=='__main__':
     
