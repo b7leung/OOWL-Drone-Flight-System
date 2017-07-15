@@ -96,6 +96,7 @@ class ProcessVideo(object):
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
+
         
         #compute the center of moments for a single-channel gray image
         #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
@@ -123,12 +124,14 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        xlower=centerx-60 #left xvalue
-        ylower=centery-60 #"top" yvalue
-        xupper=centerx+60 #right xvalue
-        yupper=centery+60 #"bottom" yvalue
-        alphax=.03
-        alphay=.02
+        width=100
+        height=60
+        xlower=centerx-width #left xvalue
+        ylower=centery-height #"top" yvalue
+        xupper=centerx+width #right xvalue
+        yupper=centery+height #"bottom" yvalue
+        alphax=0.2
+        alphay=0.2
     
 
         #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -137,7 +140,7 @@ class ProcessVideo(object):
         if cx < xlower or cx > xupper:
             #pos val means object is left, neg means object is right of cntr
             xspeed=(centerx-cx)/float(centerx)
-            xspeed=0.1*xspeed
+            xspeed=alphax*xspeed
             
         else:
             xspeed=0
@@ -145,13 +148,20 @@ class ProcessVideo(object):
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
             yspeed=(centery-cy)/float(centery)
-            yspeed=0.1*yspeed
+            yspeed=alphay*yspeed
         else:
             yspeed=0
             
         rospy.logwarn("xspeed = ")
         rospy.logwarn(str(xspeed))
       #  rospy.logwarn(str(yspeed))
+        dx=int(round((-100*xspeed)+centerx))
+        dy=int(round((-100*yspeed)+centery))
+        
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+        cv2.arrowedLine(image,(dx,dy),(centerx,centery),255,3)
+
+
         return (xspeed,yspeed)
 
         #non-linear way to normalize value between -1 and 1    

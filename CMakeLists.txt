@@ -106,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ardrone_lab
-  CATKIN_DEPENDS message_runtime ardrone_autonomy roscpp rospy std_msgs
+  CATKIN_DEPENDS ardrone_autonomy roscpp rospy std_msgs
   DEPENDS system_lib
 )
 
@@ -120,6 +120,10 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+
+#add_executable(src/KeyboardController.py)
+
+#add_dependencies(KeyboardController.py ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
