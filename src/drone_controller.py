@@ -70,11 +70,12 @@ class BasicDroneController(object):
     
     def ToggleCamera(self):
         #toggle the camera
-        try:
+        #try:
             #toggle_camera = rospy.ServiceProxy('toggle_camera', ardrone_autonomy.srv.togglecam)
             #toggle_camera()
-        except rospy.ServiceException, e:
-            print "ToggleCam service call failed"
+        #except rospy.ServiceException, e:
+            #print "ToggleCam service call failed"
+        pass
 
 
     def SetCommand(self,roll=0,pitch=0,yaw_velocity=0,z_velocity=0):

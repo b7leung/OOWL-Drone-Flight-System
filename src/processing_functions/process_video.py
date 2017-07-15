@@ -42,7 +42,8 @@ class ProcessVideo(object):
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
-        return output #return the segmented image
+        #return the segmented image
+        return output
 
     def ShowLine(self,image):
         numcols = len(image)
@@ -109,7 +110,7 @@ class ProcessVideo(object):
         #draw a circle on the center of mass on the segmented image and track it
         cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1)
         cv2.circle(image, (cx,cy), 40, 255)
-        cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
+        #cv2.arrowedLine(image,(centerx,11),(centery,2),255,2)
 
         return (cx,cy)
     
@@ -135,16 +136,22 @@ class ProcessVideo(object):
         
         if cx < xlower or cx > xupper:
             #pos val means object is left, neg means object is right of cntr
-            xspeed=(centerx-cx)/float(centerx)              
+            xspeed=(centerx-cx)/float(centerx)
+            xspeed=0.1*xspeed
+            
         else:
             xspeed=0
         
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
             yspeed=(centery-cy)/float(centery)
+            yspeed=0.1*yspeed
         else:
             yspeed=0
-
+            
+        rospy.logwarn("xspeed = ")
+        rospy.logwarn(str(xspeed))
+      #  rospy.logwarn(str(yspeed))
         return (xspeed,yspeed)
 
         #non-linear way to normalize value between -1 and 1    
