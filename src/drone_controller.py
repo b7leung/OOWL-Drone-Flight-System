@@ -91,6 +91,6 @@ class BasicDroneController(object):
         # The previously set command is then sent out periodically if the drone is flying
         if self.status == DroneStatus.Flying or self.status == DroneStatus.GotoHover or self.status == DroneStatus.Hovering:
             self.pubCommand.publish(self.command)
-            if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.commandlangular.z == 0 ):
+            if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.command.angular.z == 0 ):
                 self.commandTimer.shutdown()
 

@@ -96,6 +96,12 @@ class ProcessVideo(object):
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
+        width=100
+        height=60
+        xlower=centerx-width #left xvalue
+        ylower=centery-height #"top" yvalue
+        xupper=centerx+width #right xvalue
+        yupper=centery+height #"bottom" yvalue
 
         
         #compute the center of moments for a single-channel gray image
@@ -126,14 +132,14 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        width=100
+        width=80
         height=60
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        alphax=0.2
-        alphay=0.2
+        alphax=0.4
+        alphay=0.4
     
 
         #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -165,17 +171,6 @@ class ProcessVideo(object):
 
         return (xspeed,yspeed)
     
-    #this function will go a certain speed for a set amount of time
-    def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time)
-        current_time=time.clock()
-
-        if current_time > (startTimer+move_time):
-            xspeed=0
-            yspeed=0
-        if current_time > (start_timer+move_time+wait_time):
-            start_timer=time.clock()
-            self.controller.SetCommand(roll=xspeed,pitch=yspeed)
-            
 
     # given a segmented image hsvImage and a percentThreshold of 
     # what percentage of that image should be between hues hueMin and hueMax,
