@@ -2,6 +2,7 @@
 
 import rospy
 import time
+import datetime
 
 from os.path import expanduser
 
@@ -24,19 +25,20 @@ class TraceCircleController(DroneVideo):
         
         #set up helper objects
         self.process = ProcessVideo()
-        #self.position = DronePosition()
         self.controller = BasicDroneController()
 
         self.startControl = False
         self.startTimer = time.clock()
 
-        # setting up log file (also clears the previous one)
+        # clears any previous log file that might exist, and sets up a new log file
         self.startTime = time.clock()
         self.logFilePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/output.txt"
         open(self.logFilePath, "w").close()
         self.logFile=open( self.logFilePath,"a")
+        datetime.datetime.now().date
+        self.logFile.write( " ===== " + "Log created as of " + 
+            datetime.datetime.now().strftime("%A, %B %d %Y: %I:%M%p") + " ===== " +"\n" )
 
-        
 
     # define any keys to listen to here
     def KeyListener(self):
@@ -45,22 +47,6 @@ class TraceCircleController(DroneVideo):
         key=cv2.waitKey(1) & 0xFF
 
         if key == ord('i'):
-            orange_image=self.process.DetectColor(self.cv_image,'orange')
-            cx,cy=self.process.CenterofMass(orange_image)
-            xspeed,yspeed=self.process.ApproximateSpeed(orange_image,cx,cy)
-            
-            # logging information; timeElapsed is in milliseconds
-            timeElapsed = (time.clock()-self.startTime)*1000
-            currentDroneInfo = "time: " +str(timeElapsed)+ " cx: " + str(cx) + " cy: " + str(cy) + " xspeed: " + str(xspeed) + " yspeed: " + str(yspeed) + "\n"
-            self.logFile.write(currentDroneInfo)
-
-            self.MoveFixedTime(xspeed,yspeed,0.25,0.3)
-            
-            #self.controller.SetCommand(roll=xspeed,pitch=yspeed)
-            #self.position.DroneHover(xspeed,yspeed)
-            self.cv_image=orange_image
-
-        elif key == ord('p'):
             if self.startControl:
                 self.startControl= False
             else:
@@ -72,14 +58,29 @@ class TraceCircleController(DroneVideo):
     def EditVideo(self):
 
         if self.startControl:
-            hoverOnOrange(self)
+            self.hoverOnOrange()
         
         #self.cv_image = self.process.ShowLine(self.cv_image)
 
 
     def hoverOnOrange(self):
-        pass
+        
+        # calculating cx,cy,xspeed,yspeed
+        orange_image=self.process.DetectColor(self.cv_image,'orange')
+        self.cv_image=orange_image
+        cx,cy=self.process.CenterofMass(orange_image)
+        xspeed,yspeed=self.process.ApproximateSpeed(orange_image,cx,cy)
+        
+        # logging information; timeElapsed is in milliseconds
+        timeElapsed = (time.clock()-self.startTime)*1000
+        currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(cx) +
+        " cy: " + str(cy) + " xspeed: " + str(xspeed) + " yspeed: " + str(yspeed) + "\n")
+        self.logFile.write(currentDroneInfo)
 
+        # move drone corresponding to xspeed and yspeed at a fixed interval
+        self.MoveFixedTime(xspeed,yspeed,0.25,0.15)
+        #self.MoveFixedTime(xspeed,yspeed,0.25,0.3)
+            
     
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
@@ -91,6 +92,7 @@ class TraceCircleController(DroneVideo):
             self.startTimer=time.clock()
             self.controller.SetCommand(xspeed,yspeed)
         if current_time > (2*(self.startTimer+move_time+wait_time)):
+            rospy.logwarn("third")
             self.controller.SetCommand(0,0)
             self.startTimer=time.clock()
 

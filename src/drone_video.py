@@ -52,7 +52,7 @@ class DroneVideo(object):
 
         # move the GUI into the middle of the screenbefore the first frame is shown
         if self.moved == False :
-            cv2.moveWindow(self.windowName, 500, 300)
+            cv2.moveWindow(self.windowName, 750, 500)
             self.moved = True
 
         

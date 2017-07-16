@@ -96,18 +96,11 @@ class ProcessVideo(object):
         numrows = len(image[0])
         centerx=numrows/2
         centery=numcols/2
-        width=100
-        height=60
-        xlower=centerx-width #left xvalue
-        ylower=centery-height #"top" yvalue
-        xupper=centerx+width #right xvalue
-        yupper=centery+height #"bottom" yvalue
 
         
         #compute the center of moments for a single-channel gray image
         #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
         M=cv2.moments(cv2.cvtColor(cv2.cvtColor(image,cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY),True) 
-        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
 
         if M["m00"]!=0:
             cx = int(M["m10"] / M["m00"])
@@ -132,14 +125,15 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        width=80
-        height=60
+        width=60
+        height=45
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        alphax=0.3
-        alphay=0.3
+        alphax=0.2
+        alphay=0.2
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
     
 
         #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -164,7 +158,7 @@ class ProcessVideo(object):
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
         dy=int((-100*yspeed)+centery)
-        cv2.arrowedLine(image,(dx,dy),(centerx,centery),255,3)
+        cv2.arrowedLine(image,(dx,dy),(centerx,centery),(255,0,0),3)
 
         return (xspeed,yspeed)
     
