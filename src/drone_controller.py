@@ -9,6 +9,7 @@
 
 # Import the ROS libraries, and load the manifest file which through <depend package=... /> will give us access to the project dependencies
 import rospy
+import os
 
 # Import the messages we're interested in sending and receiving
 from geometry_msgs.msg import Twist      # for sending commands to the drone
@@ -35,12 +36,12 @@ class BasicDroneController(object):
         self.subNavdata = rospy.Subscriber('/ardrone/navdata',Navdata,self.ReceiveNavdata) 
         
         # Allow the controller to publish to the /ardrone/takeoff, land and reset topics
-        self.pubLand    = rospy.Publisher('/ardrone/land',Empty)
-        self.pubTakeoff = rospy.Publisher('/ardrone/takeoff',Empty)
-        self.pubReset   = rospy.Publisher('/ardrone/reset',Empty)
+        self.pubLand    = rospy.Publisher('/ardrone/land',Empty, queue_size = 10)
+        self.pubTakeoff = rospy.Publisher('/ardrone/takeoff',Empty, queue_size = 10)
+        self.pubReset   = rospy.Publisher('/ardrone/reset',Empty, queue_size =10)
         
         # Allow the controller to publish to the /cmd_vel topic and thus control the drone
-        self.pubCommand = rospy.Publisher('/cmd_vel',Twist)
+        self.pubCommand = rospy.Publisher('/cmd_vel',Twist, queue_size=1)
 
         # Setup regular publishing of control packets
         self.command = Twist()
@@ -69,13 +70,17 @@ class BasicDroneController(object):
         # Send an emergency (or reset) message to the ardrone driver
         self.pubReset.publish(Empty())
     
-    def ToggleCamera(self, camera):
+    # explicitly switch to a camera
+    # camera=0 is for front camera, camera=1 is for bottom camera
+    def SwitchCamera(self, camera):
         #toggle the camera
-        try:
-            toggle_camera = rospy.ServiceProxy('toggle_camera', ardrone_autonomy.srv.CamSelect)
-            toggle_camera(camera)
-        except rospy.ServiceException, e:
-            print "ToggleCam service call failed"
+        if camera != 0 and camera !=1:
+            raise ValueError("Camera must be 0 or 1")
+        os.system("rosservice call /ardrone/setcamchannel "+str(camera))
+
+    # switch to the other camera
+    def ToggleCamera(self):
+        os.system("rosservice call /ardrone/togglecam")
 
 
     def SetCommand(self,roll=0,pitch=0,yaw_velocity=0,z_velocity=0):

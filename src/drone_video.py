@@ -21,9 +21,12 @@ class DroneVideo(object):
 
         self.bridge=CvBridge()
         self.cv_image=None
+        self.windowName = "Live AR.Drone Video Stream"
 
         #Subscribe to the drones video feed
         self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage )
+
+        self.moved = False
 
         #initialization for recording video
         #fourcc=cv2.VideoWriter_fourcc(*'XVID')
@@ -43,9 +46,15 @@ class DroneVideo(object):
         
         self.EditVideo()
         self.KeyListener()
-
-        cv2.imshow("video", self.cv_image)
+    
+        cv2.imshow(self.windowName, self.cv_image)
         cv2.waitKey(3)
+
+        # move the GUI into the middle of the screenbefore the first frame is shown
+        if self.moved == False :
+            cv2.moveWindow(self.windowName, 500, 300)
+            self.moved = True
+
         
     # processes the video before it is shown
     # don't implement here; implement in subclasses (TraceCircleController)

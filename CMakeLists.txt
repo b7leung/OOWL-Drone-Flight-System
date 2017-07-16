@@ -121,9 +121,6 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-#add_executable(src/KeyboardController.py)
-
-#add_dependencies(KeyboardController.py ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

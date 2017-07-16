@@ -18,8 +18,9 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands.jpg")
+	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands2.png")
 	self.screen.blit(background,[0,0])
+        pygame.display.update()
 
         # setup controller + its variables
         self.controller = BasicDroneController()
@@ -28,11 +29,9 @@ class KeyboardController(object):
         self.roll = 0
         self.yaw_velocity = 0
         self.z_velocity = 0
-        # 1 = front camera; 0 = bottom camera
-        self.camera = 1
 
-        pygame.display.update()
-        
+
+
     def startController(self):
         # while gui is still running, continusly polls for keypresses
         gameExit = False
@@ -42,30 +41,25 @@ class KeyboardController(object):
                 if event.type == pygame.KEYDOWN and self.controller is not None:
 
                     if event.key == pygame.K_t:
+                        #switches camera to bottom when it launches
                         self.controller.SendTakeoff()
+                        self.controller.SwitchCamera(1)
                         print "Takeoff"
                     elif event.key == pygame.K_SPACE:
                         self.controller.SendLand()
                         print "Land"
                     elif event.key == pygame.K_ESCAPE:
                         self.controller.SendEmergency()
-                        rospy.logwarn("emergency land")
                         print "Emergency Land"
                     elif event.key == pygame.K_c:
-                        self.controller.ToggleCamera(self.camera)
-                        if self.camera == 1:
-                            self.camera = 0
-                        else:
-                            self.camera == 1
+                        self.controller.ToggleCamera()
                         print "toggle camera"
                     else:
                     
                         if event.key == pygame.K_w:
                             self.pitch = self.speed
-                            rospy.logwarn( "Pitch Forwards")
                         elif event.key == pygame.K_s:
                             self.pitch = self.speed*-1
-                            rospy.logwarn( "Pitch Backwards")
                         elif event.key == pygame.K_a:
                             self.roll = self.speed
                             print "Roll Left"
@@ -86,15 +80,16 @@ class KeyboardController(object):
                             print "Decrease Altitude"
                             
 
-                        self.controller.SetCommand(self.roll, self.pitch, self.yaw_velocity, self.z_velocity)
+                        self.controller.SetCommand(self.roll, self.pitch,
+                        self.yaw_velocity, self.z_velocity)
 
                 if event.type == pygame.KEYUP:
                     self.pitch = 0
                     self.roll = 0
                     self.z_velocity = 0
                     self.yaw_velocity = 0
-                    self.controller.SetCommand(self.roll, self.pitch, self.yaw_velocity, self.z_velocity)
-                    rospy.logwarn("key is up")
+                    self.controller.SetCommand(self.roll, self.pitch,
+                    self.yaw_velocity, self.z_velocity)
 
                 if event.type == pygame.QUIT:
                     gameExit = True

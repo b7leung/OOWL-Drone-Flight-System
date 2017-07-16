@@ -138,8 +138,8 @@ class ProcessVideo(object):
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        alphax=0.4
-        alphay=0.4
+        alphax=0.3
+        alphay=0.3
     
 
         #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -160,9 +160,6 @@ class ProcessVideo(object):
         else:
             yspeed=0
             
-        rospy.logwarn("xspeed = ")
-        rospy.logwarn(str(xspeed))
-      #  rospy.logwarn(str(yspeed))
         
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
