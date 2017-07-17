@@ -25,7 +25,7 @@ class TraceCircleController(DroneVideo):
         
         #set up helper objects
         self.process = ProcessVideo()
-        self.controller = BasicDroneController()
+        self.controller = BasicDroneController("TraceCircle")
 
         self.startControl = False
         self.startTimer = time.clock()
@@ -48,11 +48,14 @@ class TraceCircleController(DroneVideo):
 
         if key == ord('i'):
             if self.startControl:
+                # if toggle was on, toggle it off
                 self.startControl= False
                 # make the drone just hover in place
-                rospy.logwarn("set 0")
                 self.controller.SetCommand(0,0,0,0)
+
             else:
+                # if toggle was off, toggle it on
+                self.startTimer=time.clock()
                 self.startControl = True
 
 
@@ -82,28 +85,27 @@ class TraceCircleController(DroneVideo):
     
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
-        current_time=time.clock()
 
-        # logging information; timeElapsed is in milliseconds
+        xSetSpeed = None
+        ySetSpeed = None
+
+        if time.clock() > (self.startTimer+move_time+wait_time):
+            xSetSpeed = xspeed
+            ySetSpeed = yspeed
+            self.startTimer=time.clock()
+
+        else if time.clock() > (self.startTimer+move_time):
+            xSetSpeed = 0
+            ySetSpeed = 0
+
+        self.controller.SetCommand(xSetSpeed, ySetSpeed)
+
+        # log info
         timeElapsed = (time.clock()-self.startTime)*1000
+        currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
+        " cy: " + str(self.cy) + " xspeed: " + str(xSetSpeed) + " yspeed: " + str(ySetSpeed) + "\n")
+        self.logFile.write(currentDroneInfo)
 
-        if current_time > (self.startTimer+move_time):
-            self.controller.SetCommand(0,0)
-            currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
-            " cy: " + str(self.cy) + " xspeed: " + str(0) + " yspeed: " + str(0) + "\n")
-            self.logFile.write(currentDroneInfo)
-
-
-        if current_time > (self.startTimer+move_time+wait_time):
-            self.startTimer=time.clock()
-            self.controller.SetCommand(xspeed,yspeed)
-            currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
-            " cy: " + str(self.cy) + " xspeed: " + str(xspeed) + " yspeed: " + str(yspeed) + "\n")
-            self.logFile.write(currentDroneInfo)
-
-        if current_time > (2*(self.startTimer+move_time+wait_time)):
-            self.controller.SetCommand(0,0)
-            self.startTimer=time.clock()
 
     # changes the drone's direction after a set update_time amount of time (in seconds)
     def MoveTimer(self, xspeed, yspeed, update_time):

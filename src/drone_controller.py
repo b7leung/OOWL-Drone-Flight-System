@@ -28,7 +28,7 @@ COMMAND_PERIOD = 100 #ms
 
 
 class BasicDroneController(object):
-    def __init__(self):
+    def __init__(self, name="default"):
         # Holds the current drone status
         self.status = -1
 
@@ -50,6 +50,9 @@ class BasicDroneController(object):
 
         # Land the drone if we are shutting down
         rospy.on_shutdown(self.SendLand)
+
+        # Setting name of controller, for logging purposes
+        self.controllerName = name
 
     def ReceiveNavdata(self,navdata):
         # Although there is a lot of data in this packet, we're only interested in the state at the moment  
@@ -95,12 +98,11 @@ class BasicDroneController(object):
     def SendCommand(self,event):
         # The previously set command is then sent out periodically if the drone is flying
         if self.status == DroneStatus.Flying or self.status == DroneStatus.GotoHover or self.status == DroneStatus.Hovering:
+            #rospy.logwarn(self.controllerName +" publishing " + str(self.command.linear.x) + str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
+
             self.pubCommand.publish(self.command)
             if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.command.angular.z == 0 ):
                 self.commandTimer.shutdown()
 
-    # stops timer
-    def StopAllCommands(self):
-        self.commandTimer.shutdown()
 
 

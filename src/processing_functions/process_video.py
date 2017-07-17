@@ -130,8 +130,8 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        width=35
-        height=35
+        width=25
+        height=25
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
@@ -147,18 +147,18 @@ class ProcessVideo(object):
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
             #rospy.logwarn("high horizontal")
-            alphax = 0.9
+            alphax = 0.65
         else:
             #rospy.logwarn("low horizontal")
-            alphax = 0.6
+            alphax = 0.4
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
             #rospy.logwarn("high vertical")
-            alphay = 0.9
+            alphay = 0.65
         else:
             #rospy.logwarn("low vertical")
-            alphay = 0.6
+            alphay = 0.4
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)

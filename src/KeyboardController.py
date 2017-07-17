@@ -23,7 +23,7 @@ class KeyboardController(object):
         pygame.display.update()
 
         # setup controller + its variables
-        self.controller = BasicDroneController()
+        self.controller = BasicDroneController("Keyboard")
         self.speed = 1
         self.pitch = 0
         self.roll = 0
