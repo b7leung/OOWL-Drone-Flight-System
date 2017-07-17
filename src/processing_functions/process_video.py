@@ -39,10 +39,15 @@ class ProcessVideo(object):
         mask2 = cv2.inRange(hsv_image,lower2,upper2)
 	#perform logical or to combine the masks
         mask = cv2.bitwise_or(mask1,mask2,mask=None)
+
+        #find the outline of all orange objects in image
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
         #return the segmented image
+        #show the contours on original image
+        #self.FindBox(output,mask)
+        
         return output
 
     def ShowLine(self,image):
@@ -125,18 +130,37 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        width=60
-        height=45
+        width=35
+        height=35
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        alphax=0.2
-        alphay=0.2
         cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
-    
 
-        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
+        # alpha changes depending on if (cx,cy) is in blue box or not
+        zoneLeft = centerx - centerx/2
+        zoneRight = centerx + centerx/2
+        zoneTop= centery - centery/2
+        zoneBottom= centery + centery/2
+        cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
+        # if it's out of horizontal close zone
+        if cx < zoneLeft or cx > zoneRight:
+            #rospy.logwarn("high horizontal")
+            alphax = 0.9
+        else:
+            #rospy.logwarn("low horizontal")
+            alphax = 0.6
+        
+        # if it's out of vertical close zone
+        if cy < zoneTop or cy > zoneBottom:
+            #rospy.logwarn("high vertical")
+            alphay = 0.9
+        else:
+            #rospy.logwarn("low vertical")
+            alphay = 0.6
+
+       #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
         
         if cx < xlower or cx > xupper:
@@ -163,6 +187,19 @@ class ProcessVideo(object):
         return (xspeed,yspeed)
     
 
+    """def getZone(self, imageWidth, imageHeight, cx, cy):
+        
+        # % gap between zones
+        zoneGap = 25
+
+        centerX=imageWidth/2
+        centerY=imageHeight/2
+
+        if cx > (centerX - (zoneGap/100.0)*imageWidth) and cx < (centerX + (zoneGap/100.0)*imageWidth) and cy """
+
+
+        
+
     # given a segmented image hsvImage and a percentThreshold of 
     # what percentage of that image should be between hues hueMin and hueMax,
     # returns a boolean of whether or not the hsvImage and has enough of that
@@ -179,5 +216,20 @@ class ProcessVideo(object):
             return True
         else:
             return False
+
+    def FindBox(self,image,mask):
+        im2, contours,hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        contours=contours[0][:][:]
+        mx=amax(contours,0)
+        mn=amin(contours,0)
+        maxx=mx[0][0]
+        maxy=mx[0][1]
+        minx=mn[0][0]
+        miny=mn[0][1]
+        #only draw from the outer edges of square
+        contours=np.array([[[minx,miny],[minx,maxy]],[[minx,miny],[maxx,miny]],
+        [[maxx,miny],[maxx,maxy]],[[maxx,maxy],[minx,maxy]]])
+        #draw the square on the original image
+        cv2.drawContours(image, contours, -1, (0,255,0), 3)
 
 

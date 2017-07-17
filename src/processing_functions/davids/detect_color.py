@@ -12,7 +12,7 @@ args = vars(ap.parse_args())
 image = cv2.imread(args["image"])
 # define the list of boundaries
 boundaries = [
-	([86, 31, 4], [220, 88, 50])
+	([240, 0, 0], [255, 50, 50])
 ]
 
 # loop over the boundaries
@@ -25,8 +25,35 @@ for (lower, upper) in boundaries:
 	# the mask
 	mask = cv2.inRange(image, lower, upper)
 	output = cv2.bitwise_and(image, image, mask = mask)
- 
-	# show the images
+        im2, contours,hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+        
+
+
+        cnt=contours[0][:][:]
+        
+        
+        mx=np.amax(cnt,0)
+        mn=np.amin(cnt,0)
+        
+        
+        print(mx)
+        print(mn)
+
+        maxx=mx[0][0]
+        maxy=mx[0][1]
+        minx=mn[0][0]
+        miny=mn[0][1]
+        #print(minx)
+       #
+       #print(miny)
+        print(maxx)
+
+        print(maxy)
+
+        cnt=np.array([[[minx,miny],[minx,maxy]],[[minx,miny],[maxx,miny]],
+        [[maxx,miny],[maxx,maxy]],[[maxx,maxy],[minx,maxy]]])
+        
+        cv2.drawContours(image, cnt, -1, (0,255,0), 3,4)	# show the images
 	cv2.imshow("images", np.hstack([image, output]))
        	cv2.imwrite('index.png',output)
 	cv2.waitKey(0)

@@ -99,3 +99,8 @@ class BasicDroneController(object):
             if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.command.angular.z == 0 ):
                 self.commandTimer.shutdown()
 
+    # stops timer
+    def StopAllCommands(self):
+        self.commandTimer.shutdown()
+
+
