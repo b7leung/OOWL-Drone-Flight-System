@@ -92,17 +92,25 @@ class BasicDroneController(object):
         self.command.linear.y  = roll
         self.command.linear.z  = z_velocity
         self.command.angular.z = yaw_velocity
-        self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
+        if( self.commandTimer != None and self.command.linear.x == 0 and self.command.linear.y == 0 and
+        self.command.linear.z == 0 and self.command.angular.z == 0 ):
+            rospy.logwarn(self.controllerName +" publishing " + str(self.command.linear.x) +
+            str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
+            self.pubCommand.publish(self.command)
+            rospy.logwarn("SHUTTING DOWN TIMER")
+            self.commandTimer.shutdown()
+        else:
+            rospy.logwarn("STARTING TIMER")
+            self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
 
 
     def SendCommand(self,event):
         # The previously set command is then sent out periodically if the drone is flying
         if self.status == DroneStatus.Flying or self.status == DroneStatus.GotoHover or self.status == DroneStatus.Hovering:
-            #rospy.logwarn(self.controllerName +" publishing " + str(self.command.linear.x) + str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
+            #rospy.logwarn(self.controllerName +" publishing " + str(self.command.linear.x) +
+            #str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
 
             self.pubCommand.publish(self.command)
-            if( self.command.linear.x == 0 and self.command.linear.y == 0 and self.command.linear.z == 0 and self.command.angular.z == 0 ):
-                self.commandTimer.shutdown()
 
 
 

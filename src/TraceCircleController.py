@@ -29,14 +29,15 @@ class TraceCircleController(DroneVideo):
 
         self.startControl = False
         self.startTimer = time.clock()
-
+        self.state = 'IDLE'
+        
         # clears any previous log file that might exist, and sets up a new log file
         self.startTime = time.clock()
         self.logFilePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/output.txt"
         open(self.logFilePath, "w").close()
         self.logFile=open( self.logFilePath,"a")
         datetime.datetime.now().date
-        self.logFile.write( " ===== " + "Log created as of " + 
+        self.logFile.write( " ===== " + "Log created for flight on " + 
             datetime.datetime.now().strftime("%A, %B %d %Y: %I:%M%p") + " ===== " +"\n" )
 
 
@@ -52,24 +53,42 @@ class TraceCircleController(DroneVideo):
                 self.startControl= False
                 # make the drone just hover in place
                 self.controller.SetCommand(0,0,0,0)
-
+                self.state='IDLE'
             else:
                 # if toggle was off, toggle it on
-                self.startTimer=time.clock()
+                #self.startTimer=time.clock()
                 self.startControl = True
+                self.state = 'HoverOnOrange'
+        
+        elif key == ord('b'):
+            if self.startControl:
+                # if toggle was on, toggle it off
+                self.startControl= False
+                # make the drone just hover in place
+                self.controller.SetCommand(0,0,0,0)
+                self.state='IDLE'
+            else:
+                # if toggle was off, toggle it on
+                #self.startTimer=time.clock()
+                self.startControl = True
+                self.state = 'HollowBlue'
 
 
     # overriding superclass's EditVideo method
     # can change self.cv_image here, and changes will be reflected on the video
     def EditVideo(self):
-
-        if self.startControl:
-            self.hoverOnOrange()
         
-        #self.cv_image = self.process.ShowLine(self.cv_image)
+        if self.startControl:
+            if(self.state == 'AdjustHeight'):
+                self.adjustHeight()
 
+            elif(self.state == 'HoverOnOrange'):
+                self.HoverOnOrange()
+            
+            elif(self.state == 'HollowBlue'):
+                self.FollowBlue()
 
-    def hoverOnOrange(self):
+    def HoverOnOrange(self):
         
         # calculating cx,cy,xspeed,yspeed
         orange_image=self.process.DetectColor(self.cv_image,'orange')
@@ -82,10 +101,15 @@ class TraceCircleController(DroneVideo):
         self.MoveFixedTime(xspeed,yspeed,0.3,0.1)
         #self.MoveTimer(xspeed,yspeed,0.2)     
             
-    
+    def FollowBlue(self):
+        
+        blue_image=self.process.DetectColor(self.cv_image,'blue')
+        self.cv_image=blue_image
+        x0,y0,angle=self.process.ShowLine(blue_image)
+
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
-
+        
         xSetSpeed = None
         ySetSpeed = None
 
@@ -94,38 +118,37 @@ class TraceCircleController(DroneVideo):
             ySetSpeed = yspeed
             self.startTimer=time.clock()
 
-        else if time.clock() > (self.startTimer+move_time):
+        elif time.clock() > (self.startTimer+move_time):
             xSetSpeed = 0
             ySetSpeed = 0
 
-        self.controller.SetCommand(xSetSpeed, ySetSpeed)
+        if xSetSpeed != None and ySetSpeed != None:
+            self.controller.SetCommand(xSetSpeed, ySetSpeed)
 
-        # log info
-        timeElapsed = (time.clock()-self.startTime)*1000
-        currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
-        " cy: " + str(self.cy) + " xspeed: " + str(xSetSpeed) + " yspeed: " + str(ySetSpeed) + "\n")
-        self.logFile.write(currentDroneInfo)
-
-
-    # changes the drone's direction after a set update_time amount of time (in seconds)
-    def MoveTimer(self, xspeed, yspeed, update_time):
-        current_time=time.clock()
-        if (current_time - self.startTimer) > update_time:
-            rospy.logwarn("new command; xspeed = " + str(xspeed) + ", yspeed = " + str(yspeed))
-            self.controller.SetCommand(xspeed,yspeed)
-            self.startTimer=time.clock()
+            # log info
+            timeElapsed = (time.clock()-self.startTime)*1000
+            currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
+            " cy: " + str(self.cy) + " xspeed: " + str(xSetSpeed) + " yspeed: " + str(ySetSpeed) + "\n")
+            self.logFile.write(currentDroneInfo)
 
 
-    # if 0.2 % of what the drone sees is orange, then it will go forward
-    # orange corresponds to a hueMin of 0 and a hueMax of 50
-    def goForwardIfOrange(self):
-        orangeVisible = self.process.isHueDominant(self.cv_image, 0, 50, 0.2); 
-        if orangeVisible:
-            rospy.logwarn("go forward")
-            self.controller.SetCommand(pitch = 0.03)
+    #check if we are at the correct height and adjust
+    def MoveFixedHeight(self,currentZ,stableTime):
+        CLIMBSPEED = 0.7
+        currentTime = time.clock()
+
+        if(currentZ > 1.4):
+            zVelocity = -CLIMBSPEED
+            self.startTimer = time.clock()
+        elif (currentZ <1.3):
+            zVelocity = CLIMBSPEED
+            self.startTimer = time.clock()
         else:
-            rospy.logwarn("stop")
-            self.controller.SetCommand(pitch = 0)
+            zVelocity = 0
+            if(currentTime > (self.startTimer + stableTime)):
+                self.state = 'hoverOnOrange'
+                self.startTimer=time.clock()
+        self.controller.SetCommand(z_velocity = zVelocity)
 
 if __name__=='__main__':
     

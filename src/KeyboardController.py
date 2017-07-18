@@ -84,12 +84,14 @@ class KeyboardController(object):
                         self.yaw_velocity, self.z_velocity)
 
                 if event.type == pygame.KEYUP:
-                    self.pitch = 0
-                    self.roll = 0
-                    self.z_velocity = 0
-                    self.yaw_velocity = 0
-                    self.controller.SetCommand(self.roll, self.pitch,
-                    self.yaw_velocity, self.z_velocity)
+                    if (event.key == pygame.K_w or event.key == pygame.K_s or event.key == pygame.K_a or event.key == pygame.K_d
+                    or event.key == pygame.K_q or event.key == pygame.K_e or event.key == pygame.K_r or event.key == pygame.K_f):
+                        self.pitch = 0
+                        self.roll = 0
+                        self.z_velocity = 0
+                        self.yaw_velocity = 0
+                        self.controller.SetCommand(self.roll, self.pitch,
+                        self.yaw_velocity, self.z_velocity)
 
                 if event.type == pygame.QUIT:
                     gameExit = True

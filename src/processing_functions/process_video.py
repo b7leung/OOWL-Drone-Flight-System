@@ -50,16 +50,9 @@ class ProcessVideo(object):
         
         return output
 
+    #performs houghline transform to detect lines by inputing a BGR image and returning the angle of the line and the point perpendicular to the origin
     def ShowLine(self,image):
-        numcols = len(image)
-        numrows = len(image[0])
-        #preprocess image to make it easier to see lines
-        #segment color of tape
         
-        image = self.DetectColor(image,'blue')
-        original=image
-        #change hsv to bgr
-        #image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         #now we have binary image with edges of tape
@@ -67,21 +60,20 @@ class ProcessVideo(object):
         #lines contains rho and theta values
         
         thresh=100
-        lines = cv2.HoughLines(edges,1,pi/360,thresh)
+        lines = cv2.HoughLines(edges,1,pi/180,thresh)
         while(type(lines)==type(None) and thresh > 0):
-            lines = cv2.HoughLines(edges,1,pi/360,thresh)
+            lines = cv2.HoughLines(edges,1,pi/180,thresh)
             thresh-=thresh
         
         #average rho and theta values
         if(thresh!=0):
-            rospy.logwarn(lines)
+            #rospy.logwarn(lines)
             LINES = matrix(lines).mean(0)
-            rospy.logwarn(LINES)
             rho=LINES[0,0]
-            degrees=LINES[0,1]
+            radians=LINES[0,1]
         
-            a = cos(degrees)
-            b = sin(degrees)
+            a = cos(radians)
+            b = sin(radians)
             x0 = a*rho
             y0 = b*rho
             x1 = int(x0 + 1000*(-b))
@@ -89,11 +81,17 @@ class ProcessVideo(object):
             x2 = int(x0 - 1000*(-b))
             y2 = int(y0 - 1000*(a))
     
-            #"average fit line"
-            cv2.line(original,(x1,y1),(x2,y2),(0,0,255),2)
+            cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+            cv2.circle(image,(x0,y0),255,-1)
             #this is the correct angle relative to standard cordinate system for average line
-            angle=(-1*((degrees*180)/pi)+90)
-        return original
+            angle=(-1*((radians*180)/pi)+90)
+        
+        else:
+            x0=None
+            y0=None
+            angle=None
+
+        return (x0,y0,angle)
         
     #takes in a segmented image input and returns the center of mass in x and y coordinates
     def CenterofMass(self,image):
@@ -130,8 +128,8 @@ class ProcessVideo(object):
         centery=numcols/2
 
         #create a "window" for desired center of mass position
-        width=25
-        height=25
+        width=35
+        height=35
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
@@ -147,18 +145,18 @@ class ProcessVideo(object):
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
             #rospy.logwarn("high horizontal")
-            alphax = 0.65
+            alphax = 0.3
         else:
             #rospy.logwarn("low horizontal")
-            alphax = 0.4
+            alphax = 0.3
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
             #rospy.logwarn("high vertical")
-            alphay = 0.65
+            alphay = 0.3
         else:
             #rospy.logwarn("low vertical")
-            alphay = 0.4
+            alphay = 0.3
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
