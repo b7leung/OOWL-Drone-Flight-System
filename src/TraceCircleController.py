@@ -71,7 +71,7 @@ class TraceCircleController(DroneVideo):
                 # if toggle was off, toggle it on
                 #self.startTimer=time.clock()
                 self.startControl = True
-                self.state = 'HollowBlue'
+                self.state = 'FollowBlue'
 
 
     # overriding superclass's EditVideo method
@@ -85,7 +85,7 @@ class TraceCircleController(DroneVideo):
             elif(self.state == 'HoverOnOrange'):
                 self.HoverOnOrange()
             
-            elif(self.state == 'HollowBlue'):
+            elif(self.state == 'FollowBlue'):
                 self.FollowBlue()
 
     def HoverOnOrange(self):

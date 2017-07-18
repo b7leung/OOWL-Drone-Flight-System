@@ -82,7 +82,7 @@ class ProcessVideo(object):
             y2 = int(y0 - 1000*(a))
     
             cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-            cv2.circle(image,(x0,y0),255,-1)
+            cv2.circle(image,(x0,y0),5,255,-1)
             #this is the correct angle relative to standard cordinate system for average line
             angle=(-1*((radians*180)/pi)+90)
         
@@ -90,7 +90,8 @@ class ProcessVideo(object):
             x0=None
             y0=None
             angle=None
-
+        rospy.logwarn(x0)
+        rospy.logwarn(y0)
         return (x0,y0,angle)
         
     #takes in a segmented image input and returns the center of mass in x and y coordinates
@@ -230,4 +231,15 @@ class ProcessVideo(object):
         #draw the square on the original image
         cv2.drawContours(image, contours, -1, (0,255,0), 3)
 
+    #takes in image, segements image for different colors 
+    
+    def IsOrangeVisible(self, image):
+        
+        numcols = len(image)
+        numrows = len(image[0])
 
+        orange_image=self.DetectColor(image,'orange')
+        blue_image=self.DetectColor(image,'blue')
+
+        percent_orange = count_nonzero(orange_image)/float(numcols*numrows)
+        percent_blue = count_nonzero(blue_image)/float(numcols*numrows)
