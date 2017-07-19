@@ -94,13 +94,11 @@ class BasicDroneController(object):
         self.command.angular.z = yaw_velocity
         if( self.commandTimer != None and self.command.linear.x == 0 and self.command.linear.y == 0 and
         self.command.linear.z == 0 and self.command.angular.z == 0 ):
-            rospy.logwarn(self.controllerName +" publishing " + str(self.command.linear.x) +
-            str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
-            self.pubCommand.publish(self.command)
-            rospy.logwarn("SHUTTING DOWN TIMER")
+            self.SendCommand(None)
+            #rospy.logwarn("SHUTTING DOWN TIMER")
             self.commandTimer.shutdown()
         else:
-            rospy.logwarn("STARTING TIMER")
+            #rospy.logwarn("STARTING TIMER")
             self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
 
 
@@ -111,6 +109,8 @@ class BasicDroneController(object):
             #str(self.command.linear.y)+ str(self.command.linear.z) + str(self.command.angular.z) )
 
             self.pubCommand.publish(self.command)
+
+
 
 
 

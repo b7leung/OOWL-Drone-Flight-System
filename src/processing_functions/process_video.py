@@ -59,7 +59,8 @@ class ProcessVideo(object):
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
         
-        thresh=100
+        thresh=65
+        #thresh=100
         lines = cv2.HoughLines(edges,1,pi/180,thresh)
         while(type(lines)==type(None) and thresh > 0):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
@@ -90,8 +91,8 @@ class ProcessVideo(object):
             x0=None
             y0=None
             angle=None
-        rospy.logwarn(x0)
-        rospy.logwarn(y0)
+        #rospy.logwarn(x0)
+        #rospy.logwarn(y0)
         return (x0,y0,angle)
         
     #takes in a segmented image input and returns the center of mass in x and y coordinates
@@ -146,18 +147,20 @@ class ProcessVideo(object):
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
             #rospy.logwarn("high horizontal")
-            alphax = 0.3
+            alphax = 0.6
         else:
             #rospy.logwarn("low horizontal")
-            alphax = 0.3
+            alphax = 0.35
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
             #rospy.logwarn("high vertical")
-            alphay = 0.3
+            #alphay = 0.1
+            alphay = 0.6
         else:
             #rospy.logwarn("low vertical")
-            alphay = 0.3
+            alphay = 0.35
+            #alphay = 0.03
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -204,14 +207,19 @@ class ProcessVideo(object):
     # returns a boolean of whether or not the hsvImage and has enough of that
     # hue in it to pass that threshold 
     def isHueDominant(self, hsvImage, hueMin, hueMax, percentThreshold):
+        
+        # getting array of image that considers only hue, not saturation nor value
         hsvChannels = cv2.split(hsvImage)
         hue = hsvChannels[0]
+        
+        # find ratio of pixels whose hue is within range, to the number of pixels overall in image
+        numHuePixel = float( count_nonzero( (hueMin<hue) & (hue<hueMax) ) )
+        numImagePixel= (len(hsvImage)*len(hsvImage[0]) )
+        hueRatio = numHuePixel/numImagePixel
+        #percentHue = float(count_nonzero( ((hueMin<hue) & (hue<hueMax)) ) ) / (len(hsvImage)*len(hsvImage[0]) )
 
-        percentOrange = float((len(hsvImage)*len(hsvImage[0]))-count_nonzero(hue<hueMax)) / (len(hsvImage)*len(hsvImage[0]) )
-
-        percentOrange = percentOrange * 100
-
-        if percentOrange > percentThreshold:
+        huePercent = hueRatio * 100
+        if huePercent > percentThreshold:
             return True
         else:
             return False
