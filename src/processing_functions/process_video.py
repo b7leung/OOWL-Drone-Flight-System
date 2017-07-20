@@ -13,7 +13,10 @@ class ProcessVideo(object):
 
     #returns segemented image that only leaves a pixels within specified color value, sets else to 0
     def DetectColor(self,image,color):
-          
+        
+        numcols=len(image)
+        numrows=len(image[0])
+
 	#upper orange hsv boundary
         if(color=='orange'):
                 hsv_boundaries = [ ([0, 150, 200],[7, 255, 255])]
@@ -25,7 +28,7 @@ class ProcessVideo(object):
                 upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
         if(color=='blue'):
-                 hsv_boundaries = [ ([100,160,100],[115,255,255])]
+                 hsv_boundaries = [ ([102,150,100],[115,255,255])]
                  lower=array(hsv_boundaries[0][0], dtype = "uint8")
                  upper= array(hsv_boundaries[0][1],dtype = "uint8")
                  lower2=lower
@@ -33,7 +36,6 @@ class ProcessVideo(object):
 
 	#convert bgr to hsv image for color segmentation
         hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
         #find colors within the boundaries for each color set=1, else=0
         mask1 = cv2.inRange(hsv_image,lower,upper)
         mask2 = cv2.inRange(hsv_image,lower2,upper2)
@@ -44,10 +46,10 @@ class ProcessVideo(object):
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
+        cv2.circle(output,(320,180),4,150,1)
         #return the segmented image
         #show the contours on original image
         #self.FindBox(output,mask)
-        
         return output
 
     #performs houghline transform to detect lines by inputing a BGR image and returning the angle of the line and the point perpendicular to the origin
@@ -68,10 +70,38 @@ class ProcessVideo(object):
         
         #average rho and theta values
         if(thresh!=0):
-            #rospy.logwarn(lines)
-            LINES = matrix(lines).mean(0)
-            rho=LINES[0,0]
-            radians=LINES[0,1]
+        
+            Lines=array(lines)
+            thetas=Lines[:,:,1]
+            rhos=Lines[:,:,0]
+            thetas1 = (thetas*180)/pi
+            large = (thetas1>170)
+            small = (thetas1<10)
+            if( sum(large | small) > (size(thetas)/2)):
+                if(sum(large) > sum(small)):
+                    radians = sum(thetas*large)/(sum(large))
+                    rho = sum(rhos*large)/(sum(large))
+
+                    rospy.logwarn((radians*180)/pi)
+                    rospy.logwarn(rho)
+                    rospy.logwarn("size")
+
+                    rospy.logwarn(thetas)
+
+
+                else:
+                    radians = sum(thetas*small)/(sum(small))
+                    rho = sum(rhos*small)/(sum(small))
+                    rospy.logwarn((radians*180)/pi)
+                    rospy.logwarn(rho)
+                    rospy.logwarn("size")
+
+                    rospy.logwarn(thetas)
+
+            else:
+                LINES = matrix(lines).mean(0)
+                rho=LINES[0,0]
+                radians=LINES[0,1]
         
             a = cos(radians)
             b = sin(radians)
@@ -83,16 +113,18 @@ class ProcessVideo(object):
             y2 = int(y0 - 1000*(a))
     
             cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-            cv2.circle(image,(x0,y0),5,255,-1)
             #this is the correct angle relative to standard cordinate system for average line
-            angle=(-1*((radians*180)/pi)+90)
+            angle=((radians*180)/pi)
+            radians=radians/pi
         
         else:
             x0=None
             y0=None
             angle=None
-        #rospy.logwarn(x0)
-        #rospy.logwarn(y0)
+            rho=None
+            radians=None
+        #rospy.logwarn(angle)
+        #rospy.logwarn(rho)
         return (x0,y0,angle)
         
     #takes in a segmented image input and returns the center of mass in x and y coordinates
