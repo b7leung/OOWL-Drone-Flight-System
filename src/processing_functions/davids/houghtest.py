@@ -20,7 +20,7 @@ while(type(lines) == type(None) and thresh>0):
     thresh -= 1
     print("entered")
 L=np.matrix(lines).mean(0)
-
+print(lines)
 size=len(lines)
 row=L[0,0]
 degrees=L[0,1]

@@ -50,7 +50,7 @@ class ProcessVideo(object):
         
         return output
 
-    #performs houghline transform to detect lines by inputing a BGR image and returning the angle of the line and the point perpendicular to the origin
+    #performs houghline transform to detect lines by inputing a BGR segmented image and returning the angle of the line and the point perpendicular to the origin
     def ShowLine(self,image):
         
         #change bgr to gray for edge detection
@@ -59,8 +59,7 @@ class ProcessVideo(object):
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
         
-        thresh=65
-        #thresh=100
+        thresh=100
         lines = cv2.HoughLines(edges,1,pi/180,thresh)
         while(type(lines)==type(None) and thresh > 0):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
@@ -69,9 +68,20 @@ class ProcessVideo(object):
         #average rho and theta values
         if(thresh!=0):
             #rospy.logwarn(lines)
-            LINES = matrix(lines).mean(0)
-            rho=LINES[0,0]
-            radians=LINES[0,1]
+            thetas=lines[:,1]
+            large = (thetas>170)
+            small = (thetas<10)
+            if( sum(large or small) > (size(thetas)/2)):
+                if(sum(large) > sum(small)):
+                    radians = sum(thetas*large)/(sum(large))
+                    rho = sum(lines[:,0]*large)/(sum(large))
+                else:
+                    radians = sum(thetas*small)/(sum(small))
+                    rho = sum(lines[:,0]*small)/(sum(small))
+            else:
+                LINES = matrix(lines).mean(0)
+                rho=LINES[0,0]
+                radians=LINES[0,1]
         
             a = cos(radians)
             b = sin(radians)
@@ -150,7 +160,7 @@ class ProcessVideo(object):
             alphax = 0.6
         else:
             #rospy.logwarn("low horizontal")
-            alphax = 0.35
+            alphax = 0.3
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
@@ -159,7 +169,7 @@ class ProcessVideo(object):
             alphay = 0.6
         else:
             #rospy.logwarn("low vertical")
-            alphay = 0.35
+            alphay = 0.3
             #alphay = 0.03
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
@@ -215,14 +225,30 @@ class ProcessVideo(object):
         # find ratio of pixels whose hue is within range, to the number of pixels overall in image
         numHuePixel = float( count_nonzero( (hueMin<hue) & (hue<hueMax) ) )
         numImagePixel= (len(hsvImage)*len(hsvImage[0]) )
-        hueRatio = numHuePixel/numImagePixel
-        #percentHue = float(count_nonzero( ((hueMin<hue) & (hue<hueMax)) ) ) / (len(hsvImage)*len(hsvImage[0]) )
+        hueRatio = numHuePixel / numImagePixel
 
         huePercent = hueRatio * 100
+        rospy.logwarn(huePercent)
         if huePercent > percentThreshold:
             return True
         else:
             return False
+
+
+    # given a segmented hsv image of only 1 color, will attempt to return that image with unwanted static/noise
+    # reduced
+    def deNoiseImage(self, hsvImage):
+        #dst = cv2.fastNlMeansDenoisingColored(hsvImage, None, 10,10,7,5)
+        dst = None
+        cv2.medianBlur(hsvImage,5, dst)
+        if dst == None:
+            rospy.logwarn("none")
+        else:
+            rospy.logwarn("not none")
+
+
+        return dst
+
 
     def FindBox(self,image,mask):
         im2, contours,hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)

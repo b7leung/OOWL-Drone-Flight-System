@@ -114,7 +114,7 @@ class TraceCircleController(DroneVideo):
         
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
-        self.MoveFixedTime(xspeed,yspeed,0.1,0.03)
+        self.MoveFixedTime(xspeed,yspeed,0.1,0.04)
         #self.MoveTimer(xspeed,yspeed,0.2)     
             
     def FollowBlue(self):
@@ -170,16 +170,18 @@ class TraceCircleController(DroneVideo):
     # if 0.2 % of what the drone sees is orange, then it will go forward
     # orange corresponds to a hueMin of 0 and a hueMax of 50
     def GoForwardIfBlue(self):
+
         self.cv_image=self.process.DetectColor(self.cv_image,'blue')
         self.process.ShowLine(self.cv_image)
 
-        orangeVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.1); 
+        orangeVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.015); 
         if orangeVisible:
             rospy.logwarn("go forward")
-            self.controller.SetCommand(pitch = 0.1)
+            #self.controller.SetCommand(pitch = 0.1)
         else:
             rospy.logwarn("stop")
-            self.controller.SetCommand(pitch = 0)
+            #self.controller.SetCommand(pitch = 0)
+            
 
 if __name__=='__main__':
     
