@@ -122,6 +122,7 @@ class TraceCircleController(DroneVideo):
         blue_image=self.process.DetectColor(self.cv_image,'blue')
         self.cv_image=blue_image
         x0,y0,angle=self.process.ShowLine(blue_image)
+        cx,cy=self.process.CenterofMass(blue_image)
 
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
