@@ -76,10 +76,14 @@ class ProcessVideo(object):
             thetas=Lines[:,:,1]
             rhos=Lines[:,:,0]
             thetas1 = (thetas*180)/pi
+            #boolean arrays for angles greater than 170 and less than 10
             large = (thetas1>170)
             small = (thetas1<10)
+
+            #if most lines are within this range of theta
             if( sum(large | small) > (size(thetas)/2)):
                 if(sum(large) > sum(small)):
+                    #sums up all angles greater than 170 and averages them
                     radians = sum(thetas*large)/(sum(large))
                     rho = sum(rhos*large)/(sum(large))
 
@@ -91,6 +95,7 @@ class ProcessVideo(object):
 
 
                 else:
+                    #adds up all angles less than 10 and averages them
                     radians = sum(thetas*small)/(sum(small))
                     rho = sum(rhos*small)/(sum(small))
                     """rospy.logwarn((radians*180)/pi)
@@ -100,10 +105,11 @@ class ProcessVideo(object):
                     rospy.logwarn(thetas)"""
 
             else:
+                #takes average of all angles
                 LINES = matrix(lines).mean(0)
                 rho=LINES[0,0]
                 radians=LINES[0,1]
-        
+            # all data needed to plot lines on original image
             a = cos(radians)
             b = sin(radians)
             x0 = a*rho
@@ -252,7 +258,7 @@ class ProcessVideo(object):
         hueRatio = numHuePixel / numImagePixel
 
         huePercent = hueRatio * 100
-        rospy.logwarn(huePercent)
+        #rospy.logwarn(huePercent)
         if huePercent > percentThreshold:
             return True
         else:

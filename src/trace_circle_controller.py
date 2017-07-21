@@ -3,6 +3,7 @@
 import rospy
 import time
 import datetime
+import os
 
 from os.path import expanduser
 
@@ -10,6 +11,7 @@ from drone_video import DroneVideo
 from drone_controller import BasicDroneController
 from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
+from processing_functions.logger import Logger
 
 
 import cv2
@@ -31,61 +33,56 @@ class TraceCircleController(DroneVideo):
         self.startTimer = time.clock()
         self.state = 'IDLE'
         
-        # clears any previous log file that might exist, and sets up a new log file
-        self.startTime = time.clock()
-        self.logFilePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/output.txt"
-        open(self.logFilePath, "w").close()
-        self.logFile=open( self.logFilePath,"a")
-        datetime.datetime.now().date
-        self.logFile.write( " ===== " + "Log created for flight on " + 
-            datetime.datetime.now().strftime("%A, %B %d %Y: %I:%M%p") + " ===== " +"\n" )
+        # Set up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
+        droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
+        + datetime.datetime.now().strftime("%I:%M:%S%p_%a-%m-%d-%Y")+"_Flight"+"/")
+        if not os.path.exists(droneRecordPath):
+            os.makedirs(droneRecordPath)
+        # Initalize log file inside the folder
+        self.logger = Logger(logFilePath, "AR Drone Flight")
+        self.logger.Start()
 
-
+        
     # define any keys to listen to here
     def KeyListener(self):
         
-        #waits for a keypress 
         key=cv2.waitKey(1) & 0xFF
 
+        # toggles on/off which algorithm you want to execute with keypresses
         if key == ord('i'):
             if self.startControl:
-                # if toggle was on, toggle it off
-                self.startControl= False
-                # make the drone just hover in place
-                self.controller.SetCommand(0,0,0,0)
-                self.state='IDLE'
+                # if algorithm toggle was on, toggle algorithm off
+                self.ReturnToIdle()
             else:
-                # if toggle was off, toggle it on
-                #self.startTimer=time.clock()
+                # if algorithm toggle was off, toggle algorithm on
                 self.startControl = True
                 self.state = 'HoverOnOrange'
         
         elif key == ord('b'):
             if self.startControl:
-                # if toggle was on, toggle it off
-                self.startControl= False
-                # make the drone just hover in place
-                self.controller.SetCommand(0,0,0,0)
-                self.state='IDLE'
+                # if algorithm toggle was on, toggle it off
+                self.ReturnToIdle()
+
             else:
-                # if toggle was off, toggle it on
-                #self.startTimer=time.clock()
+                # if algorithm toggle was off, toggle algorithm on
                 self.startControl = True
                 self.state = 'FollowBlue'
 
         elif key == ord('m'):
             if self.startControl:
-                # if toggle was on, toggle it off
-                self.startControl= False
-                # make the drone just hover in place
-                self.controller.SetCommand(0,0,0,0)
-                self.state='IDLE'
+                # if algorithm toggle was on, toggle it off
+                self.ReturnToIdle()
             else:
-                # if toggle was off, toggle it on
-                #self.startTimer=time.clock()
+                # if algorithm toggle was off, toggle algorithm on
                 self.startControl = True
                 self.state = 'GoForwardIfBlue'
 
+
+    # returns drone to an idle hovering state
+    def ReturnToIdle(self):
+        self.startControl = False
+        self.controller.SetCommand(0,0,0,0)
+        self.state='IDLE'
 
 
     # overriding superclass's EditVideo method
@@ -93,6 +90,7 @@ class TraceCircleController(DroneVideo):
     def EditVideo(self):
         
         if self.startControl:
+
             if(self.state == 'AdjustHeight'):
                 self.adjustHeight()
 
@@ -101,9 +99,12 @@ class TraceCircleController(DroneVideo):
             
             elif(self.state == 'FollowBlue'):
                 self.FollowBlue()
+
             elif(self.state == 'GoForwardIfBlue'):
                 self.GoForwardIfBlue()
 
+
+    # given that something orange is visible below the drone, will command the drone to hover directly over it 
     def HoverOnOrange(self):
         
         # calculating cx,cy,xspeed,yspeed
@@ -115,14 +116,7 @@ class TraceCircleController(DroneVideo):
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed,yspeed,0.1,0.04)
-        #self.MoveTimer(xspeed,yspeed,0.2)     
             
-    def FollowBlue(self):
-        
-        blue_image=self.process.DetectColor(self.cv_image,'blue')
-        self.cv_image=blue_image
-        x0,y0,angle=self.process.ShowLine(blue_image)
-        cx,cy=self.process.CenterofMass(blue_image)
 
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
@@ -143,11 +137,16 @@ class TraceCircleController(DroneVideo):
             self.controller.SetCommand(xSetSpeed, ySetSpeed)
 
             # log info
-            timeElapsed = (time.clock()-self.startTime)*1000
-            currentDroneInfo = ("time: " +str(timeElapsed)+ " cx: " + str(self.cx) +
-            " cy: " + str(self.cy) + " xspeed: " + str(xSetSpeed) 
-            + " yspeed: " + str(ySetSpeed) + "\n")
-            self.logFile.write(currentDroneInfo)
+            self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
+            " xspeed: " + str(xSetSpeed) + " yspeed: " + str(ySetSpeed))
+
+
+    def FollowBlue(self):
+        
+        blue_image=self.process.DetectColor(self.cv_image,'blue')
+        self.cv_image=blue_image
+        x0,y0,angle=self.process.ShowLine(blue_image)
+        cx,cy=self.process.CenterofMass(blue_image)
 
 
     #check if we are at the correct height and adjust
@@ -168,7 +167,8 @@ class TraceCircleController(DroneVideo):
                 self.startTimer=time.clock()
         self.controller.SetCommand(z_velocity = zVelocity)
 
-    # if 0.2 % of what the drone sees is orange, then it will go forward
+
+    # if 0.2 % of what the drone sees is blue, then it will go forward
     # orange corresponds to a hueMin of 0 and a hueMax of 50
     def GoForwardIfBlue(self):
 
@@ -177,17 +177,23 @@ class TraceCircleController(DroneVideo):
 
         orangeVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.015); 
         if orangeVisible:
-            rospy.logwarn("go forward")
-            #self.controller.SetCommand(pitch = 0.1)
+            rospy.logwarn("go right ")
+            self.controller.SetCommand(roll= -0.1)
         else:
             rospy.logwarn("stop")
-            #self.controller.SetCommand(pitch = 0)
+            self.controller.SetCommand(roll= 0)
             
+
+    # this is called by ROS when the node shuts down
+    def ShutdownTasks(self):
+        self.logger.Stop()
+
 
 if __name__=='__main__':
     
     rospy.init_node('TraceCircleController')
     trace = TraceCircleController()
+    rospy.on_shutdown(trace.ShutdownTasks)
     rospy.spin()
 
     
