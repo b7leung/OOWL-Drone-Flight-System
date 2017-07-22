@@ -12,6 +12,7 @@ from drone_controller import BasicDroneController
 from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
 from processing_functions.logger import Logger
+from processing_functions.picture_manager import PictureManager
 
 
 import cv2
@@ -34,15 +35,36 @@ class TraceCircleController(DroneVideo):
         self.state = 'IDLE'
         
         # Set up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
-        droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
+        self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
         + datetime.datetime.now().strftime("%I:%M:%S%p_%a-%m-%d-%Y")+"_Flight"+"/")
-        if not os.path.exists(droneRecordPath):
-            os.makedirs(droneRecordPath)
+        if not os.path.exists(self.droneRecordPath):
+            os.makedirs(self.droneRecordPath)
         # Initalize log file inside the folder
-        self.logger = Logger(logFilePath, "AR Drone Flight")
+        self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
+        # Initalize picture manager 
+        self.pictureManager = PictureManager(self.droneRecordPath)
 
         
+    # overriding superclass's EditVideo method
+    # can change self.cv_image here, and changes will be reflected on the video
+    def EditVideo(self):
+        
+        if self.startControl:
+
+            if(self.state == 'AdjustHeight'):
+                self.adjustHeight()
+
+            elif(self.state == 'HoverOnOrange'):
+                self.HoverOnOrange()
+            
+            elif(self.state == 'FollowBlue'):
+                self.FollowBlue()
+
+            elif(self.state == 'GoForwardIfBlue'):
+                self.GoForwardIfBlue()
+
+
     # define any keys to listen to here
     def KeyListener(self):
         
@@ -77,6 +99,9 @@ class TraceCircleController(DroneVideo):
                 self.startControl = True
                 self.state = 'GoForwardIfBlue'
 
+        elif key == ord('c'):
+            self.captureFrame()
+            
 
     # returns drone to an idle hovering state
     def ReturnToIdle(self):
@@ -85,23 +110,10 @@ class TraceCircleController(DroneVideo):
         self.state='IDLE'
 
 
-    # overriding superclass's EditVideo method
-    # can change self.cv_image here, and changes will be reflected on the video
-    def EditVideo(self):
-        
-        if self.startControl:
-
-            if(self.state == 'AdjustHeight'):
-                self.adjustHeight()
-
-            elif(self.state == 'HoverOnOrange'):
-                self.HoverOnOrange()
-            
-            elif(self.state == 'FollowBlue'):
-                self.FollowBlue()
-
-            elif(self.state == 'GoForwardIfBlue'):
-                self.GoForwardIfBlue()
+    # saves the current frame
+    def captureFrame(self):
+        pictureName = self.pictureManager.Capture(self.cv_image)
+        rospy.logwarn("Saved picture as " + pictureName)
 
 
     # given that something orange is visible below the drone, will command the drone to hover directly over it 
