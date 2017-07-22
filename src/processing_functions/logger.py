@@ -29,7 +29,7 @@ class Logger(object):
             self.logFilePath += "/"
         self.logFile = open(self.logFilePath+filename, "a")
         self.logFile.write( " ===== " + "Log created for "+ self.logDescription +" on " + 
-        datetime.datetime.now().strftime("%A, %B %d %Y: %I:%M%p") + " ===== " +"\n" )
+        datetime.datetime.now().strftime("%A, %B %d %Y -- %I:%M:%S %p") + " ===== " +"\n" )
 
         self.startTime = time.clock()
         self.startedLogging = True
@@ -42,7 +42,11 @@ class Logger(object):
         self.logFile.write(str(timeElapsed)+ " || " + message + "\n")
 
 
+    # writes an ending timestamp into the log file and closes it
     def Stop(self):
+        self.logFile.write( " ===== " + self.logDescription + " log finished on " + 
+        datetime.datetime.now().strftime("%A, %B %d %Y -- %I:%M:%S %p") + " ===== " +"\n" )
+
         self.logFile.close()
 
 
