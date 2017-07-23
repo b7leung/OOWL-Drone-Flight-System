@@ -19,9 +19,6 @@ from ardrone_autonomy.msg import Navdata # for receiving navdata feedback
 # An enumeration of Drone Statuses
 from drone_status import DroneStatus
 
-# import services
-from ardrone_autonomy.srv import *
-
 
 # Some Constants
 COMMAND_PERIOD = 100 #ms

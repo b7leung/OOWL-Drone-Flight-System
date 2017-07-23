@@ -13,6 +13,11 @@
 	
 	<!-- Launches the keyboard controller -->
 	  <node name="KeyboardController" pkg="ardrone_lab" type="keyboard_controller.py" required="true"/> --> 
+
 	<!-- Launches the video controller -->
 	<node name="TraceCircleController" pkg="ardrone_lab" type="trace_circle_controller.py" required="true"/> -->
+
+        <!-- Launches flight statistics display -->
+	<node name="FlightstatsDisplay" pkg="ardrone_lab" type="flightstats_display.py" required="true"/> -->
+
 </launch>
