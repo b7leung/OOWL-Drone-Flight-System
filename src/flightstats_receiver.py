@@ -15,9 +15,11 @@ class FlightstatsReceiver(object):
         # update navdata messages are recieved
         self.navdataSub = rospy.Subscriber('/ardrone/navdata', Navdata, self.UpdateNavdata)
 
-        # initalize instance variables that will hold 
+        # initalize dictionary that will hold 
         # a useful subset of available flight info
-        self.batteryPercent = None
+        self.flightInfo = {}
+        self.flightInfo["batteryPercent"]=None
+        """self.batteryPercent = None
         self.state = None
         self.rotX = None
         self.rotY = None
@@ -25,12 +27,12 @@ class FlightstatsReceiver(object):
         self.altitude = None
         self.velX = None
         self.velY = None
-        self.velX = None
+        self.velX = None"""
 
 
     def UpdateNavdata(self, navdata):
         # first, update instance variables
-        self.batteryPercent = navdata.batteryPercent
+        self.flightInfo["batteryPercent"] = navdata.batteryPercent
         self.ProcessNavdata()
         
 
