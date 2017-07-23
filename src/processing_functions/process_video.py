@@ -130,9 +130,7 @@ class ProcessVideo(object):
             angle=None
             rho=None
             radians=None
-        #rospy.logwarn(angle)
-        #rospy.logwarn(rho)
-        return (x0,y0,angle)
+        return angle
 
 
     #takes in a segmented image input and returns the center of mass in x and y coordinates
@@ -228,6 +226,52 @@ class ProcessVideo(object):
 
         return (xspeed,yspeed)
     
+    #returns yawspeed for drone to hover horizontal ontop of blue line
+    def LineOrientation(self,angle);
+        
+        upperangle = 100
+        lowerangle = 80
+
+        if anlge<lowerangle and angle>0:
+            yawspeed=0.4
+        elif angle>upperangle and angle<180:
+            yawspeed=-0.4
+        else:
+            yawspeed=0
+
+        return yawspeed
+    
+    #return yawspeed to keep drone facing object and xspeed for line to stay in middle
+    def ObjectOrientation(self,image,cx,angle):
+        numcols = len(image)
+        numrows = len(image[0])
+        centerx = numrows/2
+        centery = numcols/2
+        xlower=centerx-100
+        xupper = centerx+100
+        alphax = 0.6
+
+        upperangle=170
+        lowerangle=10
+        
+        if cx < xlower or cx > xupper:
+           #pos val means object is left, neg means object is right of cntr
+            xspeed=(centerx-cx)/float(centerx)
+            xspeed=alphax*xspeed
+            
+        else:
+            xspeed=0
+
+        if angle<upperangle and angle>90:
+            yawspeed=0.4
+        elif angle>lowerangle and angle<90:
+            yawspeed=-0.4
+        else:
+            yawspeed=0
+
+        rospy.logwarn(yawspeed)
+        rospy.logwarn(xspeed)
+        return xspeed,yawspeed
 
     """def getZone(self, imageWidth, imageHeight, cx, cy):
         
