@@ -127,7 +127,7 @@ class TraceCircleController(DroneVideo):
         
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
-        self.MoveFixedTime(xspeed,yspeed,0.1,0.04)
+        self.MoveFixedTime(xspeed,yspeed,move_time=0.1,wait_time=0.04)
             
 
    #this function will go a certain speed for a set amount of time
@@ -157,9 +157,23 @@ class TraceCircleController(DroneVideo):
         
         blue_image=self.process.DetectColor(self.cv_image,'blue')
         self.cv_image=blue_image
-        x0,y0,angle=self.process.ShowLine(blue_image)
+        angle=self.process.ShowLine(blue_image)
         cx,cy=self.process.CenterofMass(blue_image)
 
+    #houghline transform on right half of image to fix orientation to blue after completing HoverOverOrange and taking image
+    def FixtoBlue(self):
+        blue_image=self.process.DetectColor(self.cv_image,'blue')
+        angle=self.process.ShowLine(blue_image[(len(blue_image)/2):][:])
+        yawspeed=self.process.LineOrientation(angle)
+
+    #fix the drone's orientation to face object before taking image
+    def FaceObject(self):
+
+        blue_image=self.process.DetectColor(self.cv_image,'blue')
+        self.cv_image=blue_image
+        angle=self.process.ShowLine(blue_image)
+        cx,cy=self.process.CenterofMass(blue_image)
+        xspeed,yawspeed=self.process.ObjectOrientation(blue_image,cx,angle)
 
     #check if we are at the correct height and adjust
     def MoveFixedHeight(self,currentZ,stableTime):
