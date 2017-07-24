@@ -14,8 +14,7 @@ class ProcessVideo(object):
     #returns segemented image that only leaves a pixels within specified color value, sets else to 0
     def DetectColor(self,image,color):
         
-        numcols=len(image)
-        numrows=len(image[0])
+        numrows,numcols,channels=image.shape
 
 	#upper orange hsv boundary
         if(color=='orange'):
@@ -135,10 +134,10 @@ class ProcessVideo(object):
 
     #takes in a segmented image input and returns the center of mass in x and y coordinates
     def CenterofMass(self,image):
-        numcols = len(image)
-        numrows = len(image[0])
-        centerx=numrows/2
-        centery=numcols/2
+        numrows,numcols,channels=image.shape
+
+        centerx=numcols/2
+        centery=numrows/2
 
         
         #compute the center of moments for a single-channel gray image
@@ -162,10 +161,10 @@ class ProcessVideo(object):
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
     def ApproximateSpeed(self, image, cx, cy):
-        numcols = len(image)
-        numrows = len(image[0])
-        centerx=numrows/2
-        centery=numcols/2
+        numrows,numcols,channels=image.shape
+
+        centerx=numcols/2
+        centery=numrows/2
 
         #create a "window" for desired center of mass position
         width=35
@@ -223,30 +222,45 @@ class ProcessVideo(object):
         dx=int((-100*xspeed)+centerx)
         dy=int((-100*yspeed)+centery)
         cv2.arrowedLine(image,(dx,dy),(centerx,centery),(255,0,0),3)
-
         return (xspeed,yspeed)
     
-    #returns yawspeed for drone to hover horizontal ontop of blue line
-    def LineOrientation(self,angle):
+    #returns yawspeed for drone to have blue line horizontal
+    def LineOrientation(self,image,cy,angle):
+        numrows,numcols,channels=image.shape
         
+        centerx=numcols/2
+        centery=numrows/2
+        
+        ylower=centery-60
+        yupper=centery+60
+
+        alphay=0.6
+
         upperangle = 100
         lowerangle = 80
+        
+        if cy < ylower or cy > yupper:
+            #pos val means object is above, neg means object is below
+            yspeed=(centery-cy)/float(centery)
+            yspeed=alphay*yspeed
+        else:
+            yspeed=0
 
-        if anlge<lowerangle and angle>0:
+        if angle<lowerangle and angle>0:
             yawspeed=0.4
         elif angle>upperangle and angle<180:
             yawspeed=-0.4
         else:
             yawspeed=0
-
-        return yawspeed
+        
+        return yspeed,yawspeed
     
-    #return yawspeed to keep drone facing object and xspeed for line to stay in middle
+    #return yawspeed for drone to have blue line vertical and xspeed for line to stay in middle
     def ObjectOrientation(self,image,cx,angle):
-        numcols = len(image)
-        numrows = len(image[0])
-        centerx = numrows/2
-        centery = numcols/2
+        numrows,numcols,channels=image.shape
+
+        centerx = numcols/2
+        centery = numrows/2
         xlower=centerx-100
         xupper = centerx+100
         alphax = 0.6
