@@ -127,8 +127,8 @@ class TraceCircleController(DroneVideo):
         
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
-        self.MoveFixedTime(xspeed,yspeed,move_time=0.1,wait_time=0.04)
-            
+        self.MoveFixedTime(xspeed,yspeed,move_time=0.1,wait_time=0.05)
+           #0.1, 0.04 
 
    #this function will go a certain speed for a set amount of time
     def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):

@@ -227,7 +227,7 @@ class ProcessVideo(object):
         return (xspeed,yspeed)
     
     #returns yawspeed for drone to hover horizontal ontop of blue line
-    def LineOrientation(self,angle);
+    def LineOrientation(self,angle):
         
         upperangle = 100
         lowerangle = 80
