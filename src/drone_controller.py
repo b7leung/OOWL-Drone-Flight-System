@@ -25,6 +25,7 @@ COMMAND_PERIOD = 100 #ms
 
 
 class BasicDroneController(object):
+
     def __init__(self, name="default"):
         # Holds the current drone status
         self.status = -1
@@ -51,9 +52,11 @@ class BasicDroneController(object):
         # Setting name of controller, for logging purposes
         self.controllerName = name
 
+
     def ReceiveNavdata(self,navdata):
         # Although there is a lot of data in this packet, we're only interested in the state at the moment  
         self.status = navdata.state
+
 
     def SendTakeoff(self):
         # Send a takeoff message to the ardrone driver
@@ -61,15 +64,18 @@ class BasicDroneController(object):
         if(self.status == DroneStatus.Landed):
             self.pubTakeoff.publish(Empty())
 
+
     def SendLand(self):
         # Send a landing message to the ardrone driver
         # Note we send this in all states, landing can do no harm
         self.pubLand.publish(Empty())
 
+
     def SendEmergency(self):
         # Send an emergency (or reset) message to the ardrone driver
         self.pubReset.publish(Empty())
     
+
     # explicitly switch to a camera
     # camera=0 is for front camera, camera=1 is for bottom camera
     def SwitchCamera(self, camera):
@@ -78,9 +84,15 @@ class BasicDroneController(object):
             raise ValueError("Camera must be 0 or 1")
         os.system("rosservice call /ardrone/setcamchannel "+str(camera))
 
+
     # switch to the other camera
     def ToggleCamera(self):
         os.system("rosservice call /ardrone/togglecam")
+
+
+    # set flattrim to re-calibrate its rotation estimates
+    def FlatTrim(self):
+        os.system("rosservice call /ardrone/flattrim")
 
 
     def SetCommand(self,roll=0,pitch=0,yaw_velocity=0,z_velocity=0):

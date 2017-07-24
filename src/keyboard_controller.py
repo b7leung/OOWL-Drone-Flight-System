@@ -54,6 +54,8 @@ class KeyboardController(object):
                     elif event.key == pygame.K_c:
                         self.controller.ToggleCamera()
                         print "toggle camera"
+                    elif event.key == pygame.K_l:
+                        self.controller.FlatTrim()
                     else:
                     
                         if event.key == pygame.K_w:
