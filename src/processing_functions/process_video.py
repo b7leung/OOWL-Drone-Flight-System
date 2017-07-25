@@ -160,11 +160,13 @@ class ProcessVideo(object):
     
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy):
+    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude, tolerance):
+
         numrows,numcols,channels=image.shape
 
         centerx=numcols/2
         centery=numrows/2
+        rospy.logwarn("x: " + str(centerx) + " y: " + str(centery))
 
         #create a "window" for desired center of mass position
         width=35
@@ -217,14 +219,26 @@ class ProcessVideo(object):
         else:
             yspeed=0
             
-        
+        climbSpeed = 0.25
+
+        if (currAltitude < (desiredAltitude - tolerance)):
+            zVelocity = climbSpeed
+            #rospy.logwarn("go up")
+        elif (currAltitude > (desiredAltitude + tolerance)):
+            zVelocity = climbSpeed * -1
+            #rospy.logwarn("go down")
+        else:
+            zVelocity = 0
+            #rospy.logwarn("stay in place")
+
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
         dy=int((-100*yspeed)+centery)
         cv2.arrowedLine(image,(dx,dy),(centerx,centery),(255,0,0),3)
-        return (xspeed,yspeed)
+        return (xspeed,yspeed, zVelocity)
     
-    #returns yawspeed for drone to have blue line horizontal
+    #returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
+    #keep blue line between 88-92 degrees (perfect at 90 degrees)
     def LineOrientation(self,image,cy,angle):
         numrows,numcols,channels=image.shape
         
@@ -234,10 +248,10 @@ class ProcessVideo(object):
         ylower=centery-60
         yupper=centery+60
 
-        alphay=0.6
+        alphay=0.5
 
-        upperangle = 100
-        lowerangle = 80
+        upperangle = 92
+        lowerangle = 88
         
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
@@ -245,17 +259,20 @@ class ProcessVideo(object):
             yspeed=alphay*yspeed
         else:
             yspeed=0
-
+        
+        #Drone rotates Counter Clock_Wise
         if angle<lowerangle and angle>0:
-            yawspeed=0.4
+            yawspeed=0.7
+        #Drone rotates Clock_Wise
         elif angle>upperangle and angle<180:
-            yawspeed=-0.4
+            yawspeed=-0.7
         else:
             yawspeed=0
         
         return yspeed,yawspeed
     
-    #return yawspeed for drone to have blue line vertical and xspeed for line to stay in middle
+    #return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
+    #keeps line between 178-182 degrees (equal to 178-2 degrees, perfect at 0 degrees)
     def ObjectOrientation(self,image,cx,angle):
         numrows,numcols,channels=image.shape
 
@@ -263,10 +280,10 @@ class ProcessVideo(object):
         centery = numrows/2
         xlower=centerx-100
         xupper = centerx+100
-        alphax = 0.6
+        alphax = 0.5
 
-        upperangle=170
-        lowerangle=10
+        upperangle=178
+        lowerangle=2
         
         if cx < xlower or cx > xupper:
            #pos val means object is left, neg means object is right of cntr
@@ -275,11 +292,13 @@ class ProcessVideo(object):
             
         else:
             xspeed=0
-
+        
+        #Drone rotates Counter Clock-Wise
         if angle<upperangle and angle>90:
-            yawspeed=0.4
+            yawspeed=0.7
+        #Drone rotates Clock_Wise
         elif angle>lowerangle and angle<90:
-            yawspeed=-0.4
+            yawspeed=-0.7
         else:
             yawspeed=0
 
