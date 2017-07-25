@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 
+# importing python modules
 import rospy
 import time
 import datetime
 import os
-
+import cv2
 from os.path import expanduser
 
+# importing drone specific modules
 from drone_video import DroneVideo
 from drone_controller import BasicDroneController
+from flightstats_receiver import FlightstatsReceiver
 from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
 from processing_functions.logger import Logger
 from processing_functions.picture_manager import PictureManager
 
-import cv2
 
 # list of possible states to control drone
 IDLE_STATE = "idle"
@@ -24,7 +26,9 @@ FOLLOW_BLUE_STATE = "follow_blue"
 GO_FORWARD_IF_BLUE_STATE = "go_forward_if_blue"
 
 
-class TraceCircleController(DroneVideo):
+# TraceCircleController "is-a" Drone Video display and a flightstats receiver. It uses
+# this info to ultimately control the drone
+class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
 
     def __init__(self):
@@ -69,6 +73,10 @@ class TraceCircleController(DroneVideo):
             
             self.IdleStateSwitch(GO_FORWARD_IF_BLUE_STATE)
 
+        elif key == ord('h'):
+            
+            self.IdleStateSwitch(ADJUST_HEIGHT_STATE)
+
         elif key == ord('c'):
 
             self.captureFrame()
@@ -76,6 +84,7 @@ class TraceCircleController(DroneVideo):
 
     # provides a "switch" between the drone being idle and being controlled
     def IdleStateSwitch(self, state):
+        originalState = self.state
         if self.state == IDLE_STATE:
             # if drone is idle, set the current state as specified in the parameter
             self.state = state
@@ -83,7 +92,8 @@ class TraceCircleController(DroneVideo):
             # else, if drone is being controlled by a state, return back to idle
             self.controller.SetCommand(0,0,0,0)
             self.state = IDLE_STATE
-        rospy.logwarn("Changed state to: " + self.state)
+        rospy.logwarn("======= Changed from " + originalState + " state to: " +
+        self.state + " state =======")
             
 
     # this is called every time a frame (in self.cv_image) is updated
@@ -93,7 +103,8 @@ class TraceCircleController(DroneVideo):
             # do nothing 
             pass
         elif self.state == ADJUST_HEIGHT_STATE:
-            self.adjustHeight()
+            # Hovers to 950mm (0.95 m), with a tolerance of 100 mm (.1m)
+            self.AdjustHeight(950, 100)
 
         elif self.state == HOVER_ORANGE_STATE:
             self.HoverOnOrange()
@@ -126,31 +137,40 @@ class TraceCircleController(DroneVideo):
         
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
-        self.MoveFixedTime(xspeed,yspeed,move_time=0.1,wait_time=0.05)
+        self.MoveFixedTime(xspeed, yspeed, 0, 0, move_time=0.1, wait_time=0.04)
            #0.1, 0.04 
 
 
    #this function will go a certain speed for a set amount of time
-    def MoveFixedTime(self,xspeed,yspeed,move_time,wait_time):
+    def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):
         
         xSetSpeed = None
         ySetSpeed = None
+        yawSetSpeed = None
+        zSetSpeed = None
 
         if time.clock() > (self.startTimer+move_time+wait_time):
-            xSetSpeed = xspeed
-            ySetSpeed = yspeed
+            xSetSpeed = xSpeed
+            ySetSpeed = ySpeed
+            yawSetSpeed = yawSpeed
+            zSetSpeed = zSpeed
             self.startTimer=time.clock()
 
         elif time.clock() > (self.startTimer+move_time):
             xSetSpeed = 0
             ySetSpeed = 0
+            yawSetSpeed = 0
+            zSetSpeed = 0
 
-        if xSetSpeed != None and ySetSpeed != None:
-            self.controller.SetCommand(xSetSpeed, ySetSpeed)
+        if (xSetSpeed != None and ySetSpeed != None and
+        yawSetSpeed != None and zSetSpeed != None):
+            self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)
 
             # log info
-            self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
-            " xspeed: " + str(xSetSpeed) + " yspeed: " + str(ySetSpeed))
+            #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
+            self.logger.Log(
+            " xSpeed: " + str(xSetSpeed) + " ySpeed: " + str(ySetSpeed)
+            + " yawSpeed: " +str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
 
 
     def FollowBlue(self):
@@ -178,23 +198,23 @@ class TraceCircleController(DroneVideo):
         xspeed,yawspeed=self.process.ObjectOrientation(blue_image,cx,angle)
 
 
-    #check if we are at the correct height and adjust
-    def MoveFixedHeight(self,currentZ,stableTime):
-        CLIMBSPEED = 0.7
-        currentTime = time.clock()
+    # adjusts the drone to the desired altitude within a tolerance, in mm
+    def AdjustHeight(self, desiredAltitude, tolerance):
 
-        if(currentZ > 1.4):
-            zVelocity = -CLIMBSPEED
-            self.startTimer = time.clock()
-        elif (currentZ < 1.3):
-            zVelocity = CLIMBSPEED
-            self.startTimer = time.clock()
+        climbSpeed = 0.25
+
+        if (self.flightInfo["altitude"])[1] < (desiredAltitude - tolerance):
+            zVelocity = climbSpeed
+            rospy.logwarn("go up")
+        elif (self.flightInfo["altitude"])[1] > (desiredAltitude + tolerance):
+            zVelocity = climbSpeed * -1
+            rospy.logwarn("go down")
         else:
             zVelocity = 0
-            if(currentTime > (self.startTimer + stableTime)):
-                self.state = 'hoverOnOrange'
-                self.startTimer=time.clock()
-        self.controller.SetCommand(z_velocity = zVelocity)
+            rospy.logwarn("stay in place")
+
+        #self.controller.SetCommand(z_velocity = zVelocity)
+        self.MoveFixedTime(0 , 0 , 0, zVelocity, move_time=0.1, wait_time=0.009)
 
 
     # if 0.2 % of what the drone sees is blue, then it will go forward
@@ -208,10 +228,12 @@ class TraceCircleController(DroneVideo):
 
         if orangeVisible:
             rospy.logwarn("go forward")
-            self.controller.SetCommand(pitch= 0.1)
+            self.MoveFixedTime(0 , 0.1 , 0, 0, move_time=0.1, wait_time=0.009)
+            #self.controller.SetCommand(pitch= 0.1)
         else:
             rospy.logwarn("stop")
-            self.controller.SetCommand(pitch = 0)
+            self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.009)
+            #self.controller.SetCommand(pitch= 0.0)
             
 
     # this is called by ROS when the node shuts down

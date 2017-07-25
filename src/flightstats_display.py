@@ -16,7 +16,7 @@ MEDIUM_VIEW = 1
 SIMPLE_VIEW = 0
 
 # frequency to update GUI display, in ms
-UPDATE_FREQUENCY = 30
+UPDATE_FREQUENCY = 10
 
 # an extension of FlightstatsReciever that also provides a GUI interface
 class FlightstatsDisplay(FlightstatsReceiver, QtGui.QWidget):

@@ -18,6 +18,8 @@ from cv_bridge import CvBridge, CvBridgeError
 class DroneVideo(object):
 
     def __init__(self):
+        
+        super(DroneVideo, self).__init__()
 
         self.bridge=CvBridge()
         self.cv_image=None

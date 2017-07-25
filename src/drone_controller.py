@@ -101,14 +101,28 @@ class BasicDroneController(object):
         self.command.linear.y  = roll
         self.command.linear.z  = z_velocity
         self.command.angular.z = yaw_velocity
-        if( self.commandTimer != None and self.command.linear.x == 0 and self.command.linear.y == 0 and
+
+        """if self.commandTimer == None:
+            ctbool = " None "
+        else:
+            ctbool = " Not None " 
+
+        rospy.logwarn("setting command:" + ctbool + str(self.command.linear.x) + 
+        str(self.command.linear.y) + str(self.command.linear.z) + str(self.command.angular.z))
+        """
+
+        if( self.command.linear.x == 0 and self.command.linear.y == 0 and
         self.command.linear.z == 0 and self.command.angular.z == 0 ):
-            self.SendCommand(None)
-            #rospy.logwarn("SHUTTING DOWN TIMER")
-            self.commandTimer.shutdown()
+            #self.SendCommand(None)
+            self.pubCommand.publish(self.command)
+            #rospy.logwarn("attempting to shut timer down")
+            if self.commandTimer != None:
+                #rospy.logwarn("SHUTTING DOWN TIMER")
+                self.commandTimer.shutdown()
+                self.commandTimer = None
         else:
             #rospy.logwarn("STARTING TIMER")
-            self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand)
+            self.commandTimer = rospy.Timer(rospy.Duration(COMMAND_PERIOD/1000.0),self.SendCommand, True)
 
 
     def SendCommand(self,event):
