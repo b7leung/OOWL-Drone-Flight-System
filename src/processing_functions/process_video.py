@@ -27,14 +27,14 @@ class ProcessVideo(object):
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
         if(color=='blue'):
-            hsv_boundaries = [ ([102,150,100],[115,255,255])]
+            hsv_boundaries = [ ([102,110,70],[115,255,255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=lower
             upper2=upper
         
         if(color=='green'):
-            hsv_boundaries = [ ([0, 0, 0],[179, 255, 255])]
+            hsv_boundaries = [ ([40, 70, 0],[70, 190, 254])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=lower
@@ -50,8 +50,8 @@ class ProcessVideo(object):
 
         #find the outline of all orange objects in image
 	#set any pixel != 0 to its original color value from unsegented image
-        output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
-        output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
+        hsv_output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
+        output = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
         cv2.circle(output,(numcols/2,numrows/2),4,150,1)
         rospy.logwarn(hsv_image[numrows/2,numcols/2])
         #return the segmented image
@@ -288,8 +288,8 @@ class ProcessVideo(object):
         xupper = centerx+100
         alphax = 0.5
 
-        upperangle=178
-        lowerangle=2
+        upperangle=179
+        lowerangle=1
         
         if cx < xlower or cx > xupper:
            #pos val means object is left, neg means object is right of cntr

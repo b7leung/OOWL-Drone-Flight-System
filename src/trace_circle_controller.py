@@ -149,7 +149,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         orange_image=self.process.DetectColor(self.cv_image,'orange')
         self.cv_image=orange_image
         self.cx,self.cy=self.process.CenterofMass(orange_image)
-        xspeed, yspeed, zspeed=self.process.ApproximateSpeed(orange_image,self.cx,self.cy,(self.flightInfo["altitude"])[1], 800, 100 )
+        xspeed, yspeed, zspeed=self.process.ApproximateSpeed(orange_image,self.cx,self.cy,(self.flightInfo["altitude"])[1], 1000, 100 )
         
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
@@ -161,7 +161,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         
         blue_image=self.process.DetectColor(self.cv_image,'blue')
         self.cv_image=blue_image
-        angle=self.process.ShowLine(blue_image)
+        angle=self.process.ShowLine(blue_image,100)
         cx,cy=self.process.CenterofMass(blue_image)
         yspeed,yawspeed=self.process.LineOrientation(blue_image, cy, angle)
         
@@ -181,7 +181,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         blue_image = self.process.DetectColor(self.cv_image,'blue')
         self.cv_image = blue_image
         # houghline transform on right half of image to fix orientation to blue after taking image
-        angle = self.process.ShowLine(blue_image[:,3*(blue_image.shape[1]/4):])
+        angle = self.process.ShowLine(blue_image[:,3*(blue_image.shape[1]/4):],40)
         cx, cy = self.process.CenterofMass(blue_image[:,3*(blue_image.shape[1]/4):])
         yspeed, yawspeed=self.process.LineOrientation(blue_image,cy,angle)
         
@@ -194,11 +194,11 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         green_image=self.process.DetectColor(self.cv_image,'green')
         self.cv_image=green_image
-        angle=self.process.ShowLine(green_image)
+        angle=self.process.ShowLine(green_image,50)
         cx,cy=self.process.CenterofMass(green_image)
         xspeed,yawspeed=self.process.ObjectOrientation(green_image,cx,angle)
         
-        #self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
+        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
 
 
     # this function will go a certain speed for a set amount of time
