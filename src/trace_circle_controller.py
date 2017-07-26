@@ -25,6 +25,7 @@ HOVER_ORANGE_STATE = "hover_orange"
 FOLLOW_BLUE_STATE = "follow_blue"
 GO_RIGHT_IF_BLUE_STATE = "go_right_if_blue"
 FIX_LINE_ORIENTATION = "fix_line_orientation"
+FACE_OBJECT = 'face_object'
 
 
 # TraceCircleController "is-a" Drone Video display and a flightstats receiver. It uses
@@ -82,6 +83,10 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
             self.IdleStateSwitch(FIX_LINE_ORIENTATION)
 
+        elif key == ord('z'):
+
+            self.IdleStateSwitch(FACE_OBJECT)
+
         elif key == ord('c'):
 
             self.captureFrame()
@@ -122,6 +127,10 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         
         elif self.state == FIX_LINE_ORIENTATION:
             self.FixtoBlue()
+
+        elif self.state == FACE_OBJECT:
+            self.FaceObject()
+            
         else:
             # if the current self.state is not one of the above, then it is undefined
             raise ValueError("State is undefined for Trace Circle Controller")
@@ -145,7 +154,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
-           #0.1, 0.04 
+
 
     #follows a blue line by going right ASSUMING the blue line is horizontal under the drone
     def FollowBlue(self):
@@ -166,31 +175,33 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.04)
  
 
-    #houghline transform on right half of image to fix orientation to blue after completing HoverOverOrange and taking image
-    #makes blue line horizontal in bottom cam under the drone
+    # makes blue line horizontal in bottom cam under the drone.
+    # drone's front camera will be perpendicular to the line, but it will fly sideways to follow the line
     def FixtoBlue(self):
-        blue_image=self.process.DetectColor(self.cv_image,'blue')
-        self.cv_image=blue_image
-        angle=self.process.ShowLine(blue_image[:,(blue_image.shape[1]/2):])
-        cx,cy=self.process.CenterofMass(blue_image[:,(blue_image.shape[1]/2):])
-        yspeed,yawspeed=self.process.LineOrientation(blue_image,cy,angle)
+        blue_image = self.process.DetectColor(self.cv_image,'blue')
+        self.cv_image = blue_image
+        # houghline transform on right half of image to fix orientation to blue after taking image
+        angle = self.process.ShowLine(blue_image[:,3*(blue_image.shape[1]/4):])
+        cx, cy = self.process.CenterofMass(blue_image[:,3*(blue_image.shape[1]/4):])
+        yspeed, yawspeed=self.process.LineOrientation(blue_image,cy,angle)
         
         self.MoveFixedTime(0, yspeed, yawspeed, 0, move_time=0.1, wait_time=0.04)
     
-    #fix the drone's orientation to face object before taking image
-    #makes the line vertical in bottom cam under the drone
+
+    # fix the drone's orientation to face object before taking image
+    # makes green line vertical in bottom cam under the drone
     def FaceObject(self):
 
-        blue_image=self.process.DetectColor(self.cv_image,'blue')
-        self.cv_image=blue_image
-        angle=self.process.ShowLine(blue_image)
-        cx,cy=self.process.CenterofMass(blue_image)
-        xspeed,yawspeed=self.process.ObjectOrientation(blue_image,cx,angle)
+        green_image=self.process.DetectColor(self.cv_image,'green')
+        self.cv_image=green_image
+        angle=self.process.ShowLine(green_image)
+        cx,cy=self.process.CenterofMass(green_image)
+        xspeed,yawspeed=self.process.ObjectOrientation(green_image,cx,angle)
         
-        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
+        #self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
 
 
-   #this function will go a certain speed for a set amount of time
+    # this function will go a certain speed for a set amount of time
     def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):
         
         xSetSpeed = None
@@ -222,7 +233,6 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             + " yawSpeed: " +str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
 
 
-
     # adjusts the drone to the desired altitude within a tolerance, in mm
     def AdjustHeight(self, desiredAltitude, tolerance):
 
@@ -244,7 +254,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
     # if 0.2 % of what the drone sees is blue, then it will go forward
     # orange corresponds to a hueMin of 0 and a hueMax of 50
-    # blue correspondas to a hueMin of 100 and a hueMax of 115
+    # blue corresponds to a hueMin of 100 and a hueMax of 115
     def GoRightIfBlue(self):
 
         self.cv_image=self.process.DetectColor(self.cv_image,'blue')

@@ -20,12 +20,25 @@ UPDATE_FREQUENCY = 10
 
 # an extension of FlightstatsReciever that also provides a GUI interface
 class FlightstatsDisplay(FlightstatsReceiver, QtGui.QWidget):
+#class FlightstatsDisplay(FlightstatsReceiver, QtGui.QMainWindow):
 
     def __init__(self):
         
         super(FlightstatsDisplay,self).__init__()
 
-        # initalize and show GUI
+        # initalizing menus
+        #exitAction = QtGui.QAction('&Exit', self)
+        #exitAction.setShortcut('Ctrl+Q')
+        #exitAction.triggered.connect(self.close)
+        
+
+        #menubar = self.menuBar()
+        #menubar.setNativeMenuBar(False)
+        #viewMenu= menubar.addMenu('&View')
+        #fileMenu= menubar.addMenu('&File')
+        #viewMenu.addAction(exitAction)
+
+        # initalizing and showing window
         self.setGeometry(300,300,450,450)
         self.setWindowTitle("AR Drone Flight Info")
         self.grid = QtGui.QGridLayout()

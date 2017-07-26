@@ -18,20 +18,27 @@ class ProcessVideo(object):
 
 	#upper orange hsv boundary
         if(color=='orange'):
-                hsv_boundaries = [ ([0, 150, 200],[7, 255, 255])]
-	        #lower  hsv boundary
-                hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])]
-                lower=array(hsv_boundaries[0][0], dtype = "uint8")
-                upper= array(hsv_boundaries[0][1],dtype = "uint8")
-                lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
-                upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
+            hsv_boundaries = [ ([0, 150, 200],[7, 255, 255])]
+            #lower  hsv boundary
+            hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+            lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
+            upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
         if(color=='blue'):
-                 hsv_boundaries = [ ([102,150,100],[115,255,255])]
-                 lower=array(hsv_boundaries[0][0], dtype = "uint8")
-                 upper= array(hsv_boundaries[0][1],dtype = "uint8")
-                 lower2=lower
-                 upper2=upper
+            hsv_boundaries = [ ([102,150,100],[115,255,255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+            lower2=lower
+            upper2=upper
+        
+        if(color=='green'):
+            hsv_boundaries = [ ([0, 0, 0],[179, 255, 255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+            lower2=lower
+            upper2=upper
 
 	#convert bgr to hsv image for color segmentation
         hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -45,7 +52,8 @@ class ProcessVideo(object):
 	#set any pixel != 0 to its original color value from unsegented image
         output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(output,cv2.COLOR_HSV2BGR)
-        cv2.circle(output,(320,180),4,150,1)
+        cv2.circle(output,(numcols/2,numrows/2),4,150,1)
+        rospy.logwarn(hsv_image[numrows/2,numcols/2])
         #return the segmented image
         #show the contours on original image
         #self.FindBox(output,mask)
@@ -53,7 +61,7 @@ class ProcessVideo(object):
         
 
     #performs houghline transform to detect lines by inputing a BGR image and returning the angle of the line and the point perpendicular to the origin
-    def ShowLine(self,image):
+    def ShowLine(self,image,thresh=65):
         
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
@@ -61,8 +69,6 @@ class ProcessVideo(object):
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
         
-        thresh=65
-        #thresh=100
         lines = cv2.HoughLines(edges,1,pi/180,thresh)
         while(type(lines)==type(None) and thresh > 0):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
@@ -262,10 +268,10 @@ class ProcessVideo(object):
         
         #Drone rotates Counter Clock_Wise
         if angle<lowerangle and angle>0:
-            yawspeed=0.7
+            yawspeed=0.5
         #Drone rotates Clock_Wise
         elif angle>upperangle and angle<180:
-            yawspeed=-0.7
+            yawspeed=-0.5
         else:
             yawspeed=0
         
@@ -295,15 +301,13 @@ class ProcessVideo(object):
         
         #Drone rotates Counter Clock-Wise
         if angle<upperangle and angle>90:
-            yawspeed=0.7
+            yawspeed=0.5
         #Drone rotates Clock_Wise
         elif angle>lowerangle and angle<90:
-            yawspeed=-0.7
+            yawspeed=-0.5
         else:
             yawspeed=0
 
-        rospy.logwarn(yawspeed)
-        rospy.logwarn(xspeed)
         return xspeed,yawspeed
 
     """def getZone(self, imageWidth, imageHeight, cx, cy):
