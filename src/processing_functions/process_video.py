@@ -53,7 +53,6 @@ class ProcessVideo(object):
         hsv_output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
         output = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
         cv2.circle(output,(numcols/2,numrows/2),4,150,1)
-        rospy.logwarn(hsv_image[numrows/2,numcols/2])
         #return the segmented image
         #show the contours on original image
         #self.FindBox(output,mask)
@@ -172,7 +171,6 @@ class ProcessVideo(object):
 
         centerx=numcols/2
         centery=numrows/2
-        rospy.logwarn("x: " + str(centerx) + " y: " + str(centery))
 
         #create a "window" for desired center of mass position
         width=35
@@ -191,21 +189,15 @@ class ProcessVideo(object):
         cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
-            #rospy.logwarn("high horizontal")
             alphax = 0.6
         else:
-            #rospy.logwarn("low horizontal")
             alphax = 0.3
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
-            #rospy.logwarn("high vertical")
-            #alphay = 0.1
             alphay = 0.6
         else:
-            #rospy.logwarn("low vertical")
             alphay = 0.3
-            #alphay = 0.03
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -244,7 +236,7 @@ class ProcessVideo(object):
         return (xspeed,yspeed, zVelocity)
     
     #returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
-    #keep blue line between 88-92 degrees (perfect at 90 degrees)
+    #keep blue line between 87-93 degrees (perfect at 90 degrees)
     def LineOrientation(self,image,cy,angle):
         numrows,numcols,channels=image.shape
         
@@ -254,10 +246,10 @@ class ProcessVideo(object):
         ylower=centery-60
         yupper=centery+60
 
-        alphay=0.5
+        alphay=0.3
 
-        upperangle = 92
-        lowerangle = 88
+        upperangle = 93
+        lowerangle = 87
         
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
@@ -268,28 +260,29 @@ class ProcessVideo(object):
         
         #Drone rotates Counter Clock_Wise
         if angle<lowerangle and angle>0:
-            yawspeed=0.5
+            yawspeed=0.4
         #Drone rotates Clock_Wise
         elif angle>upperangle and angle<180:
-            yawspeed=-0.5
+            yawspeed=-0.4
         else:
             yawspeed=0
         
         return yspeed,yawspeed
     
     #return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
-    #keeps line between 178-182 degrees (equal to 178-2 degrees, perfect at 0 degrees)
-    def ObjectOrientation(self,image,cx,angle):
+    #keeps line between 177-183 degrees (equal to 178-2 degrees, perfect at 0 degrees)
+    def ObjectOrientation(self,image,cx,cy,angle):
         numrows,numcols,channels=image.shape
 
         centerx = numcols/2
         centery = numrows/2
         xlower=centerx-100
         xupper = centerx+100
+        
         alphax = 0.5
-
-        upperangle=179
-        lowerangle=1
+        alphay = 0.3
+        upperangle=177
+        lowerangle=3
         
         if cx < xlower or cx > xupper:
            #pos val means object is left, neg means object is right of cntr
@@ -298,6 +291,14 @@ class ProcessVideo(object):
             
         else:
             xspeed=0
+
+        if cy < ylower or cy > yupper:
+            #pos val means object is above, neg means object is below
+            yspeed=(centery-cy)/float(centery)
+            yspeed=alphay*yspeed
+        else:
+            yspeed=0
+
         
         #Drone rotates Counter Clock-Wise
         if angle<upperangle and angle>90:
@@ -308,7 +309,7 @@ class ProcessVideo(object):
         else:
             yawspeed=0
 
-        return xspeed,yawspeed
+        return xspeed,yspeed,yawspeed
 
     """def getZone(self, imageWidth, imageHeight, cx, cy):
         

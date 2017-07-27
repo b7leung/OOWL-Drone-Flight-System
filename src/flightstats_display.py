@@ -18,9 +18,11 @@ SIMPLE_VIEW = 0
 
 # frequency to update GUI display, in ms
 UPDATE_FREQUENCY = 10
+REAL_TIME_FREQ = 5
 
 curr_view = None
 curr_units_system = None
+curr_refresh_rate = None
 
 # A Widget that provides all the navadata recieved as a flightstatsreceiver
 # in a easy to view grid layout 
@@ -158,14 +160,14 @@ class FlightstatsDisplay(QtGui.QMainWindow):
 
 
         
-        imperialAction = QtGui.QAction('&Imperial', self)
-        metricAction = QtGui.QAction('&Metric', self)
-        freezeAction = QtGui.QAction('&Freeze', self)
-        lowAction = QtGui.QAction('&Low', self)
-        mediumAction = QtGui.QAction('&Medium', self)
-        highAction = QtGui.QAction('&High', self)
-        realTimeAction = QtGui.QAction('&Real Time', self)
-        realTimeAction.triggered.connect(functools.partial(self.test, "w0rld"))
+        self.imperialAction = QtGui.QAction('&Imperial', self)
+        self.metricAction = QtGui.QAction('&Metric', self)
+        self.freezeAction = QtGui.QAction('&Freeze', self)
+        self.lowAction = QtGui.QAction('&Low', self)
+        self.mediumAction = QtGui.QAction('&Medium', self)
+        self.highAction = QtGui.QAction('&High', self)
+        self.realTimeAction = QtGui.QAction('&Real Time', self)
+        self.realTimeAction.triggered.connect(functools.partial(self.ToggleRefreshRate, REAL_TIME_FREQ))
 
         # initalizing menus
         menubar = self.menuBar()
@@ -175,14 +177,16 @@ class FlightstatsDisplay(QtGui.QMainWindow):
 
         self.viewMenu = menubar.addMenu('&View')
         self.measurementSubmenu = self.viewMenu.addMenu("&System of Measurement")
-        self.measurementSubmenu.addAction(imperialAction)
-        self.measurementSubmenu.addAction(metricAction)
+        self.measurementSubmenu.addAction(self.imperialAction)
+        self.measurementSubmenu.addAction(self.metricAction)
         self.refreshRateSubmenu= self.viewMenu.addMenu("&Refresh Rate")
-        self.refreshRateSubmenu.addAction(freezeAction)
-        self.refreshRateSubmenu.addAction(lowAction)
-        self.refreshRateSubmenu.addAction(mediumAction)
-        self.refreshRateSubmenu.addAction(highAction)
-        self.refreshRateSubmenu.addAction(realTimeAction)
+        self.refreshRateSubmenu.addAction(self.freezeAction)
+        self.refreshRateSubmenu.addAction(self.lowAction)
+        self.refreshRateSubmenu.addAction(self.mediumAction)
+        self.refreshRateSubmenu.addAction(self.highAction)
+        self.refreshRateSubmenu.addAction(self.realTimeAction)
+
+        self.refreshRateGroup = QtGui.QActionGroup(self)
 
         # initalizing and showing window
         self.setGeometry(300,300,450,450)
@@ -194,8 +198,17 @@ class FlightstatsDisplay(QtGui.QMainWindow):
         curr_view = SIMPLE_VIEW
         self.show()
         
-    def test(self, word):
-        rospy.logwarn("hello " + word)
+    def ToggleUnits(self, newUnits):
+        global curr_units_system
+        curr_units_system = newUnits
+
+    def ToggleRefreshRate(self, newRate):
+        global curr_refresh_rate
+        curr_refresh_rate = newRate
+
+    def ToggleView(self, newView):
+        global curr_view
+        cur_view = newView
 
 
 if __name__=="__main__":

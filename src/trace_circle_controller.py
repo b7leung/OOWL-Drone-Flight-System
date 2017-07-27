@@ -185,7 +185,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         cx, cy = self.process.CenterofMass(blue_image[:,3*(blue_image.shape[1]/4):])
         yspeed, yawspeed=self.process.LineOrientation(blue_image,cy,angle)
         
-        self.MoveFixedTime(0, yspeed, yawspeed, 0, move_time=0.1, wait_time=0.04)
+        self.MoveFixedTime(0, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.05)
     
 
     # fix the drone's orientation to face object before taking image
@@ -193,12 +193,14 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     def FaceObject(self):
 
         green_image=self.process.DetectColor(self.cv_image,'green')
+        orange_image=self.process.DetectColor(self.cv_image,'orange')
+
         self.cv_image=green_image
         angle=self.process.ShowLine(green_image,50)
-        cx,cy=self.process.CenterofMass(green_image)
-        xspeed,yawspeed=self.process.ObjectOrientation(green_image,cx,angle)
+        cx,cy=self.process.CenterofMass(orange_image)
+        xspeed,yspeed,yawspeed=self.process.ObjectOrientation(green_image,cx,cy,angle)
         
-        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
+        self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.04)
 
 
     # this function will go a certain speed for a set amount of time
