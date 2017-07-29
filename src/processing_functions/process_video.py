@@ -137,16 +137,17 @@ class ProcessVideo(object):
         return angle
 
 
-    #takes in a segmented image input and returns the center of mass in x and y coordinates
+    # Takes in a segmented image input and returns a tuple in the form (x,y,bool),
+    # where x and y are the center of mass and bool is whether an object was found
+    # If it does not exist, the center of mass is set to the middle of the screen
     def CenterofMass(self,image):
+
         numrows,numcols,channels=image.shape
 
         centerx=numcols/2
         centery=numrows/2
 
-        
         #compute the center of moments for a single-channel gray image
-        #if cx and cy DNE then set valuews such that xspeed and yspeed == 0
         M=cv2.moments(cv2.cvtColor(cv2.cvtColor(image,cv2.COLOR_HSV2BGR), cv2.COLOR_BGR2GRAY),True) 
 
         if M["m00"]!=0:
@@ -155,14 +156,14 @@ class ProcessVideo(object):
             #Draw a circle only when an object is detected
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
+            return(cx,cy,True)
 
 	else:
-            #Set Cx and Cy to zero
-	    cx=centerx
-	    cy=centery
+            # if center of mass doesn't exist; set them as the center
+            return (centerx, centery, False)
 
-        return (cx,cy)
     
+
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
     def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude, tolerance):
@@ -217,24 +218,23 @@ class ProcessVideo(object):
         else:
             yspeed=0
             
+        # calculating if the drone should go up or down to match the desired altitude
         climbSpeed = 0.25
-
         if (currAltitude < (desiredAltitude - tolerance)):
             zVelocity = climbSpeed
-            #rospy.logwarn("go up")
         elif (currAltitude > (desiredAltitude + tolerance)):
             zVelocity = climbSpeed * -1
-            #rospy.logwarn("go down")
         else:
             zVelocity = 0
-            #rospy.logwarn("stay in place")
 
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
         dy=int((-100*yspeed)+centery)
         cv2.arrowedLine(image,(dx,dy),(centerx,centery),(255,0,0),3)
-        return (xspeed,yspeed, zVelocity)
-    
+
+        return (xspeed, yspeed, zVelocity)
+
+
     #returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
     #keep blue line between 87-93 degrees (perfect at 90 degrees)
     def LineOrientation(self,image,cy,angle):
@@ -291,13 +291,14 @@ class ProcessVideo(object):
             
         else:
             xspeed=0
-
+        """
         if cy < ylower or cy > yupper:
             #pos val means object is above, neg means object is below
             yspeed=(centery-cy)/float(centery)
             yspeed=alphay*yspeed
         else:
             yspeed=0
+            """
 
         
         #Drone rotates Counter Clock-Wise
@@ -309,7 +310,8 @@ class ProcessVideo(object):
         else:
             yawspeed=0
 
-        return xspeed,yspeed,yawspeed
+        #return xspeed,yspeed,yawspeed
+        return xspeed,yawspeed
 
     """def getZone(self, imageWidth, imageHeight, cx, cy):
         

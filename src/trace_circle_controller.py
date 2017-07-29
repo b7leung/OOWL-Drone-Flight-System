@@ -20,12 +20,11 @@ from processing_functions.picture_manager import PictureManager
 
 # list of possible states to control drone
 IDLE_STATE = "idle"
-ADJUST_HEIGHT_STATE = "adjust_height"
 HOVER_ORANGE_STATE = "hover_orange"
-FOLLOW_BLUE_STATE = "follow_blue"
-GO_RIGHT_IF_BLUE_STATE = "go_right_if_blue"
-FIX_LINE_ORIENTATION = "fix_line_orientation"
 FACE_OBJECT = 'face_object'
+FIX_TO_BLUE_LINE = "fix_to_blue_line"
+FOLLOW_BLUE_STATE = "follow_blue"
+ADJUST_HEIGHT_STATE = "adjust_height"
 
 
 # TraceCircleController "is-a" Drone Video display and a flightstats receiver. It uses
@@ -63,145 +62,198 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         key=cv2.waitKey(1) & 0xFF
 
         # toggles on/off which algorithm you want to execute with keypresses
-        if key == ord('i'):
+        if key == ord('1'):
             
             self.IdleStateSwitch(HOVER_ORANGE_STATE)
-        
-        elif key == ord('b'):
+            
+        elif key == ord('2'):
+
+            self.IdleStateSwitch(FACE_OBJECT)
+
+        elif key == ord('3'):
+
+            self.CaptureFrame()
+
+        elif key == ord('4'):
+
+            self.IdleStateSwitch(FIX_TO_BLUE_LINE)
+
+        elif key == ord('5'):
             
             self.IdleStateSwitch(FOLLOW_BLUE_STATE)
-
-        elif key == ord('m'):
-            
-            self.IdleStateSwitch(GO_RIGHT_IF_BLUE_STATE)
 
         elif key == ord('h'):
             
             self.IdleStateSwitch(ADJUST_HEIGHT_STATE)
-
-        elif key == ord('f'):
-
-            self.IdleStateSwitch(FIX_LINE_ORIENTATION)
-
-        elif key == ord('z'):
-
-            self.IdleStateSwitch(FACE_OBJECT)
-
-        elif key == ord('c'):
-
-            self.captureFrame()
             
 
     # provides a "switch" between the drone being idle and being controlled
     def IdleStateSwitch(self, state):
+
         originalState = self.state
-        if self.state == IDLE_STATE:
+        if originalState == IDLE_STATE:
             # if drone is idle, set the current state as specified in the parameter
             self.state = state
-        else:
-            # else, if drone is being controlled by a state, return back to idle
+        elif originalState == state:
+            # if the current state is toggled again with the same state, return back to idle
             self.controller.SetCommand(0,0,0,0)
             self.state = IDLE_STATE
-        rospy.logwarn("======= Changed from " + originalState + " state to: " +
-        self.state + " state =======")
+        else:
+            # if the drone was in an non-idle state and the new state is different than the original,
+            # switch to it
+            self.controller.SetCommand(0,0,0,0)
+            self.state = state
+            
+        rospy.logwarn('======= Changed from "' + originalState + '" state to "' +
+        self.state + '" state =======')
             
 
     # this is called every time a frame (in self.cv_image) is updated
     def EditVideo(self):
         
         if self.state == IDLE_STATE :
+
             # do nothing 
             pass
+
+        elif self.state == HOVER_ORANGE_STATE:
+
+            self.HoverOnOrange()
+
+        elif self.state == FACE_OBJECT:
+
+            self.FaceObject()
+
+        elif self.state == FIX_TO_BLUE_LINE:
+
+            self.FixToBlue()
+
+        elif self.state == FOLLOW_BLUE_STATE:
+
+            self.FollowBlue()
+        
         elif self.state == ADJUST_HEIGHT_STATE:
+
             # Hovers to 950mm (0.95 m), with a tolerance of 100 mm (.1m)
             self.AdjustHeight(950, 100)
 
-        elif self.state == HOVER_ORANGE_STATE:
-            self.HoverOnOrange()
-        
-        elif self.state == FOLLOW_BLUE_STATE:
-            self.FollowBlue()
-
-        elif self.state == GO_RIGHT_IF_BLUE_STATE:
-            self.GoRightIfBlue()
-        
-        elif self.state == FIX_LINE_ORIENTATION:
-            self.FixtoBlue()
-
-        elif self.state == FACE_OBJECT:
-            self.FaceObject()
-            
         else:
+
             # if the current self.state is not one of the above, then it is undefined
             raise ValueError("State is undefined for Trace Circle Controller")
 
 
-    # saves the current frame
-    def captureFrame(self):
-        pictureName = self.pictureManager.Capture(self.cv_image)
-        rospy.logwarn("Saved picture as " + pictureName)
-
-
-    # given that something orange is visible below the drone, will command the drone to hover directly over it 
+    # Given that something orange is visible below the drone, will command 
+    # the drone to hover directly over it 
+    # Returns False if algorithm is still running and drone isn't on orange yet
+    # Returns True if algorithm is finished and drone is now on orange
     def HoverOnOrange(self):
         
-        # calculating cx,cy,xspeed,yspeed
-        orange_image=self.process.DetectColor(self.cv_image,'orange')
-        self.cv_image=orange_image
-        self.cx,self.cy=self.process.CenterofMass(orange_image)
-        xspeed, yspeed, zspeed=self.process.ApproximateSpeed(orange_image,self.cx,self.cy,(self.flightInfo["altitude"])[1], 1000, 100 )
-        
+        # converting to a segmented orange image and calculating the corresponding cx, cy, xspeed, yspeed
+        self.cv_image = self.process.DetectColor(self.cv_image, 'orange')
+        self.cx, self.cy, orangeFound = self.process.CenterofMass(self.cv_image)
+        xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, self.cx, self.cy,
+        (self.flightInfo["altitude"])[1], 1300, 100)
+
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
 
-
-    #follows a blue line by going right ASSUMING the blue line is horizontal under the drone
-    def FollowBlue(self):
-        
-        blue_image=self.process.DetectColor(self.cv_image,'blue')
-        self.cv_image=blue_image
-        angle=self.process.ShowLine(blue_image,100)
-        cx,cy=self.process.CenterofMass(blue_image)
-        yspeed,yawspeed=self.process.LineOrientation(blue_image, cy, angle)
-        
-        blueVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.015); 
-
-        if blueVisible:
-            rospy.logwarn("go forward")
-            self.MoveFixedTime(-0.4, yspeed, yawspeed, 0, move_time=0.1, wait_time=0.04)
+        # if there is orange in the screen, and the drone is in the middle, return true
+        if orangeFound and xspeed == 0 and yspeed == 0 and zspeed == 0:
+            rospy.logwarn("Done Hovering on Orange")
+            return True
         else:
-            rospy.logwarn("stop")
-            self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.04)
- 
+            rospy.logwarn("Trying to Hover on Orange")
+            return False
 
+
+    # Fix the drone's orientation to face object before taking image
+    # Makes green line vertical in bottom cam under the drone
+    # Returns False if drone isn't facing object
+    # Returns True if drone is facing object; parallel to the green line
+    def FaceObject(self):
+
+        green_image = self.process.DetectColor(self.cv_image, 'green')
+        orange_image = self.process.DetectColor(self.cv_image,'orange')
+
+        self.cv_image = green_image
+        angle = self.process.ShowLine(green_image, 50)
+
+        # trying to be parallel to the green line, while being over orange checkpoint
+        cx, cy, found=self.process.CenterofMass(orange_image)
+        #xspeed, yspeed, yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
+        xspeed, yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
+
+        #self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.04)
+        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.25, wait_time=0.04)
+
+        if xspeed == 0 and yawspeed == 0 and found:
+        #if xspeed == 0 and yawspeed == 0 and yspeed == 0 and found:
+            rospy.logwarn("Facing Object")
+            return True
+        else:
+            rospy.logwarn("Trying to Face Object")
+            return False
+
+
+    # Saves the current cv_image frame as a .png into the Flight_Info folder
+    # Returns True once the picture has been taken
+    def CaptureFrame(self):
+        pictureName = self.pictureManager.Capture(self.cv_image)
+        rospy.logwarn("Saved picture as " + pictureName)
+        return True
+
+
+    # Rotates the drone such that its front is perpendicular to the blue line below it;
     # makes blue line horizontal in bottom cam under the drone.
-    # drone's front camera will be perpendicular to the line, but it will fly sideways to follow the line
-    def FixtoBlue(self):
+    # Returns False when it is still rotating to fix to the blue line
+    # Returns True when it is fixed perpendicular to the blue line
+    def FixToBlue(self):
+
         blue_image = self.process.DetectColor(self.cv_image,'blue')
         self.cv_image = blue_image
         # houghline transform on right half of image to fix orientation to blue after taking image
-        angle = self.process.ShowLine(blue_image[:,3*(blue_image.shape[1]/4):],40)
-        cx, cy = self.process.CenterofMass(blue_image[:,3*(blue_image.shape[1]/4):])
+        angle = self.process.ShowLine(blue_image[:,7*(blue_image.shape[1]/10):],40)
+        cx, cy, blueFound = self.process.CenterofMass(blue_image[:,7*(blue_image.shape[1]/10):])
         yspeed, yawspeed=self.process.LineOrientation(blue_image,cy,angle)
         
         self.MoveFixedTime(0, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.05)
-    
 
-    # fix the drone's orientation to face object before taking image
-    # makes green line vertical in bottom cam under the drone
-    def FaceObject(self):
+        # if there is blue in the screen, and the drone's front is perpendicular to the blue, return True
+        if blueFound and yspeed == 0 and yawspeed == 0:
+            rospy.logwarn("Done Fixing to Blue line")
+            return True
+        else:
+            rospy.logwarn("Trying to Fix to Blue Line")
+            return False
 
-        green_image=self.process.DetectColor(self.cv_image,'green')
-        orange_image=self.process.DetectColor(self.cv_image,'orange')
 
-        self.cv_image=green_image
-        angle=self.process.ShowLine(green_image,50)
-        cx,cy=self.process.CenterofMass(orange_image)
-        xspeed,yspeed,yawspeed=self.process.ObjectOrientation(green_image,cx,cy,angle)
+    # Given that the drone's front is perpendicular to a blue line below it
+    # the drone will fly right until its bottom camera cannot see blue anymore.
+    # Returns False when it is still following the line
+    # Returns True when it has finished following the blue line
+    def FollowBlue(self):
         
-        self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.04)
+        self.cv_image=self.process.DetectColor(self.cv_image,'blue')
 
+        angle=self.process.ShowLine(self.cv_image)
+        #cx,cy,found=self.process.CenterofMass(self.cv_image)
+        #yspeed,yawspeed=self.process.LineOrientation(blue_image, cy, angle)
+        
+        # Blue corresponds to a hue min of 100 and 115
+        # Blue will be deemed visible if 0.2% of the total screen is within this range
+        blueVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.015); 
+
+        if blueVisible:
+            rospy.logwarn("Trying to Follow Blue")
+            self.MoveFixedTime(-0.4, 0, 0, 0, move_time=0.1, wait_time=0.009)
+            return False
+        else:
+            rospy.logwarn("Done Following Blue")
+            self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.009)
+            return True
+ 
 
     # this function will go a certain speed for a set amount of time
     def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):
@@ -250,27 +302,8 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             zVelocity = 0
             rospy.logwarn("stay in place")
 
-        #self.controller.SetCommand(z_velocity = zVelocity)
         self.MoveFixedTime(0 , 0 , 0, zVelocity, move_time=0.1, wait_time=0.009)
 
-
-    # if 0.2 % of what the drone sees is blue, then it will go forward
-    # orange corresponds to a hueMin of 0 and a hueMax of 50
-    # blue corresponds to a hueMin of 100 and a hueMax of 115
-    def GoRightIfBlue(self):
-
-        self.cv_image=self.process.DetectColor(self.cv_image,'blue')
-        self.process.ShowLine(self.cv_image)
-
-        blueVisible = self.process.isHueDominant(self.cv_image, 100, 115, 0.015); 
-
-        if blueVisible:
-            rospy.logwarn("go right")
-            self.MoveFixedTime(-0.4, 0, 0, 0, move_time=0.1, wait_time=0.009)
-        else:
-            rospy.logwarn("stop")
-            self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.009)
-            
 
     # this is called by ROS when the node shuts down
     def ShutdownTasks(self):

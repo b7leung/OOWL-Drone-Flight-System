@@ -27,9 +27,9 @@ class FlightstatsReceiver(object):
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotZ"]=["Rotation Amount: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
-        self.flightInfo["velX"]=["Left/Right Velocity: ", self.defaultValue, "in/s", ""]
-        self.flightInfo["velY"]=["Front/Back Velocity: ", self.defaultValue, "in/s", ""]
-        self.flightInfo["velZ"]=["Up/Down Velocity: ", self.defaultValue, "in/s", ""]
+        self.flightInfo["velX"]=["Left/Right Velocity: ", self.defaultValue, "mm/s", ""]
+        self.flightInfo["velY"]=["Front/Back Velocity: ", self.defaultValue, "mm/s", ""]
+        self.flightInfo["velZ"]=["Up/Down Velocity: ", self.defaultValue, "mm/s", ""]
 
     
     # update dictionary as new info from drone comes
