@@ -151,9 +151,8 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         
         # converting to a segmented orange image and calculating the corresponding cx, cy, xspeed, yspeed
         self.cv_image = self.process.DetectColor(self.cv_image, 'orange')
-        self.cx, self.cy, orangeFound = self.process.CenterofMass(self.cv_image)
-        xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, self.cx, self.cy,
-        (self.flightInfo["altitude"])[1], 1300, 100)
+        cx, cy, orangeFound = self.process.CenterofMass(self.cv_image)
+        xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, cx, cy,orangeFound,(self.flightInfo["altitude"])[1], 1000, 100)
 
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
@@ -176,17 +175,17 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         green_image = self.process.DetectColor(self.cv_image, 'green')
         orange_image = self.process.DetectColor(self.cv_image,'orange')
-
         self.cv_image = green_image
-        angle = self.process.ShowLine(green_image, 50)
 
         # trying to be parallel to the green line, while being over orange checkpoint
+        angle = self.process.ShowLine(green_image, 50)
         cx, cy, found=self.process.CenterofMass(orange_image)
-        #xspeed, yspeed, yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
-        xspeed, yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
+
+        xspeed,yspeed,zspeed = self.process.ApproximateSpeed(green_image,cx,cy,found,(self.flightInfo["altitude"])[1], 1000, 100)
+        yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
 
         #self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.04)
-        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.25, wait_time=0.04)
+        self.MoveFixedTime(xspeed, 0, yawspeed, 0, move_time=0.1, wait_time=0.04)
 
         if xspeed == 0 and yawspeed == 0 and found:
         #if xspeed == 0 and yawspeed == 0 and yspeed == 0 and found:
@@ -212,16 +211,20 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     def FixToBlue(self):
 
         blue_image = self.process.DetectColor(self.cv_image,'blue')
+        orange_image = self.process.DetectColor(self.cv_image,'orange')
         self.cv_image = blue_image
+
         # houghline transform on right half of image to fix orientation to blue after taking image
-        angle = self.process.ShowLine(blue_image[:,7*(blue_image.shape[1]/10):],40)
-        cx, cy, blueFound = self.process.CenterofMass(blue_image[:,7*(blue_image.shape[1]/10):])
-        yspeed, yawspeed=self.process.LineOrientation(blue_image,cy,angle)
+        angle = self.process.ShowLine(blue_image[:,7*(blue_image.shape[1]/10):],50)
+        cx, cy, found = self.process.CenterofMass(orange_image)
+
+        xspeed,yspeed,zspeed = self.process.ApproximateSpeed(blue_image, cx, cy, found, (self.flightInfo["altitude"])[1], 1000, 100)
+        yawspeed=self.process.LineOrientation(blue_image,cx,cy,angle)
         
-        self.MoveFixedTime(0, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.05)
+        self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.25, wait_time=0.05)
 
         # if there is blue in the screen, and the drone's front is perpendicular to the blue, return True
-        if blueFound and yspeed == 0 and yawspeed == 0:
+        if found and xspeed == 0 and yspeed == 0 and yawspeed == 0:
             rospy.logwarn("Done Fixing to Blue line")
             return True
         else:

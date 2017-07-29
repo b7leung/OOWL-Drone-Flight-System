@@ -153,9 +153,6 @@ class ProcessVideo(object):
         if M["m00"]!=0:
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
-            #Draw a circle only when an object is detected
-            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
-            cv2.circle(image, (cx,cy), 40, 255)
             return(cx,cy,True)
 
 	else:
@@ -166,7 +163,7 @@ class ProcessVideo(object):
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude, tolerance):
+    def ApproximateSpeed(self, image, cx, cy,found, currAltitude, desiredAltitude, tolerance):
 
         numrows,numcols,channels=image.shape
 
@@ -180,14 +177,21 @@ class ProcessVideo(object):
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
 
+       
         # alpha changes depending on if (cx,cy) is in blue box or not
         zoneLeft = centerx - centerx/2
         zoneRight = centerx + centerx/2
         zoneTop= centery - centery/2
         zoneBottom= centery + centery/2
+
+        #draw circle on cx and cy only if center of mass exists
+        if found:
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
         cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
+
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
             alphax = 0.6
@@ -237,26 +241,14 @@ class ProcessVideo(object):
 
     #returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
     #keep blue line between 87-93 degrees (perfect at 90 degrees)
-    def LineOrientation(self,image,cy,angle):
+    def LineOrientation(self,image,cx,cy,angle):
         numrows,numcols,channels=image.shape
         
         centerx=numcols/2
         centery=numrows/2
         
-        ylower=centery-60
-        yupper=centery+60
-
-        alphay=0.3
-
         upperangle = 93
         lowerangle = 87
-        
-        if cy < ylower or cy > yupper:
-            #pos val means object is above, neg means object is below
-            yspeed=(centery-cy)/float(centery)
-            yspeed=alphay*yspeed
-        else:
-            yspeed=0
         
         #Drone rotates Counter Clock_Wise
         if angle<lowerangle and angle>0:
@@ -267,7 +259,7 @@ class ProcessVideo(object):
         else:
             yawspeed=0
         
-        return yspeed,yawspeed
+        return yawspeed
     
     #return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
     #keeps line between 177-183 degrees (equal to 178-2 degrees, perfect at 0 degrees)
@@ -276,29 +268,10 @@ class ProcessVideo(object):
 
         centerx = numcols/2
         centery = numrows/2
-        xlower=centerx-100
-        xupper = centerx+100
         
-        alphax = 0.5
-        alphay = 0.3
+        
         upperangle=177
         lowerangle=3
-        
-        if cx < xlower or cx > xupper:
-           #pos val means object is left, neg means object is right of cntr
-            xspeed=(centerx-cx)/float(centerx)
-            xspeed=alphax*xspeed
-            
-        else:
-            xspeed=0
-        """
-        if cy < ylower or cy > yupper:
-            #pos val means object is above, neg means object is below
-            yspeed=(centery-cy)/float(centery)
-            yspeed=alphay*yspeed
-        else:
-            yspeed=0
-            """
 
         
         #Drone rotates Counter Clock-Wise
@@ -310,8 +283,7 @@ class ProcessVideo(object):
         else:
             yawspeed=0
 
-        #return xspeed,yspeed,yawspeed
-        return xspeed,yawspeed
+        return yawspeed
 
     """def getZone(self, imageWidth, imageHeight, cx, cy):
         
