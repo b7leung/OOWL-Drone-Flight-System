@@ -9,7 +9,11 @@ from numpy import *
 import time
 from cv_bridge import CvBridge, CvBridgeError
 
+
+# This class contains helper functions that each process
+# video frames in some way
 class ProcessVideo(object):
+
 
     #returns segemented image that only leaves a pixels within specified color value, sets else to 0
     def DetectColor(self,image,color):
@@ -59,7 +63,8 @@ class ProcessVideo(object):
         return output
         
 
-    #performs houghline transform to detect lines by inputing a BGR image and returning the angle of the line and the point perpendicular to the origin
+    # Performs houghline transform to detect lines by inputing a BGR image and returning
+    # the angle of the line and the point perpendicular to the origin
     def ShowLine(self,image,thresh=65):
         
         #change bgr to gray for edge detection
@@ -159,7 +164,6 @@ class ProcessVideo(object):
             # if center of mass doesn't exist; set them as the center
             return (centerx, centery, False)
 
-    
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
@@ -261,6 +265,7 @@ class ProcessVideo(object):
         
         return yawspeed
     
+
     #return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
     #keeps line between 177-183 degrees (equal to 178-2 degrees, perfect at 0 degrees)
     def ObjectOrientation(self,image,cx,cy,angle):
@@ -284,25 +289,13 @@ class ProcessVideo(object):
             yawspeed=0
 
         return yawspeed
-
-    """def getZone(self, imageWidth, imageHeight, cx, cy):
-        
-        # % gap between zones
-        zoneGap = 25
-
-        centerX=imageWidth/2
-        centerY=imageHeight/2
-
-        if cx > (centerX - (zoneGap/100.0)*imageWidth) and cx < (centerX + (zoneGap/100.0)*imageWidth) and cy """
-
-
         
 
     # given a segmented image hsvImage and a percentThreshold of 
     # what percentage of that image should be between hues hueMin and hueMax,
     # returns a boolean of whether or not the hsvImage and has enough of that
     # hue in it to pass that threshold 
-    def isHueDominant(self, hsvImage, hueMin, hueMax, percentThreshold):
+    def IsHueDominant(self, hsvImage, hueMin, hueMax, percentThreshold):
         
         # getting array of image that considers only hue, not saturation nor value
         hsvChannels = cv2.split(hsvImage)
@@ -320,9 +313,9 @@ class ProcessVideo(object):
             return False
 
 
-    # given a segmented hsv image of only 1 color, will attempt to return that image with unwanted static/noise
-    # reduced
-    def deNoiseImage(self, hsvImage):
+    # given a segmented hsv image of only 1 color, will attempt to return that
+    # image with unwanted static/noise reduced
+    def DeNoiseImage(self, hsvImage):
         #dst = cv2.fastNlMeansDenoisingColored(hsvImage, None, 10,10,7,5)
         dst = None
         cv2.medianBlur(hsvImage,5, dst)
@@ -330,7 +323,6 @@ class ProcessVideo(object):
             rospy.logwarn("none")
         else:
             rospy.logwarn("not none")
-
 
         return dst
 
@@ -349,20 +341,6 @@ class ProcessVideo(object):
         [[maxx,miny],[maxx,maxy]],[[maxx,maxy],[minx,maxy]]])
         #draw the square on the original image
         cv2.drawContours(image, contours, -1, (0,255,0), 3)
-
-    #takes in image, segements image for different colors 
-    
-
-    def IsOrangeVisible(self, image):
-        
-        numcols = len(image)
-        numrows = len(image[0])
-
-        orange_image=self.DetectColor(image,'orange')
-        blue_image=self.DetectColor(image,'blue')
-
-        percent_orange = count_nonzero(orange_image)/float(numcols*numrows)
-        percent_blue = count_nonzero(blue_image)/float(numcols*numrows)
 
 
     # Given an image, a point (x,y), and a width/height,
