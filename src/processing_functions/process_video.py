@@ -163,7 +163,7 @@ class ProcessVideo(object):
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy,found, currAltitude, desiredAltitude, tolerance):
+    def ApproximateSpeed(self, image, cx, cy, found, currAltitude, desiredAltitude, tolerance):
 
         numrows,numcols,channels=image.shape
 
@@ -314,7 +314,6 @@ class ProcessVideo(object):
         hueRatio = numHuePixel / numImagePixel
 
         huePercent = hueRatio * 100
-        #rospy.logwarn(huePercent)
         if huePercent > percentThreshold:
             return True
         else:
@@ -353,6 +352,7 @@ class ProcessVideo(object):
 
     #takes in image, segements image for different colors 
     
+
     def IsOrangeVisible(self, image):
         
         numcols = len(image)
@@ -363,3 +363,19 @@ class ProcessVideo(object):
 
         percent_orange = count_nonzero(orange_image)/float(numcols*numrows)
         percent_blue = count_nonzero(blue_image)/float(numcols*numrows)
+
+
+    # Given an image, a point (x,y), and a width/height,
+    # Will return a "cropped image" of the same dimensions
+    # where only a box whose upper left corner starts at (x,y) 
+    # and a corresponding dimentions of width/height will correspond
+    # to visible image. The rest of the image will be black.
+    def CropVisible(self, image, x, y, width, height):
+        
+        # first, make 0 filled array of the same shape as the original image
+        rect_image = zeros( (len(image),len(image[0]),len(image[0][0])), uint8 )
+        # move each pixel that fits the (x,y) and width height criteria from image to the empty
+        # array
+        rect_image[y:y+height,x:x+width, 0:3:1] = image[y:y+height,x:x+width, 0:3:1]
+        return rect_image 
+                    
