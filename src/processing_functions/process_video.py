@@ -175,8 +175,8 @@ class ProcessVideo(object):
         centery=numrows/2
 
         #create a "window" for desired center of mass position
-        width=35
-        height=35
+        width=90
+        height=90
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
@@ -194,19 +194,19 @@ class ProcessVideo(object):
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
         cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
-        cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
+        #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
 
         # if it's out of horizontal close zone
         if cx < zoneLeft or cx > zoneRight:
-            alphax = 0.6
+            alphax = 0.35
         else:
-            alphax = 0.3
+            alphax = 0.35
         
         # if it's out of vertical close zone
         if cy < zoneTop or cy > zoneBottom:
-            alphay = 0.6
+            alphay = 0.35
         else:
-            alphay = 0.3
+            alphay = 0.35
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -256,10 +256,10 @@ class ProcessVideo(object):
         
         #Drone rotates Counter Clock_Wise
         if angle<lowerangle and angle>0:
-            yawspeed=0.4
+            yawspeed=0.7
         #Drone rotates Clock_Wise
         elif angle>upperangle and angle<180:
-            yawspeed=-0.4
+            yawspeed=-0.7
         else:
             yawspeed=0
         
