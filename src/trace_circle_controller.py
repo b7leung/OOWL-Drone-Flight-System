@@ -6,6 +6,7 @@ import time
 import datetime
 import os
 import cv2
+import numpy
 from os.path import expanduser
 
 # importing drone specific modules
@@ -164,6 +165,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
 
+        self.logger.Log(str(cx) + " " + str(cy))
         # if there is orange in the screen, and the drone is in the middle, return true
         if orangeFound and xspeed == 0 and yspeed == 0 and zspeed == 0:
             rospy.logwarn("Done Hovering on Orange")
@@ -191,9 +193,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         (self.flightInfo["altitude"])[1], DRONE_ALTITUDE, ALT_THRESH)
         yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
 
-        self.MoveFixedTime(xspeed, yspeed, yawspeed, zspeed, move_time=0.2, wait_time=0.04)
+        self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.2, wait_time=0.04)
 
-        if xspeed == 0 and yawspeed == 0 and found:
+        if xspeed == 0 and yspeed == 0 and yawspeed == 0 and found:
         #if xspeed == 0 and yawspeed == 0 and yspeed == 0 and found:
             rospy.logwarn("Facing Object")
             return True
@@ -218,10 +220,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         blue_image = self.process.DetectColor(self.cv_image,'blue')
         orange_image = self.process.DetectColor(self.cv_image,'orange')
-        self.cv_image = blue_image
-
         # houghline transform on right half of image to fix orientation to blue after taking image
-        angle = self.process.ShowLine(blue_image[:,3.5*(blue_image.shape[1]/10):],40)
+        angle = self.process.ShowLine(blue_image,20,110,thresh=45)
+        #angle = self.process.ShowLine(blue_image[:,10*(blue_image.shape[1]/10):],thresh=40)
         cx, cy, orangeFound = self.process.CenterofMass(orange_image)
 
         xspeed, yspeed, zspeed = self.process.ApproximateSpeed(blue_image, cx, cy, orangeFound,
@@ -230,14 +231,19 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         
         self.MoveFixedTime(xspeed*.3, yspeed*.3, yawspeed, 0, move_time=0.2, wait_time=0.04)
 
+        #blue_image = cv2.cvtColor(blue_image, cv2.COLOR_BGR2GRAY)
+        #rospy.logwarn("blue image: " + str(numpy.shape(blue_image))+ " edges: " + str(numpy.shape(edges)))
+        #self.cv_image = numpy.hstack((blue_image,edges))
+        self.cv_image = blue_image
+
         # if there is blue in the screen, and the drone's front is perpendicular to the blue, return True
         if orangeFound and xspeed == 0 and yspeed == 0 and yawspeed == 0:
             rospy.logwarn("Done Fixing to Blue line")
             return True
         else:
-            #rospy.logwarn("Trying to Fix to Blue Line")
-            rospy.logwarn("xspeed : " + str(xspeed) + " yspeed: " + str(yspeed) +
-            " yawspeed: " + str(yawspeed) + " zspeed: " + str(zspeed) )
+            rospy.logwarn("Trying to Fix to Blue Line")
+            #rospy.logwarn("xspeed : " + str(xspeed) + " yspeed: " + str(yspeed) +
+            #" yawspeed: " + str(yawspeed) + " zspeed: " + str(zspeed) )
             return False
 
 
@@ -248,17 +254,18 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     def FollowBlue(self):
         # we only consider the far right of the image to look for blue
         self.cv_image = self.process.CropVisible(self.cv_image, 
-        int(len(self.cv_image[0])*(0/10)), 0, len(self.cv_image[0])/2, len(self.cv_image))
+        int(len(self.cv_image[0])*(0/10)), 0, len(self.cv_image[0]), len(self.cv_image))
 
         
         self.cv_image=self.process.DetectColor(self.cv_image,'blue')
 
-        angle=self.process.ShowLine(self.cv_image)
+        angle=self.process.ShowLine(self.cv_image,75,110)
         
         # Blue will be deemed visible if .015% of the total screen is blue
-        blueVisible = self.process.IsHueDominant(self.cv_image, 0, 360, 0.015); 
+        #blueVisible = self.process.IsHueDominant(self.cv_image, 0, 360, 0.015); 
 
-        if blueVisible:
+
+        if angle != None:
             rospy.logwarn("Trying to Follow Blue")
             self.MoveFixedTime(-0.3, 0, 0, 0, move_time=0.1, wait_time=0.009)
             return False
@@ -296,9 +303,11 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
             # log info
             #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
+            """
             self.logger.Log(
             " xSpeed: " + str(xSetSpeed) + " ySpeed: " + str(ySetSpeed)
             + " yawSpeed: " +str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
+            """
 
 
     # adjusts the drone to the desired altitude within a tolerance, in mm

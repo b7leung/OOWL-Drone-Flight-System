@@ -39,7 +39,7 @@ class Logger(object):
     def Log(self, message, timeElapsed = True):
         # in ms
         timeElapsed = (time.clock()-self.startTime)*1000
-        self.logFile.write(str(timeElapsed)+ " || " + message + "\n")
+        self.logFile.write(str(timeElapsed)+ " " + message + "\n")
 
 
     # writes an ending timestamp into the log file and closes it

@@ -65,11 +65,12 @@ class ProcessVideo(object):
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
-    def ShowLine(self,image,thresh=65):
+    def ShowLine(self,image, lowerAngleBound = 0, upperAngleBound = 180, thresh=65):
         
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         #now we have binary image with edges of tape
+        gray = cv2.GaussianBlur( gray, (9,9),0)
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
         
@@ -77,20 +78,24 @@ class ProcessVideo(object):
         while(type(lines)==type(None) and thresh > 0):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
             thresh-=thresh
-        
+       
         #average rho and theta values
         if(thresh!=0):
         
             Lines=array(lines)
             thetas=Lines[:,:,1]
             rhos=Lines[:,:,0]
-            thetas1 = (thetas*180)/pi
-            #boolean arrays for angles greater than 170 and less than 10
-            large = (thetas1>170)
-            small = (thetas1<10)
+            thetasDegrees = (thetas*180)/pi
 
+            #rospy.logwarn(thetasDegrees)
+
+            #boolean arrays for angles greater than 170 and less than 10
+            large = (thetasDegrees>170)
+            small = (thetasDegrees<10)
+            extract = logical_and((thetasDegrees > lowerAngleBound),(thetasDegrees < upperAngleBound))
             #if most lines are within this range of theta
-            if( sum(large | small) > (size(thetas)/2)):
+
+            if( sum(large | small) > (size(thetas)/2) and (lowerAngleBound <= 0)):
                 if(sum(large) > sum(small)):
                     #sums up all angles greater than 170 and averages them
                     radians = sum(thetas*large)/(sum(large))
@@ -115,24 +120,35 @@ class ProcessVideo(object):
 
             else:
                 #takes average of all angles
-                LINES = matrix(lines).mean(0)
-                rho=LINES[0,0]
-                radians=LINES[0,1]
+                temp=(thetas*extract)*180/pi
+                rospy.logwarn(temp)
+                radians = sum(thetas*extract)/(sum(extract))
+                rho = sum(rhos*extract)/(sum(extract))
+                
+
+                #LINES = matrix(lines).mean(0)
+                #rho=LINES[0,0]
+                #radians=LINES[0,1]
             # all data needed to plot lines on original image
-            a = cos(radians)
-            b = sin(radians)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))
+            
+            if( not math.isnan(radians)):
+                a = cos(radians)
+                b = sin(radians)
+                x0 = a*rho
+                y0 = b*rho
+                x1 = int(x0 + 1000*(-b))
+                y1 = int(y0 + 1000*(a))
+                x2 = int(x0 - 1000*(-b))
+                y2 = int(y0 - 1000*(a))
     
-            cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+                cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
             #this is the correct angle relative to standard cordinate system for average line
-            angle=((radians*180)/pi)
-            radians=radians/pi
-        
+                angle=((radians*180)/pi)
+                radians=radians/pi
+                #rospy.logwarn(angle)
+
+            else: 
+                angle = None
         else:
             x0=None
             y0=None
