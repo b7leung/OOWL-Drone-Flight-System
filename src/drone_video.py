@@ -42,7 +42,7 @@ class DroneVideo(object):
         height, width, channels = self.cv_image.shape
         size = self.cv_image.size
         self.ShowVideo()
-        
+
 
     def ShowVideo(self):
         
