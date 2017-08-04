@@ -17,6 +17,7 @@ from processing_functions.process_video import ProcessVideo
 from processing_functions.process_position import DronePosition
 from processing_functions.logger import Logger
 from processing_functions.picture_manager import PictureManager
+from processing_functions.pid_controller import PIDController
 
 
 # list of possible states to control drone
@@ -58,6 +59,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # initalizing helper objects
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
+        self.pid = PIDController()
         self.pictureManager = PictureManager(self.droneRecordPath)
         self.startTimer = time.clock()
         
@@ -148,6 +150,20 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             # if the current self.state is not one of the above, then it is undefined
             raise ValueError("State is undefined for Trace Circle Controller")
 
+   def RunPIDController(self):
+
+    orange_image = self.process.DetectColor(self.cv_image, 'orange')
+    cx, cy, orangeFound = self.process.CenterofMass(orange_image)
+    
+    self.pid.UpdateDeltaTime()
+    self.pid.SetPoint(orange_image)
+    self.pid.UpdateError(cx,cy)
+    self.pid.SetpTerm()
+    self.pid.SetiTerm()
+    self.pid.SetdTerm()
+    xspeed, yspeed = self.pid.GetPIDValues()
+
+    rospy.logwarn(xspeed,yspeed)
 
     # Given that something orange is visible below the drone, will command 
     # the drone to hover directly over it 
