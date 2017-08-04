@@ -3,5 +3,6 @@
 *.pyc
 *.swp
 *.swo
+*.swn
 output.txt
 Flight_Info

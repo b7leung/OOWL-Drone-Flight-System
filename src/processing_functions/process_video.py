@@ -121,7 +121,7 @@ class ProcessVideo(object):
             else:
                 #takes average of all angles
                 temp=(thetas*extract)*180/pi
-                rospy.logwarn(temp)
+                #rospy.logwarn(temp)
                 radians = sum(thetas*extract)/(sum(extract))
                 rho = sum(rhos*extract)/(sum(extract))
                 
