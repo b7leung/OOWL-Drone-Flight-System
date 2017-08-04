@@ -95,29 +95,31 @@ import numpy as np
 
         self.oldTime = rospy.Time.now()
 
-    def LowPassFilter(self,xError, yError)
+    def SetFilter(self):
 
-        coef = np.array([0.00498902, 0.00567655, 0.00768429, 0.01092849, 0.01526534,
+        self.coef = np.array([0.00498902, 0.00567655, 0.00768429, 0.01092849, 0.01526534,
                 0.02049766, 0.02638413, 0.03265082, 0.03900430, 0.04514569,
                 0.05078516, 0.05565588, 0.05952694, 0.06221459, 0.06359114,
                 0.06359114, 0.06221459, 0.05952694, 0.05565588, 0.05078516,
                 0.04514569, 0.03900430, 0.03265082, 0.02638413, 0.02049766,
                 0.01526534, 0.01092849, 0.00768429, 0.00567655, 0.00498902])
         
-        filterSize = coef.size
+        self.filterSize = coef.size
 
-        xBuffer = np.zeros(filterSize)
-        yBuffer = np.zeros(filterSize)
+        self.xBuffer = np.zeros(filterSize)
+        self.yBuffer = np.zeros(filterSize)
 
-        xBuffer[0] = xError
-        yBuffer[0] = yError
+    def LowPassFilter(self,xError,yError):
+    
+        self.xBuffer[0] = xError
+        self.yBuffer[0] = yError
 
-        for i in np.arange(filterSize):
-            xFiltered += xBuffer[i] * coef[i]
-            yFiltered += yBuffer[i] * coef[i]
+        for i in np.arange(self.filterSize):
+            xFiltered += self.xBuffer[i] * self.coef[i]
+            yFiltered += self.yBuffer[i] * self.coef[i]
 
-        for i in np.arange(filterSize-1,0,-1):
-            xBuffer[i] = xBuffer[i-1]
-            yBuffer[i] = yBuffer[i-1]
+        for i in np.arange(self.filterSize-1,0,-1):
+            self.xBuffer[i] = self.xBuffer[i-1]
+            self.yBuffer[i] = self.yBuffer[i-1]
 
         return xFiltered, yFiltered
