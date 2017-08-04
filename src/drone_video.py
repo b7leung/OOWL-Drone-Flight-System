@@ -29,6 +29,7 @@ class DroneVideo(object):
         self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage )
 
         self.moved = False
+        self.sleepAmt = 0
 
         #initialization for recording video
         #fourcc=cv2.VideoWriter_fourcc(*'XVID')
@@ -46,7 +47,11 @@ class DroneVideo(object):
 
     def ShowVideo(self):
         
-        self.EditVideo()
+        if self.sleepAmt == 0:
+            self.EditVideo()
+        else:
+            self.sleepAmt = self.sleepAmt - 1
+
         self.KeyListener()
     
         cv2.imshow(self.windowName, self.cv_image)
@@ -57,7 +62,13 @@ class DroneVideo(object):
             cv2.moveWindow(self.windowName, 750, 500)
             self.moved = True
 
+    
+    # causes the video feed to "sleep" for a specified number of frames;
+    # that is, it will run but not execute any algorithms in edit video
+    def Sleep(self, frames):
+        self.sleepAmt = frames
         
+
     # processes the video before it is shown
     # don't implement here; implement in subclasses (TraceCircleController)
     def EditVideo(self):
