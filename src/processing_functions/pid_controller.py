@@ -1,22 +1,26 @@
 #!/usr/bin/env python
 
 import rospy
+import numpy as np
 
  class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.5, Derivator=0, Integrator=0, integralMax=1, integralMin=-1):
+    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.5, integralMax=1, integralMin=-1, moveTime = 0.1, waitTime = 0.04):
         
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
         
-        self.xDerivator = Derivator
-        self.yDerivator = Derivator
-        self.xIntegrator = Integarator
-        self.yIntegrator = Integrator
+        self.xDerivator = 0.0
+        self.yDerivator = 0.0
+        self.xIntegrator = 0.0
+        self.yIntegrator = 0.0
 
         self.xError = 0.0
         self.yError = 0.0
+
+        self.dt = moveTime + waitTime
+        self.oldTime = rospy.Time.now()
 
     def pTerm(self):
 
@@ -31,19 +35,21 @@ import rospy
 
     def dTerm(self):
 
-        self.xTemp = self.xError - self.xDerivator
-        self.yTemp = self.yError - self.yDerivator
+        self.xResult, self.yResult = self.LowPassFilter(self.xError, self.yError)
+        self.xTemp = self.xFiltered - self.xDerivator
+        self.yTemp = self.yFiltered - self.yDerivator
         
-        self.xDerivative = self.xTemp/self.dt
-        self.yDerivative = self.yTemp/self.dt
-
-        self.UpdateDTerm()
-        self.UpdateTime()
+        if self.dt > 0.0:
+            self.xDerivative = self.xTemp/self.dt
+            self.yDerivative = self.yTemp/self.dt
+        else:
+            self.xDerivative = 0.0
+            self.yDerivative = 0.0
 
         self.x_dTerm = self.Kd * self.xDerivative
         self.y_dTerm = self.Kd * self.yDerivative
 
-    def SetPIDController(self):
+    def GetPIDValues(self):
 
         xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
         yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
@@ -69,8 +75,8 @@ import rospy
 
     def UpdateDTerm(self):
         
-        self.xDerivator = self.xError
-        self.yDerivator = self.yError
+        self.xDerivator = self.xFiltered
+        self.yDerivator = self.yFiltered
 
     def UpdateITerm(self):
 
@@ -80,11 +86,32 @@ import rospy
         self.xIntegral += self.xIntegrator
         self.yIntegral += self.yIntegrator
 
-    def GetTime(self):
+    def UpdateTimeDelta(self):
         
         self.timeNow = rospy.Time.now()
-
-    def Updatetime(self):
-
         self.dt = self.timeNow - self.oldTime
-        self.oldTime = self.timeNow
+
+    def UpdateTime(self):
+
+        self.oldTime = rospy.Time.now()
+
+    def LowPassFilter(self,xError, yError)
+
+        coef = [0.25, 0.5, 0.25]
+        filterSize = coef.size
+
+        xBuffer = np.zeros(filterSize)
+        yBuffer = np.zeros(filterSize)
+
+        xBuffer[0] = xError
+        yBuffer[0] = yError
+
+        for i in np.arange(filterSize):
+            xFiltered += xBuffer[i] * coef[i]
+            yFiltered += yBuffer[i] * coef[i]
+
+        for i in np.arange(filterSize-1,0,-1):
+            xBuffer[i] = xBuffer[i-1]
+            yBuffer[i] = yBuffer[i-1]
+
+        return xFiltered, yFiltered
