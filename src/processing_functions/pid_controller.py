@@ -5,11 +5,16 @@ import numpy as np
 
  class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.5, integralMax=1, integralMin=-1, moveTime = 0.1, waitTime = 0.04):
+    def __init__(self,Kp=0.5, Ki=0.1, Kd=0.2, moveTime = 0.1, waitTime = 0.04):
         
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
+        self.xP = Kp/320
+        self.xI = Ki/320
+        self.xD = Kd/320
+        
+        self.yP = Kp/180
+        self.yI = Ki/180
+        self.yD = Kd/180
+        
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -24,18 +29,20 @@ import numpy as np
 
     def pTerm(self):
 
-        self.x_pTerm = self.Kp * self.xError
-        self.y_pTerm = self.Kp * self.yError
+        self.x_pTerm = self.xP * self.xError
+        self.y_pTerm = self.yP * self.yError
 
     def iTerm(self):
-    
-        self.x_iTerm = self.Ki * self.xIntegral
-        self.y_iTerm = self.Ki * self.yIntegral
-        self.UpdateITerm()
+        
+        self.xIntegral += self.xIntegrator
+        self.yIntegral += self.yIntegrator
+
+        self.x_iTerm = self.xI * self.xIntegral
+        self.y_iTerm = self.yI * self.yIntegral
 
     def dTerm(self):
 
-        self.xResult, self.yResult = self.LowPassFilter(self.xError, self.yError)
+        self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
         self.xTemp = self.xFiltered - self.xDerivator
         self.yTemp = self.yFiltered - self.yDerivator
         
@@ -46,8 +53,8 @@ import numpy as np
             self.xDerivative = 0.0
             self.yDerivative = 0.0
 
-        self.x_dTerm = self.Kd * self.xDerivative
-        self.y_dTerm = self.Kd * self.yDerivative
+        self.x_dTerm = self.xD * self.xDerivative
+        self.y_dTerm = self.yD * self.yDerivative
 
     def GetPIDValues(self):
 
@@ -64,8 +71,8 @@ import numpy as np
 
     def UpdateError(self,cx,cy):
         
-        self.xError = (self.centerx - cx)/float(self.centerx)
-        self.yError = (self.centery - cy)/float(self.centery)
+        self.xError = self.centerx - cx
+        self.yError = self.centery - cy
 
     def SetPID(self,Kp,Ki,Kd):
 
@@ -80,13 +87,10 @@ import numpy as np
 
     def UpdateITerm(self):
 
-        self.xIntegrator = self.xError * dt
-        self.yIntegrator = self.yError * dt
+        self.xIntegrator = self.xFiltered * dt
+        self.yIntegrator = self.yFiltered * dt
         
-        self.xIntegral += self.xIntegrator
-        self.yIntegral += self.yIntegrator
-
-    def UpdateTimeDelta(self):
+    def UpdateDeltaTime(self):
         
         self.timeNow = rospy.Time.now()
         self.dt = self.timeNow - self.oldTime
