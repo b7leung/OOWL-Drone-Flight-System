@@ -31,8 +31,8 @@ AUTO_CIRCLE_STATE = "auto_circle"
 
 # the altitude & threashold at which all the algorithms that adjust height will
 # go to, in mm
-DRONE_ALTITUDE = 1000
-ALT_THRESH = 75
+DRONE_ALTITUDE = 1300
+ALT_THRESH = 100
 
 
 # TraceCircleController "is-a" Drone Video display and a flightstats receiver. It uses
@@ -304,7 +304,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
             rospy.logwarn("Done Fixing to Blue line")
             self.stateCounter += 1
-            if(self.stateCounter >= 10 and self.autonomyState):
+            if(self.stateCounter >= 20 and self.autonomyState):
                 self.stateCounter = 0
                 self.state = FOLLOW_BLUE_STATE
             return True
@@ -328,7 +328,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         
         self.cv_image=self.process.DetectColor(self.cv_image,'blue')
 
-        angle=self.process.ShowLine(self.cv_image,75,110)
+        angle=self.process.ShowLine(self.cv_image,75,120)
         
         # Blue will be deemed visible if .015% of the total screen is blue
         #blueVisible = self.process.IsHueDominant(self.cv_image, 0, 360, 0.015); 
@@ -346,7 +346,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             rospy.logwarn("Done Following Blue")
             self.MoveFixedTime(0 , 0 , 0, 0, move_time=0.1, wait_time=0.009)
             self.stateCounter += 1
-            if(self.stateCounter >= 5 and self.autonomyState):
+            if(self.stateCounter >= 20 and self.autonomyState):
                 self.stateCounter = 0
                 self.state = HOVER_ORANGE_STATE
             return True
