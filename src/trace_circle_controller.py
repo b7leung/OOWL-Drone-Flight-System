@@ -29,6 +29,7 @@ CAPTURE_FRAME_STATE = 'capture_frame'
 FIX_TO_BLUE_STATE = "fix_to_blue"
 FOLLOW_BLUE_STATE = "follow_blue"
 AUTO_CIRCLE_STATE = "auto_circle"
+PID_STATE = 'pid_state'
 
 # the altitude & threashold at which all the algorithms that adjust height will
 # go to, in mm
@@ -110,6 +111,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             self.IdleStateSwitch(HOVER_ORANGE_STATE)
             self.autonomyState = True
 
+        elif key == ord('p'):
+
+            self.IdleStateSwitch(PID_STATE)
 
     # provides a "switch" between the drone being idle and being controlled
     def IdleStateSwitch(self, state):
@@ -164,6 +168,10 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         elif self.state == FOLLOW_BLUE_STATE:
 
             self.FollowBlue()
+
+        elif self.state == PID_STATE:
+
+            self.RunPIDController()
                
         elif self.state ==  AUTO_CIRCLE_STATE:
             
@@ -182,21 +190,24 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             # if the current self.state is not one of the above, then it is undefined
             raise ValueError("State is undefined for Trace Circle Controller")
 
-   def RunPIDController(self):
+    def RunPIDController(self):
 
-    orange_image = self.process.DetectColor(self.cv_image, 'orange')
-    cx, cy, orangeFound = self.process.CenterofMass(orange_image)
-    
-    self.pid.UpdateDeltaTime()
-    self.pid.SetPoint(orange_image)
-    self.pid.UpdateError(cx,cy)
-    self.pid.SetpTerm()
-    self.pid.SetiTerm()
-    self.pid.SetdTerm()
-    xspeed, yspeed = self.pid.GetPIDValues()
+        orange_image = self.process.DetectColor(self.cv_image, 'orange')
+        cx, cy, orangeFound = self.process.CenterofMass(orange_image)
+        self.cv_image = orange_image 
+        self.pid.UpdateDeltaTime()
+        self.pid.SetPoint(orange_image)
+        self.pid.SetPIDConstants(0.4, 0.0, 0.0)
+        self.pid.UpdateError(cx,cy)
+        x_P, y_P, x_I, y_I, x_D, y_D = self.pid.SetPIDTerms()
+        xspeed, yspeed = self.pid.GetPIDValues()
 
-    rospy.logwarn(xspeed,yspeed)
+        #rospy.logwarn("X Terms: "+str(x_P)+", " + str(x_I)+", "+ str(x_D))
+        #rospy.logwarn("Y Terms: "+str(y_P)+", " + str(y_I)+", "+ str(y_D))
 
+        rospy.logwarn("xPID, yPID: "+str(xspeed) +", " + str(yspeed))
+        self.controller.SetCommand(xspeed,yspeed, 0, 0)
+        #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
     # Given that something orange is visible below the drone, will command 
     # the drone to hover directly over it 
     # Returns False if algorithm is still running and drone isn't on orange yet
@@ -213,8 +224,10 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
 
+        '''
         # logging cx + cy
         self.logger.Log(str(cx) + " " + str(cy))
+        '''
 
         # if there is orange in the screen, and the drone is in the middle, return true
         if orangeFound and xspeed == 0 and yspeed == 0 and zspeed == 0:

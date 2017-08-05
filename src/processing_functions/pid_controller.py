@@ -2,24 +2,18 @@
 
 import rospy
 import numpy as np
+import cv2
 
- class PIDController(object):
+class PIDController(object):
 
     def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.1, waitTime = 0.04):
-        
-        self.xP = Kp/320
-        self.xI = Ki/320
-        self.xD = Kd/320
-        
-        self.yP = Kp/180
-        self.yI = Ki/180
-        self.yD = Kd/180
-        
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
         self.xIntegrator = 0.0
         self.yIntegrator = 0.0
+        self.xIntegral = 0.0
+        self.yIntegral = 0.0
 
         self.xError = 0.0
         self.yError = 0.0
@@ -29,19 +23,19 @@ import numpy as np
 
         self.InitializeFilter()
 
-    #Calculation for the P_term
-    #Linear relationship between Error and output
-    def SetpTerm(self):
+    def SetPIDTerms(self):
+
+        #Calculation for the P_term
+        #Linear relationship between Error and output
         
         self.x_pTerm = self.xP * self.xError
         self.y_pTerm = self.yP * self.yError
-        
-    #Calculation for the I_term
-    #Gets the accumulation of error over time to assist the P_term in pushing the drone
-    def SetiTerm(self):
 
-        self.xIntegrator = self.xFiltered * dt
-        self.yIntegrator = self.yFiltered * dt
+        #Calculation for the I_term
+        #Gets the accumulation of error over time to assist the P_term in pushing the drone
+
+        self.xIntegrator = self.xFiltered * self.dt.to_sec()
+        self.yIntegrator = self.yFiltered * self.dt.to_sec()
 
         self.xIntegral += self.xIntegrator
         self.yIntegral += self.yIntegrator
@@ -49,16 +43,14 @@ import numpy as np
         self.x_iTerm = self.xI * self.xIntegral
         self.y_iTerm = self.yI * self.yIntegral
 
-    #Calculation for the D_term
-    #Computes the rate of change of our Error to compensate for overshooting the command
-    def SetdTerm(self):
-
+        #Calculation for the D_term
+        #Computes the rate of change of our Error to compensate for overshooting the command
         self.xTemp = self.xFiltered - self.xDerivator
         self.yTemp = self.yFiltered - self.yDerivator
         
-        if self.dt > 0.0:
-            self.xDerivative = self.xTemp/self.dt
-            self.yDerivative = self.yTemp/self.dt
+        if self.dt.to_sec() > 0.0:
+            self.xDerivative = self.xTemp/self.dt.to_sec()
+            self.yDerivative = self.yTemp/self.dt.to_sec()
         else:
             self.xDerivative = 0.0
             self.yDerivative = 0.0
@@ -69,41 +61,63 @@ import numpy as np
         self.xDerivator = self.xFiltered
         self.yDerivator = self.yFiltered
 
+        return self.x_pTerm, self.y_pTerm, self.x_iTerm, self.y_iTerm, self.x_dTerm, self.y_dTerm
+
+
     #Sum up the three P,I,D terms to get the output Command
     #Return xspeed for roll and yspeed for pitch
     def GetPIDValues(self):
 
-        xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
-        yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
-        
+        if self.cx < self.xLower or self.cx > self.xUpper:
+            xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
+        else:
+            xPID = 0.0
+
+        if self.cy < self.yLower or self.cy > self.yUpper:
+            yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
+        else:
+            yPID = 0.0
+
         return xPID,yPID
 
         
     #Compute the desired SetPoint for the Drone - the center of the image
-    def SetPoint(self,image):
+    #Set the desired window size for drone to hover in
+    def SetPoint(self,image,windowSize=25):
         
         self.numRows, self.numCols, self.channels = image.shape
-        self.centerx = self.numCols/2
-        self.centery = self.numRows/2
+        self.centerx = self.numCols/2.0
+        self.centery = self.numRows/2.0
+
+        self.xLower = self.centerx-windowSize
+        self.yLower = self.centery-windowSize
+        self.xUpper = self.centerx+windowSize
+        self.yUpper = self.centery+windowSize
+
+        cv2.rectangle(image, (int(self.xLower), int(self.yLower)), (int(self.xUpper), int(self.yUpper)), (255,0,0), 2)
+
 
     #Calculate Error as a function of object's distance from desired setpoint (the center)
     #Perform a LowPass Filter on the Error Values for the Integral and Derivative Terms
     def UpdateError(self,cx,cy):
         
-        self.xError = self.centerx - cx
-        self.yError = self.centery - cy
+        self.cx = cx
+        self.cy = cy
+
+        self.xError = self.centerx - self.cx
+        self.yError = self.centery - self.cy
         self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
 
    #Set the Coefficient to an appropriate value based on trial and Error 
-    def SetPID(self,Kp,Ki,Kd):
+    def SetPIDConstants(self,Kp,Ki,Kd):
         
-        self.xP = Kp/320
-        self.xI = Ki/320
-        self.xD = Kd/320
+        self.xP = Kp/self.centerx
+        self.xI = Ki/self.centerx
+        self.xD = Kd/self.centerx
         
-        self.yP = Kp/180
-        self.yI = Ki/180
-        self.yD = Kd/180
+        self.yP = Kp/self.centery
+        self.yI = Ki/self.centery
+        self.yD = Kd/self.centery
 
     def UpdateDeltaTime(self):
         
@@ -124,15 +138,18 @@ import numpy as np
                 0.04514569, 0.03900430, 0.03265082, 0.02638413, 0.02049766,
                 0.01526534, 0.01092849, 0.00768429, 0.00567655, 0.00498902])
         
-        self.filterSize = coef.size
+        self.filterSize = self.coef.size
 
-        self.xBuffer = np.zeros(filterSize)
-        self.yBuffer = np.zeros(filterSize)
-    
+        self.xBuffer = np.zeros(self.filterSize)
+        self.yBuffer = np.zeros(self.filterSize)
+
     #Perform a LowPassFilter on Error values to remove noise and high-freq values
     #return filtered error values
     def LowPassFilter(self,xError,yError):
     
+        xFiltered = 0.0
+        yFiltered = 0.0
+        
         self.xBuffer[0] = xError
         self.yBuffer[0] = yError
 

@@ -174,6 +174,11 @@ class ProcessVideo(object):
         if M["m00"]!=0:
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
+            
+            #draw circle on cx and cy only if center of mass exists
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
+        
             return(cx,cy,True)
 
 	else:
@@ -204,8 +209,8 @@ class ProcessVideo(object):
         zoneRight = centerx + centerx/2
         zoneTop= centery - centery/2
         zoneBottom= centery + centery/2
-
-        #draw circle on cx and cy only if center of mass exists
+        
+                #draw circle on cx and cy only if center of mass exists
         if found:
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
