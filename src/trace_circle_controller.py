@@ -197,13 +197,17 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         self.cv_image = orange_image 
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
-        self.pid.SetPIDConstants(0.5, 0.1, 0.0)
+        self.pid.SetPIDConstants(0.4, 0.0, 0.0)
         self.pid.UpdateError(cx,cy)
-        self.pid.SetPIDTerms()
+        x_P, y_P, x_I, y_I, x_D, y_D = self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
 
-        rospy.logwarn(str(xspeed) +" " + str(yspeed))
+        #rospy.logwarn("X Terms: "+str(x_P)+", " + str(x_I)+", "+ str(x_D))
+        #rospy.logwarn("Y Terms: "+str(y_P)+", " + str(y_I)+", "+ str(y_D))
 
+        rospy.logwarn("xPID, yPID: "+str(xspeed) +", " + str(yspeed))
+        self.controller.SetCommand(xspeed,yspeed, 0, 0)
+        #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
     # Given that something orange is visible below the drone, will command 
     # the drone to hover directly over it 
     # Returns False if algorithm is still running and drone isn't on orange yet
@@ -220,8 +224,10 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
 
+        '''
         # logging cx + cy
         self.logger.Log(str(cx) + " " + str(cy))
+        '''
 
         # if there is orange in the screen, and the drone is in the middle, return true
         if orangeFound and xspeed == 0 and yspeed == 0 and zspeed == 0:

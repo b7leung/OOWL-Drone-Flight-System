@@ -2,6 +2,7 @@
 
 import rospy
 import numpy as np
+import cv2
 
 class PIDController(object):
 
@@ -29,7 +30,7 @@ class PIDController(object):
         
         self.x_pTerm = self.xP * self.xError
         self.y_pTerm = self.yP * self.yError
-        
+
         #Calculation for the I_term
         #Gets the accumulation of error over time to assist the P_term in pushing the drone
 
@@ -60,29 +61,51 @@ class PIDController(object):
         self.xDerivator = self.xFiltered
         self.yDerivator = self.yFiltered
 
+        return self.x_pTerm, self.y_pTerm, self.x_iTerm, self.y_iTerm, self.x_dTerm, self.y_dTerm
+
+
     #Sum up the three P,I,D terms to get the output Command
     #Return xspeed for roll and yspeed for pitch
     def GetPIDValues(self):
 
-        xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
-        yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
-        
+        if self.cx < self.xLower or self.cx > self.xUpper:
+            xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
+        else:
+            xPID = 0.0
+
+        if self.cy < self.yLower or self.cy > self.yUpper:
+            yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
+        else:
+            yPID = 0.0
+
         return xPID,yPID
 
         
     #Compute the desired SetPoint for the Drone - the center of the image
-    def SetPoint(self,image):
+    #Set the desired window size for drone to hover in
+    def SetPoint(self,image,windowSize=25):
         
         self.numRows, self.numCols, self.channels = image.shape
         self.centerx = self.numCols/2.0
         self.centery = self.numRows/2.0
 
+        self.xLower = self.centerx-windowSize
+        self.yLower = self.centery-windowSize
+        self.xUpper = self.centerx+windowSize
+        self.yUpper = self.centery+windowSize
+
+        cv2.rectangle(image, (int(self.xLower), int(self.yLower)), (int(self.xUpper), int(self.yUpper)), (255,0,0), 2)
+
+
     #Calculate Error as a function of object's distance from desired setpoint (the center)
     #Perform a LowPass Filter on the Error Values for the Integral and Derivative Terms
     def UpdateError(self,cx,cy):
         
-        self.xError = self.centerx - cx
-        self.yError = self.centery - cy
+        self.cx = cx
+        self.cy = cy
+
+        self.xError = self.centerx - self.cx
+        self.yError = self.centery - self.cy
         self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
 
    #Set the Coefficient to an appropriate value based on trial and Error 
