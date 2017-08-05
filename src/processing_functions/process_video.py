@@ -209,7 +209,12 @@ class ProcessVideo(object):
         zoneRight = centerx + centerx/2
         zoneTop= centery - centery/2
         zoneBottom= centery + centery/2
-
+        
+                #draw circle on cx and cy only if center of mass exists
+        if found:
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
         #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
 
         # if it's out of horizontal close zone
