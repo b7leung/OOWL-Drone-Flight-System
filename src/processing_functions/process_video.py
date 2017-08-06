@@ -59,7 +59,7 @@ class ProcessVideo(object):
         cv2.circle(output,(numcols/2,numrows/2),4,150,1)
         #return the segmented image
         #show the contours on original image
-        #self.FindBox(output,mask)
+        
         return output
         
 
@@ -179,16 +179,16 @@ class ProcessVideo(object):
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
         
-            return(cx,cy,True)
+            return(cx,cy)
 
 	else:
             # if center of mass doesn't exist; set them as the center
-            return (centerx, centery, False)
+            return (None, None)
 
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy, found, currAltitude, desiredAltitude, tolerance):
+    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude, tolerance):
 
         numrows,numcols,channels=image.shape
 
@@ -203,51 +203,14 @@ class ProcessVideo(object):
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
 
-       
         # alpha changes depending on if (cx,cy) is in blue box or not
         zoneLeft = centerx - centerx/2
         zoneRight = centerx + centerx/2
         zoneTop= centery - centery/2
         zoneBottom= centery + centery/2
         
-                #draw circle on cx and cy only if center of mass exists
-        if found:
-            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
-            cv2.circle(image, (cx,cy), 40, 255)
-        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
-        #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
-
-        # if it's out of horizontal close zone
-        if cx < zoneLeft or cx > zoneRight:
-            alphax = 0.35
-        else:
-            alphax = 0.35
         
-        # if it's out of vertical close zone
-        if cy < zoneTop or cy > zoneBottom:
-            alphay = 0.35
-        else:
-            alphay = 0.35
-
-       #calculate movement command values for moving up, down, left, right. normalized between -1:1.
-       #if object is in desired area do not move (xspeed, yspeed == 0)
-        
-        if cx < xlower or cx > xupper:
-            #pos val means object is left, neg means object is right of cntr
-            xspeed=(centerx-cx)/float(centerx)
-            xspeed=alphax*xspeed
-            
-        else:
-            xspeed=0
-        
-        if cy < ylower or cy > yupper:
-            #pos val means object is above, neg means object is below
-            yspeed=(centery-cy)/float(centery)
-            yspeed=alphay*yspeed
-        else:
-            yspeed=0
-            
-        # calculating if the drone should go up or down to match the desired altitude
+         # calculating if the drone should go up or down to match the desired altitude
         climbSpeed = 0.25
         if (currAltitude < (desiredAltitude - tolerance)):
             zVelocity = climbSpeed
@@ -255,6 +218,49 @@ class ProcessVideo(object):
             zVelocity = climbSpeed * -1
         else:
             zVelocity = 0
+        
+        #Draws a rectangle for the center part of the drone desired to hover over object
+        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+        #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
+
+    
+        #draw circle and calculate speeds only if the center of mass for object exists
+        if (cx != None) and (cy != None):
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
+
+            # if it's out of horizontal close zone
+            if cx < zoneLeft or cx > zoneRight:
+                alphax = 0.35
+            else:
+                alphax = 0.35
+        
+            # if it's out of vertical close zone
+            if cy < zoneTop or cy > zoneBottom:
+                alphay = 0.35
+            else:
+                alphay = 0.35
+
+       #calculate movement command values for moving up, down, left, right. normalized between -1:1.
+       #if object is in desired area do not move (xspeed, yspeed == 0)
+        
+            if (cx < xlower) or (cx > xupper):
+                #pos val means object is left, neg means object is right of cntr
+                xspeed = (centerx-cx)/float(centerx)
+                xspeed = alphax*xspeed
+            
+            else:
+                xspeed = 0
+        
+            if (cy < ylower) or (cy > yupper):
+                #pos val means object is above, neg means object is below
+                yspeed = (centery-cy)/float(centery)
+                yspeed = alphay*yspeed
+            else:
+                yspeed = 0
+        else: 
+            xspeed = 0
+            yspeed = 0
 
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
