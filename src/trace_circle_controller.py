@@ -22,12 +22,12 @@ from processing_functions.pid_controller import PIDController
 
 # list of possible states to control drone
 IDLE_STATE = "idle"
-HOVER_ORANGE_STATE = "hover_orange"
+HOVER_PLATFORM_STATE = "hover_orange"
 FACE_OBJECT_STATE = 'face_object'
 PREPARE_CAPTURE_STATE = 'prepare_capture'
 CAPTURE_FRAME_STATE = 'capture_frame'
-FIX_TO_BLUE_STATE = "fix_to_blue"
-FOLLOW_BLUE_STATE = "follow_blue"
+FIX_TO_LINE_STATE = "fix_to_blue"
+FOLLOW_LINE_STATE = "follow_blue"
 AUTO_CIRCLE_STATE = "auto_circle"
 PID_STATE = 'pid_state'
 RETURN_STATE = "return_state"
@@ -69,7 +69,8 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         self.autonomyState = False
         self.stateCounter = 0
         self.lastLocation = (None,None)
-
+        self.lastState = IDLE_STATE
+        
     # define keys to listen to here. When key is presses, does any necessary preparation, then goes to state
     def KeyListener(self):
         
@@ -78,7 +79,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # toggles on/off which algorithm you want to execute with keypresses
         if key == ord('1'):
             
-            self.IdleStateSwitch(HOVER_ORANGE_STATE)
+            self.IdleStateSwitch(HOVER_PLATFORM_STATE)
             
         elif key == ord('2'):
 
@@ -90,18 +91,18 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('4'):
 
-            self.IdleStateSwitch(FIX_TO_BLUE_STATE)
+            self.IdleStateSwitch(FIX_TO_LINE_STATE)
 
         elif key == ord('5'):
             
-            self.IdleStateSwitch(FOLLOW_BLUE_STATE)
+            self.IdleStateSwitch(FOLLOW_LINE_STATE)
 
         elif key == ord('c'):
             
             # list of algorithms to execute, in order. They are in format:
             # (algorithm method name, frames to wait to make sure algorithm is finished).
-            self.algorithmOrdering = [(self.HoverOnOrange, 20), (self.FaceObject, 20), (self.FixToBlue, 10),
-            (self.PrepareCapture,1), (self.CaptureFrame,1), (self.FollowBlue, 5)]
+            self.algorithmOrdering = [(self.HoverOnPlatform, 20), (self.FaceObject, 20), (self.FixToLine, 10),
+            (self.PrepareCapture,1), (self.CaptureFrame,1), (self.FollowLine, 5)]
 
             self.currAlgorithm = algorithmOrdering[0]
             self.currAlgorithmFinished= False
@@ -110,16 +111,14 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('s'):
 
-            self.IdleStateSwitch(HOVER_ORANGE_STATE)
+            self.IdleStateSwitch(HOVER_PLATFORM_STATE)
             self.autonomyState = True
 
         elif key == ord('p'):
 
             self.IdleStateSwitch(PID_STATE)
 
-        elif key == ord('r'):
-            
-            self.IdleStateSwitch(RETURN_STATE)
+        
 
     # provides a "switch" between the drone being idle and being controlled
     def IdleStateSwitch(self, state):
@@ -146,48 +145,51 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
     # this is called every time a frame (in self.cv_image) is updated
     def EditVideo(self):
-        
-        if self.state == IDLE_STATE :
+        rospy.logwarn(str(self.lastState))
+        if self.state == RETURN_STATE:
 
-            # do nothing 
-            pass
-
-        elif self.state == HOVER_ORANGE_STATE:
-
-            self.HoverOnOrange()
-
-        elif self.state == FACE_OBJECT_STATE:
-
-            self.FaceObject()
-
-        elif self.state == FIX_TO_BLUE_STATE:
-
-            self.FixToBlue()
-
-        elif self.state == PREPARE_CAPTURE_STATE:
-            
-            self.PrepareCapture()
-
-        elif self.state == CAPTURE_FRAME_STATE:
-
-            self.CaptureFrame()
-
-        elif self.state == FOLLOW_BLUE_STATE:
-
-            self.FollowBlue()
-
-        elif self.state == PID_STATE:
-
-            self.RunPIDController()
-
-        elif self.state == RETURN_STATE:
-            
             self.ReturnState()
-               
+        
+        elif self.state == IDLE_STATE : 
+            #do nothing
+            pass
         else:
 
-            # if the current self.state is not one of the above, then it is undefined
-            raise ValueError("State is undefined for Trace Circle Controller")
+            self.lastState = self.state
+
+            if self.state == HOVER_PLATFORM_STATE:
+
+                self.HoverOnPlatform(platformColor = 'orange')
+
+            elif self.state == FACE_OBJECT_STATE:
+
+                self.FaceObject(objectColor = 'green', platformColor = 'orange')
+
+            elif self.state == FIX_TO_LINE_STATE:
+
+                self.FixToLine(lineColor = 'blue', platformColor = 'orange')
+
+            elif self.state == PREPARE_CAPTURE_STATE:
+            
+                self.PrepareCapture()
+
+            elif self.state == CAPTURE_FRAME_STATE:
+
+                self.CaptureFrame()
+
+            elif self.state == FOLLOW_LINE_STATE:
+
+                self.FollowLine(lineColor = 'blue')
+
+            elif self.state == PID_STATE:
+
+                self.RunPIDController()
+               
+            else:
+
+                # if the current self.state is not one of the above, then it is undefined
+                raise ValueError("State is undefined for Trace Circle Controller")
+        
 
     def RunPIDController(self):
 
@@ -211,16 +213,22 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # the drone to hover directly over it 
     # Returns 0 if algorithm is still running and drone isn't on orange yet
     # Returns 1 if algorithm is finished and drone is now on orange
-    def HoverOnOrange(self):
+    def HoverOnPlatform(self,platformColor = 'orange'):
         
         # converting to a segmented orange image and calculating the corresponding cx, cy, xspeed, yspeed
-        self.cv_image = self.process.DetectColor(self.cv_image, 'orange')
+        self.cv_image = self.process.DetectColor(self.cv_image, platformColor)
         cx, cy = self.process.CenterofMass(self.cv_image)
-
+        
+        if (cx == None or cy == None) and self.lastLocation[0] != None and self.lastLocation[1] != None:
+            self.state = RETURN_STATE
+            self.stateCounter = 0
+            return -1
+        
+        self.lastLocation = (cx,cy)
         
         xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, cx, cy, 
         (self.flightInfo["altitude"])[1], DRONE_ALTITUDE, ALT_THRESH)
-
+        
 
         # move drone corresponding to xspeed and yspeed at a fixed interval
         self.MoveFixedTime(xspeed, yspeed, 0, zspeed, 0.1, 0.04)
@@ -251,19 +259,26 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # Makes green line vertical in bottom cam under the drone
     # Returns False if drone isn't facing object
     # Returns True if drone is facing object; parallel to the green line
-    def FaceObject(self):
+    def FaceObject(self, objectColor = 'green',platformColor = 'orange'):
 
-        green_image = self.process.DetectColor(self.cv_image, 'green')
-        orange_image = self.process.DetectColor(self.cv_image,'orange')
-        self.cv_image = green_image
+        object_image = self.process.DetectColor(self.cv_image, objectColor)
+        platform_image = self.process.DetectColor(self.cv_image,platformColor)
+        self.cv_image = object_image
 
         # trying to be parallel to the green line, while being over orange checkpoint
-        angle = self.process.ShowLine(green_image, thresh=40)
-        cx, cy =self.process.CenterofMass(orange_image)
+        angle = self.process.ShowLine(object_image, thresh=40)
+        cx, cy =self.process.CenterofMass(platform_image)
+        
+        if (cx == None or cy == None) and self.lastLocation[0] != None and self.lastLocation[1] != None:
+            self.state = RETURN_STATE
+            self.stateCounter = 0
+            return -1
 
-        xspeed,yspeed,zspeed = self.process.ApproximateSpeed(green_image,cx,cy,
+        self.lastLocation = (cx,cy)
+
+        xspeed,yspeed,zspeed = self.process.ApproximateSpeed(object_image,cx,cy,
         (self.flightInfo["altitude"])[1], DRONE_ALTITUDE, ALT_THRESH)
-        yawspeed = self.process.ObjectOrientation(green_image, cx, cy, angle)
+        yawspeed = self.process.ObjectOrientation(object_image, cx, cy, angle)
 
         self.MoveFixedTime(xspeed, yspeed, yawspeed, 0, move_time=0.2, wait_time=0.04)
 
@@ -301,7 +316,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         rospy.logwarn("Saved picture as " + pictureName)
         self.controller.SwitchCamera(1)
         if self.autonomyState:
-            self.state = FIX_TO_BLUE_STATE
+            self.state = FIX_TO_LINE_STATE
         return True
 
 
@@ -309,32 +324,32 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # makes blue line horizontal in bottom cam under the drone.
     # Returns False when it is still rotating to fix to the blue line
     # Returns True when it is fixed perpendicular to the blue line
-    def FixToBlue(self):
+    def FixToLine(self,lineColor = 'blue',platformColor = 'orange'):
 
-        blue_image = self.process.DetectColor(self.cv_image,'blue')
-        orange_image = self.process.DetectColor(self.cv_image,'orange')
+        line_image = self.process.DetectColor(self.cv_image, lineColor)
+        platform_image = self.process.DetectColor(self.cv_image, platformColor)
         # houghline transform on right half of image to fix orientation to blue after taking image
-        angle = self.process.ShowLine(blue_image,20,110,thresh=45)
+        angle = self.process.ShowLine(line_image,20,110,thresh=45)
         #angle = self.process.ShowLine(blue_image[:,10*(blue_image.shape[1]/10):],thresh=40)
-        cx, cy = self.process.CenterofMass(orange_image)
+        cx, cy = self.process.CenterofMass(platform_image)
         
-        if (cx == None or cy == None) and (self.lastLocation != (None,None)):
-            stateCounter = 0
+        if (cx == None or cy == None) and self.lastLocation[0] != None and self.lastLocation[1] != None:
             self.state = RETURN_STATE
+            self.stateCounter = 0
             return -1
 
         self.lastLocation = (cx,cy)
 
-        xspeed, yspeed, zspeed = self.process.ApproximateSpeed(blue_image, cx, cy,
+        xspeed, yspeed, zspeed = self.process.ApproximateSpeed(line_image, cx, cy,
         (self.flightInfo["altitude"])[1], DRONE_ALTITUDE, ALT_THRESH)
-        yawspeed = self.process.LineOrientation(blue_image,cx,cy,angle)
+        yawspeed = self.process.LineOrientation(line_image,cx,cy,angle)
         
         self.MoveFixedTime(xspeed*.7, yspeed*.7, yawspeed, 0, move_time=0.2, wait_time=0.04)
 
         #blue_image = cv2.cvtColor(blue_image, cv2.COLOR_BGR2GRAY)
         #rospy.logwarn("blue image: " + str(numpy.shape(blue_image))+ " edges: " + str(numpy.shape(edges)))
         #self.cv_image = numpy.hstack((blue_image,edges))
-        self.cv_image = blue_image
+        self.cv_image = line_image
 
         # if there is blue in the screen, and the drone's front is perpendicular to the blue, return True
         if (cx!=None and cy!=None) and xspeed == 0 and yspeed == 0 and yawspeed == 0:
@@ -343,7 +358,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             self.stateCounter += 1
             if(self.stateCounter >= 20 and self.autonomyState):
                 self.stateCounter = 0
-                self.state = FOLLOW_BLUE_STATE
+                self.state = FOLLOW_LINE_STATE
             return True
 
         else:
@@ -357,13 +372,13 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # the drone will fly right until its bottom camera cannot see blue anymore.
     # Returns False when it is still following the line
     # Returns True when it has finished following the blue line
-    def FollowBlue(self):
+    def FollowLine(self,lineColor = 'blue'):
         # we only consider the far right of the image to look for blue
         self.cv_image = self.process.CropVisible(self.cv_image, 
         int(len(self.cv_image[0])*(0/10)), 0, len(self.cv_image[0]), len(self.cv_image))
 
         
-        self.cv_image=self.process.DetectColor(self.cv_image,'blue')
+        self.cv_image=self.process.DetectColor(self.cv_image,lineColor)
 
         angle=self.process.ShowLine(self.cv_image,75,120)
         
@@ -385,30 +400,46 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             self.stateCounter += 1
             if(self.stateCounter >= 20 and self.autonomyState):
                 self.stateCounter = 0
-                self.state = HOVER_ORANGE_STATE
+                self.state = HOVER_PLATFORM_STATE
             return True
 
     #This state will push the drone back towards the target location if it has drifted out of the cameras vision
-    def ReturnState(self):
-        orange_image = self.process.DetectColor(self.cv_image, 'orange')
-        self.cv_image = orange_image
-        hasOrange = self.process.IsHueDominant(orange_image, 0, 360, 0.2)            
+    def ReturnState(self, platformColor = 'orange'):
+        platform_image = self.process.DetectColor(self.cv_image, platformColor)
+        self.cv_image = platform_image
+        numrows,numcols,channels=self.cv_image.shape
         
-        if( not hasOrange):
+        cx = self.lastLocation[0]
+        cy = self.lastLocation[1]
+
+        centerx=numcols/2
+        centery=numrows/2
+        width=120
+        height=120
+        xlower=centerx-width #left xvalue
+        ylower=centery-height #"top" yvalue
+        xupper=centerx+width #right xvalue
+        yupper=centery+height #"bottom" yvalue
+        hasPlatform = self.process.IsHueDominant(platform_image, 0, 360, 0.2)            
+        
+        if( not hasPlatform):
             self.stateCounter += 1
             rospy.logwarn("currently returning, statecounter: "+ str(self.stateCounter))
-            if self.stateCounter > 3:
-                self.state = FIX_TO_BLUE_STATE
+            if (self.stateCounter > 2) or (cx>xlower and cx < xupper) or (cy > ylower and cy < yupper):
+                self.state = self.lastState
+                rospy.logwarn(str(self.lastState))
                 self.stateCounter = 0
                 self.lastLocation = (None,None)
+                self.MoveFixedTime(0, 0, 0 ,0, 0.1, 0.04)
+
                 return False
-            xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, self.lastLocation[0], self.lastLocation[1], 
+            xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, cx, cy, 
             (self.flightInfo["altitude"])[1], DRONE_ALTITUDE, ALT_THRESH)
             self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.04)
-
+            return False
         else:
             rospy.logwarn("done returning")
-            self.state = FIX_TO_BLUE_STATE
+            self.state = self.lastState
             self.stateCounter = 0
             return True
 
