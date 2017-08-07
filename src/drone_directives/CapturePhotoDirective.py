@@ -28,5 +28,5 @@ class CapturePhotoDirective(AbstractDroneDirective):
         pictureName = self.pictureManager.Capture(image)
         rospy.logwarn("Saved picture as " + pictureName)
 
-        return 1, (0, 0, 0, 0), image
+        return 1, (0, 0, 0, 0), image, (None, None)
 

@@ -51,12 +51,16 @@ class OrientVLineDirective(AbstractDroneDirective):
             rospy.logwarn("Vertically facing " + self.lineColor + " line")
             directiveStatus = 1
 
+        elif cx == None or cy == None:
+            
+            directiveStatus = -1
+
         else:
 
             rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
             directiveStatus = 0 
 
-        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage
+        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 
 

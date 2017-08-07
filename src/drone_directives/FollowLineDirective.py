@@ -43,7 +43,7 @@ class FollowLineDirective(AbstractDroneDirective):
             xspeed = -0.3
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, 0, 0, 0), segImage
+        return directiveStatus, (xspeed, 0, 0, 0), segImage, (None, None)
 
 
 

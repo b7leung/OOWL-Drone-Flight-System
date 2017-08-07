@@ -188,7 +188,7 @@ class ProcessVideo(object):
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude):
+    def ApproximateSpeed(self, image, cx, cy, currAltitude =None, desiredAltitude=None):
 
         numrows,numcols,channels=image.shape
 
@@ -213,13 +213,16 @@ class ProcessVideo(object):
          # calculating if the drone should go up or down to match the desired altitude
         tolerance = 75
         climbSpeed = 0.25
-        if (currAltitude < (desiredAltitude - tolerance)):
-            zVelocity = climbSpeed
-        elif (currAltitude > (desiredAltitude + tolerance)):
-            zVelocity = climbSpeed * -1
+        if currAltitude != None and desiredAltitude != None:
+            if (currAltitude < (desiredAltitude - tolerance)):
+                zVelocity = climbSpeed
+            elif (currAltitude > (desiredAltitude + tolerance)):
+                zVelocity = climbSpeed * -1
+            else:
+                zVelocity = 0
         else:
             zVelocity = 0
-        
+            
         #Draws a rectangle for the center part of the drone desired to hover over object
         cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
         #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)

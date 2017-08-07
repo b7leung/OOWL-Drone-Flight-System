@@ -24,11 +24,16 @@ class HoverColorDirective(AbstractDroneDirective):
     # A directive status int:
     #   0 if algorithm is still running and drone isn't on orange yet
     #   1 if algorithm is finished and drone is now on orange
+    #  -1 if an error has occured
     #
     # A tuple of (xspeed, yspeed, yawspeed, zspeed):
     #   indicating the next instructions to fly the drone
     #
     # An image reflecting what is being done as part of the algorithm
+    #
+    # A coordinate pair that represents where things are being tracked
+    # If nothing is being tracked, (None,None) is returned
+
     def RetrieveNextInstruction(self, image, navdata):
         
         # color segmented image
@@ -43,12 +48,16 @@ class HoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("Done Hovering on " + self.platformColor)
             directiveStatus = 1
 
+        elif cx == None or cy == None:
+            
+            directiveStatus = -1
+
         else:
 
             rospy.logwarn("Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage 
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy)
 
 
 
