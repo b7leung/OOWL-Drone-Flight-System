@@ -48,7 +48,7 @@ class DroneVideo(object):
     def ShowVideo(self):
         
         if self.sleepAmt == 0:
-            self.EditVideo()
+            self.ReceivedVideo()
         else:
             self.sleepAmt = self.sleepAmt - 1
 
@@ -71,7 +71,7 @@ class DroneVideo(object):
 
     # processes the video before it is shown
     # don't implement here; implement in subclasses (TraceCircleController)
-    def EditVideo(self):
+    def ReceivedVideo(self):
         pass
 
     #defines any keys to listen to

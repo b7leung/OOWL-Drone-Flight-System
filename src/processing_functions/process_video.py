@@ -161,7 +161,7 @@ class ProcessVideo(object):
     # Takes in a segmented image input and returns a tuple in the form (x,y,bool),
     # where x and y are the center of mass and bool is whether an object was found
     # If it does not exist, the center of mass is set to the middle of the screen
-    def CenterofMass(self,image):
+    def CenterOfMass(self,image):
 
         numrows,numcols,channels=image.shape
 
@@ -188,7 +188,7 @@ class ProcessVideo(object):
 
     #takes in an image and the center of masses for its segmented version, 
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude, tolerance):
+    def ApproximateSpeed(self, image, cx, cy, currAltitude, desiredAltitude):
 
         numrows,numcols,channels=image.shape
 
@@ -211,6 +211,7 @@ class ProcessVideo(object):
         
         
          # calculating if the drone should go up or down to match the desired altitude
+        tolerance = 75
         climbSpeed = 0.25
         if (currAltitude < (desiredAltitude - tolerance)):
             zVelocity = climbSpeed
