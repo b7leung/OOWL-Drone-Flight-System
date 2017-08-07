@@ -61,8 +61,6 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
 
-        self.lastLocation = (None,None)
-        
 
     # Each state machine that trace circle controller can use is defined here;
     # When key is pressed, define the machine to be used and switch over to it.
@@ -165,48 +163,6 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],droneInstructions[2], droneInstructions[3], 0.1, 0.04)
-
-    
-    # This state will push the drone back towards the target location if 
-    # it has drifted out of the cameras vision
-    def ReturnState(self, platformColor = 'orange'):
-        platform_image = self.process.DetectColor(self.cv_image, platformColor)
-        self.cv_image = platform_image
-        numrows,numcols,channels=self.cv_image.shape
-        
-        cx = self.lastLocation[0]
-        cy = self.lastLocation[1]
-
-        centerx=numcols/2
-        centery=numrows/2
-        width=120
-        height=120
-        xlower=centerx-width #left xvalue
-        ylower=centery-height #"top" yvalue
-        xupper=centerx+width #right xvalue
-        yupper=centery+height #"bottom" yvalue
-        hasPlatform = self.process.IsHueDominant(platform_image, 0, 360, 0.2)            
-        
-        if( not hasPlatform):
-            self.stateCounter += 1
-            rospy.logwarn("currently returning, statecounter: "+ str(self.stateCounter))
-            if (self.stateCounter > 2) or (cx>xlower and cx < xupper) or (cy > ylower and cy < yupper):
-                self.state = self.lastState
-                rospy.logwarn(str(self.lastState))
-                self.stateCounter = 0
-                self.lastLocation = (None,None)
-                self.MoveFixedTime(0, 0, 0 ,0, 0.1, 0.04)
-
-                return False
-            xspeed, yspeed, zspeed = self.process.ApproximateSpeed(self.cv_image, cx, cy, 
-            (self.flightInfo["altitude"])[1], DRONE_ALTITUDE)
-            self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.04)
-            return False
-        else:
-            rospy.logwarn("done returning")
-            self.state = self.lastState
-            self.stateCounter = 0
-            return True
 
 
     # this function will go a certain speed for a set amount of time
