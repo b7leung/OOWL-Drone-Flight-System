@@ -33,13 +33,13 @@ RETURN_MACHINE = "return"
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
 # any one of its defined state machines, which will tell this class how to control the drone.
 # The particular state machine to use can be changed at run time.
-class TraceCircleController(DroneVideo, FlightstatsReceiver):
+class DroneMaster(DroneVideo, FlightstatsReceiver):
 
 
     def __init__(self):
 
         # getting access to elements in DroneVideo and FlightstatsReciever
-        super(TraceCircleController,self).__init__()
+        super(DroneMaster,self).__init__()
         
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -62,7 +62,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         self.startTimer = time.clock()
 
 
-    # Each state machine that trace circle controller can use is defined here;
+    # Each state machine that drone mastercan use is defined here;
     # When key is pressed, define the machine to be used and switch over to it.
     # Machines are defined as array of tuples. Each tuple represents a state's directive and duration
     # in the format (stateobject, stateduration). stateobject must subclass AbstractDroneDirective
@@ -86,7 +86,6 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             (ToggleCameraDirective(), 1),
             (IdleDirective(), 7),
             (CapturePhotoDirective(self.droneRecordPath), 1),
-            (IdleDirective(), 7),
             (ToggleCameraDirective(), 1),
             (IdleDirective(), 200)
             ]
@@ -107,8 +106,14 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             machineDef = [
             ( HoverColorDirective('orange', 700), 15 ),
             ( OrientVLineDirective('green', 'orange', 700), 7 ),
+            ( ToggleCameraDirective(), 1 ),
+            # give drone time to switch cameras
+            ( IdleDirective(), 7 ),
+            ( CapturePhotoDirective(self.droneRecordPath), 1 ),
+            ( ToggleCameraDirective(), 1 ),
+            ( IdleDirective(), 7 ),
             ( OrientPLineDirective('blue', 'orange', 700), 7 ),
-            ( FollowLineDirective('blue'), 10)
+            ( FollowLineDirective('blue'), 10 )
             ]
             
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
@@ -120,7 +125,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
-    # trace circle controller uses to control the drone
+    # drone master uses to control the drone
     def MachineSwitch(self, newMachineDefinition, newMachineName):
 
         originalMachine = self.currMachine
@@ -153,7 +158,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # machine's current state.
     def ReceivedVideo(self):
   
-        # If no machine is loaded, then trace circle controller does nothing 
+        # If no machine is loaded, then drone master does nothing 
         # (so that the drone may be controlled with the keyboard)
         if self.currMachine == None:
             pass
@@ -206,9 +211,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
 if __name__=='__main__':
     
-    rospy.init_node('TraceCircleController')
-    trace = TraceCircleController()
-    rospy.on_shutdown(trace.ShutdownTasks)
+    rospy.init_node('DroneMaster')
+    master = DroneMaster()
+    rospy.on_shutdown(master.ShutdownTasks)
     rospy.spin()
 
     
