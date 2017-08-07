@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.1, waitTime = 0.04):
+    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.05, waitTime = 0.0):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -25,59 +25,71 @@ class PIDController(object):
 
     def SetPIDTerms(self):
 
-        #Calculation for the P_term
-        #Linear relationship between Error and output
-        
-        self.x_pTerm = self.xP * self.xError
-        self.y_pTerm = self.yP * self.yError
+        if self.xError != None and self.yError != None:
+            #Calculation for the P_term
+            #Linear relationship between Error and output
+            
+            self.x_pTerm = self.xP * self.xError
+            self.y_pTerm = self.yP * self.yError
 
-        #Calculation for the I_term
-        #Gets the accumulation of error over time to assist the P_term in pushing the drone
+            #Calculation for the I_term
+            #Gets the accumulation of error over time to assist the P_term in pushing the drone
 
-        self.xIntegrator = self.xFiltered * self.dt.to_sec()
-        self.yIntegrator = self.yFiltered * self.dt.to_sec()
+            self.xIntegrator = self.xFiltered * self.dt.to_sec()
+            self.yIntegrator = self.yFiltered * self.dt.to_sec()
 
-        self.xIntegral += self.xIntegrator
-        self.yIntegral += self.yIntegrator
+            self.xIntegral += self.xIntegrator
+            self.yIntegral += self.yIntegrator
 
-        self.x_iTerm = self.xI * self.xIntegral
-        self.y_iTerm = self.yI * self.yIntegral
+            self.x_iTerm = self.xI * self.xIntegral
+            self.y_iTerm = self.yI * self.yIntegral
 
-        #Calculation for the D_term
-        #Computes the rate of change of our Error to compensate for overshooting the command
-        self.xTemp = self.xFiltered - self.xDerivator
-        self.yTemp = self.yFiltered - self.yDerivator
-        
-        if self.dt.to_sec() > 0.0:
-            self.xDerivative = self.xTemp/self.dt.to_sec()
-            self.yDerivative = self.yTemp/self.dt.to_sec()
+            #Calculation for the D_term
+            #Computes the rate of change of our Error to compensate for overshooting the command
+            self.xTemp = self.xFiltered - self.xDerivator
+            self.yTemp = self.yFiltered - self.yDerivator
+            
+            if self.dt.to_sec() > 0.0:
+                self.xDerivative = self.xTemp/self.dt.to_sec()
+                self.yDerivative = self.yTemp/self.dt.to_sec()
+            else:
+                self.xDerivative = 0.0
+                self.yDerivative = 0.0
+
+            self.x_dTerm = self.xD * self.xDerivative
+            self.y_dTerm = self.yD * self.yDerivative
+
+            self.xDerivator = self.xFiltered
+            self.yDerivator = self.yFiltered
+
         else:
-            self.xDerivative = 0.0
-            self.yDerivative = 0.0
+            self.xIntegral = 0.0
+            self.yIntegral = 0.0
 
-        self.x_dTerm = self.xD * self.xDerivative
-        self.y_dTerm = self.yD * self.yDerivative
-
-        self.xDerivator = self.xFiltered
-        self.yDerivator = self.yFiltered
-
-        return self.x_pTerm, self.y_pTerm, self.x_iTerm, self.y_iTerm, self.x_dTerm, self.y_dTerm
+        #return self.x_pTerm, self.y_pTerm, self.x_iTerm, self.y_iTerm, self.x_dTerm, self.y_dTerm
 
 
     #Sum up the three P,I,D terms to get the output Command
     #Return xspeed for roll and yspeed for pitch
     def GetPIDValues(self):
 
-        if self.cx < self.xLower or self.cx > self.xUpper:
-            xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
+        if self.xError != None and self.yError != None:
+            if self.cx < self.xLower or self.cx > self.xUpper:
+                xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
+            else:
+                xPID = 0.0
+
+            if self.cy < self.yLower or self.cy > self.yUpper:
+                yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
+            else:
+                yPID = 0.0
+
         else:
             xPID = 0.0
-
-        if self.cy < self.yLower or self.cy > self.yUpper:
-            yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
-        else:
             yPID = 0.0
-
+            self.xIntegral = 0.0
+            self.yIntegral = 0.0
+        
         return xPID,yPID
 
         
@@ -104,10 +116,15 @@ class PIDController(object):
         self.cx = cx
         self.cy = cy
 
-        self.xError = self.centerx - self.cx
-        self.yError = self.centery - self.cy
-        self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
-
+        if cx != None and cy != None:
+            self.xError = self.centerx - self.cx
+            self.yError = self.centery - self.cy
+            self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
+        
+        else:
+            self.xError = None
+            self.yError = None
+        
    #Set the Coefficient to an appropriate value based on trial and Error 
     def SetPIDConstants(self,Kp,Ki,Kd):
         

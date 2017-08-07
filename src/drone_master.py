@@ -167,7 +167,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # and commanding the drone to move accordingly
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
-            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],droneInstructions[2], droneInstructions[3], 0.1, 0.04)
+            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],droneInstructions[2], droneInstructions[3], 0.0, 0.0)
 
 
     # this function will go a certain speed for a set amount of time
@@ -186,10 +186,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.startTimer=time.clock()
 
         elif time.clock() > (self.startTimer+move_time):
-            xSetSpeed = 0
-            ySetSpeed = 0
-            yawSetSpeed = 0
-            zSetSpeed = 0
+        #if there is no wait time then don't reset speed to 0
+            if(wait_time != 0):
+                xSetSpeed = 0
+                ySetSpeed = 0
+                yawSetSpeed = 0
+                zSetSpeed = 0
 
         if (xSetSpeed != None and ySetSpeed != None and
         yawSetSpeed != None and zSetSpeed != None):
