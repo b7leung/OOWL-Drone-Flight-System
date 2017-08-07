@@ -16,7 +16,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
-        self.lastLocation = (None, None)
+    
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -30,13 +30,14 @@ class ReturnToColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
-        
-        
-        """platform_image = self.processVideo.DetectColor(image, self.platformColor)
-        numrows,numcols,channels=self.image.shape
-        
-        cx = self.lastLocation[0]
-        cy = self.lastLocation[1]
+
+        #navdata stores the last location in the case of an error
+        cx = navdata[0]
+        cy = navdata[1]     
+        if cx == None or cy == None:
+            return -1, (0,0,0,0),platform_image,navdata
+        platform_image = self.processVideo.DetectColor(image, self.platformColor)
+        numrows,numcols,channels=self.platform_image.shape
 
         centerx=numcols/2
         centery=numrows/2
@@ -46,21 +47,16 @@ class ReturnToColorDirective(AbstractDroneDirective):
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
-        hasPlatform = self.process.IsHueDominant(platform_image, 0, 360, 0.2)   
-
-        if xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0 and cx != None and cy != None:
-
-            rospy.logwarn("Vertically facing " + self.lineColor + " line")
-            directiveStatus = 1
-
-        else:
-
-            rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
-            directiveStatus = 0 
-
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), platform_image
-        """
-        pass
+        hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.2)   
+        hasPlatform = self.process.IsHueDominant(platform_image, 0, 360, 0.2)            
+        
+        #if the last location for the object was in the center of image do nothing
+        if ((cx > xlower and cx < xupper) or (cy > ylower and cy < yupper)):
+            return 0, (0, 0, 0, 0), platform_image, navdata
+     
+        xspeed, yspeed, _ = self.process.ApproximateSpeed(self.cv_image, cx, cy)
+        return 0,(xspeed,yspeed, 0, 0), platform_image, navdata
+        
 
 
 

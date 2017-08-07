@@ -51,11 +51,14 @@ class OrientPLineDirective(AbstractDroneDirective):
             rospy.logwarn("Perpendicular to " + self.lineColor + " line")
             directiveStatus = 1
 
+        elif cx == None or cy == None:
+            directiveStatus = -1
+
         else:
 
             rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")
             directiveStatus = 0 
 
-        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage
+        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 

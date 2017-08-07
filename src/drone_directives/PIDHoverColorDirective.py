@@ -52,12 +52,16 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1
 
+        elif cx == None or cy == None:
+            
+            directiveStatus = -1
+
         else:
 
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, 0), orange_image
+        return directiveStatus, (xspeed, yspeed, 0, 0), orange_image, (cx,cy)
 
 
 

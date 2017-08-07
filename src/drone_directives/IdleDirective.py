@@ -24,5 +24,5 @@ class IdleDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
         
         rospy.logwarn("Drone is idle")
-        return 1, (0, 0, 0, 0), image
+        return 1, (0, 0, 0, 0), image, (None, None)
 
