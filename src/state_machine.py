@@ -17,10 +17,9 @@ class StateMachine(object):
     # in the format (stateobject, stateduration). stateobject must subclass AbstractDroneDirective
     def SetStates(self, ArrayOfStates):
         
-        self.stateCounter = 0
-
         self.states = ArrayOfStates
-        # set the first element in the array of states as the state to start with
+        self.stateCounter = 0
+        # first state is the first tuple in the array
         self.currStateIndex = 0
 
 

@@ -13,27 +13,20 @@ from os.path import expanduser
 from drone_video import DroneVideo
 from drone_controller import BasicDroneController
 from flightstats_receiver import FlightstatsReceiver
-from processing_functions.process_video import ProcessVideo
-from processing_functions.process_position import DronePosition
-from processing_functions.logger import Logger
-from processing_functions.picture_manager import PictureManager
-from processing_functions.pid_controller import PIDController
-
 from state_machine import StateMachine
-from drone_directives.AbstractDroneDirective import * 
-from drone_directives.HoverColorDirective import * 
-from drone_directives.OrientVLineDirective import *
-from drone_directives.OrientPLineDirective import *
-from drone_directives.FollowLineDirective import *
+from processing_functions import *
+from drone_directives import *
+
 
 # list of possible state machines that can be used to control drone
 IDLE_MACHINE = "idle"
 HOVER_ORANGE_MACHINE = "hover_orange"
 FACE_OBJECT_MACHINE = 'face_object'
+CAPTURE_PHOTO_MACHINE = 'capture_photo'
 FIX_TO_BLUE_LINE_MACHINE = "fix_to_blue"
 FOLLOW_BLUE_LINE_MACHINE = "follow_blue"
 AUTO_CIRCLE_MACHINE= "auto_circle"
-PID_MACHINE = 'pid_state'
+PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 RETURN_MACHINE = "return"
 
 
@@ -66,12 +59,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
         # initalizing helper objects
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
-        self.pid = PIDController()
-        self.pictureManager = PictureManager(self.droneRecordPath)
         self.startTimer = time.clock()
 
         self.lastLocation = (None,None)
-        self.temp = False
         
 
     # Each state machine that trace circle controller can use is defined here;
@@ -92,8 +82,18 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('3'):
 
-            #self.IdleMachineSwitch(CAPTURE_FRAME_STATE)
-            pass
+            # toggles cameras back and forth to take a photo once every 200 frames
+            # The 7 frame idles in between are to give the drone time to switch the camera
+            machineDef = [
+            (ToggleCameraDirective(), 1),
+            (IdleDirective(), 7),
+            (CapturePhotoDirective(self.droneRecordPath), 1),
+            (IdleDirective(), 7),
+            (ToggleCameraDirective(), 1),
+            (IdleDirective(), 200)
+            ]
+
+            self.MachineSwitch( machineDef, CAPTURE_PHOTO_MACHINE)
 
         elif key == ord('4'):
 
@@ -105,6 +105,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('s'):
             
+            # does the entire circle algorithm, in order.
             machineDef = [
             ( HoverColorDirective('orange', 700), 15 ),
             ( OrientVLineDirective('green', 'orange', 700), 7 ),
@@ -115,8 +116,8 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
             
         elif key == ord('p'):
-            
-            pass
+
+            self.MachineSwitch( [(PIDHoverColorDirective('orange'), 0)], PID_HOVER_ORANGE_MACHINE )
 
 
     # Taking in some machine's definition of states and a string name,
@@ -153,7 +154,7 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
     # Runs an iteration of the current state machine to get the next set of instructions, depending on the 
     # machine's current state.
     def ReceivedVideo(self):
-        
+  
         # If no machine is loaded, then trace circle controller does nothing 
         # (so that the drone may be controlled with the keyboard)
         if self.currMachine == None:
@@ -163,52 +164,9 @@ class TraceCircleController(DroneVideo, FlightstatsReceiver):
             # and commanding the drone to move accordingly
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
-            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], 0.1, 0.04)
-
-
-    def RunPIDController(self):
-
-        orange_image = self.process.DetectColor(self.cv_image, 'orange')
-        cx, cy = self.process.CenterOfMass(orange_image)
-        self.cv_image = orange_image 
-        self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(orange_image)
-        self.pid.SetPIDConstants(0.4, 0.0, 0.0)
-        self.pid.UpdateError(cx,cy)
-        x_P, y_P, x_I, y_I, x_D, y_D = self.pid.SetPIDTerms()
-        xspeed, yspeed = self.pid.GetPIDValues()
-
-        #rospy.logwarn("X Terms: "+str(x_P)+", " + str(x_I)+", "+ str(x_D))
-        #rospy.logwarn("Y Terms: "+str(y_P)+", " + str(y_I)+", "+ str(y_D))
-
-        rospy.logwarn("xPID, yPID: "+str(xspeed) +", " + str(yspeed))
-        self.controller.SetCommand(xspeed,yspeed, 0, 0)
-        #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
+            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],droneInstructions[2], droneInstructions[3], 0.1, 0.04)
 
     
-    # Prepares the drone for capturing a photo; Toggles the camera,
-    # and tells the program to wait while the drone is switching its cameras
-    def PrepareCapture(self):
-        
-        self.controller.ToggleCamera()
-        self.state = CAPTURE_FRAME_STATE
-        # causes algorithm to wait 20 frames before executing the next state
-        self.Sleep(20)
-
-
-    # Switches to front camera, saves the current cv_image frame 
-    # as a .png into the Flight_Info folder, then switches to bottom again
-    # Returns True once the picture has been taken
-    def CaptureFrame(self):
-        pictureName = self.pictureManager.Capture(self.cv_image)
-        rospy.logwarn("Saved picture as " + pictureName)
-        self.controller.SwitchCamera(1)
-        if self.autonomyState:
-            self.state = FIX_TO_LINE_STATE
-        return True
-
-
     # This state will push the drone back towards the target location if 
     # it has drifted out of the cameras vision
     def ReturnState(self, platformColor = 'orange'):
