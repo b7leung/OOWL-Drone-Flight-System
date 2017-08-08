@@ -35,9 +35,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         cx, cy = self.processVideo.CenterOfMass(orange_image)
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
-        self.pid.SetPIDConstants(0.4, 0.0, 0.0)
+        self.pid.SetPIDConstants(0.2, 0.03, 0.05)
         self.pid.UpdateError(cx,cy)
-        x_P, y_P, x_I, y_I, x_D, y_D = self.pid.SetPIDTerms()
+        self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
 
         #rospy.logwarn("X Terms: "+str(x_P)+", " + str(x_I)+", "+ str(x_D))
