@@ -356,6 +356,16 @@ class ProcessVideo(object):
             rospy.logwarn("not none")
 
         return dst
+    #takes in an image and the center coordinate as a tuple and simply draws a circle over the coordinate    
+    def DrawCircle(self,image,center):
+        cx = center[0]
+        cy = center[1]
+
+        
+        #draw circle on cx and cy only if center is valid
+        if cx != None and cy != None:
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+            cv2.circle(image, (cx,cy), 40, 255)
 
 
     def FindBox(self,image,mask):

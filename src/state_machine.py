@@ -54,7 +54,7 @@ class StateMachine(object):
         else:
             self.errorCounter += 1
             # status = -1; error occured. call error function
-            if self.errorCounter > self.errorDuration:
+            if self.errorCounter < self.errorDuration:
                 status, droneInstructions, image, coordinate = self.errorFunction.RetrieveNextInstruction(image, self.lastLocation)
             else:
                 rospy.logwarn("The drone was not able to return")

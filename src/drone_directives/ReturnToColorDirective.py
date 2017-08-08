@@ -35,26 +35,28 @@ class ReturnToColorDirective(AbstractDroneDirective):
         cx = navdata[0]
         cy = navdata[1]     
         if cx == None or cy == None:
-            return -1, (0,0,0,0),platform_image,navdata
+            return -1, (0,0,0,0),image,navdata
         platform_image = self.processVideo.DetectColor(image, self.platformColor)
-        numrows,numcols,channels=self.platform_image.shape
+        #Draws a circle over the last location of the drone
+        self.processVideo.DrawCircle(platform_image,(cx,cy))
+
+        numrows,numcols,channels=platform_image.shape
 
         centerx=numcols/2
         centery=numrows/2
-        width=120
-        height=120
+        width=90
+        height=90
         xlower=centerx-width #left xvalue
         ylower=centery-height #"top" yvalue
         xupper=centerx+width #right xvalue
         yupper=centery+height #"bottom" yvalue
         hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.2)   
-        hasPlatform = self.process.IsHueDominant(platform_image, 0, 360, 0.2)            
         
         #if the last location for the object was in the center of image do nothing
-        if ((cx > xlower and cx < xupper) or (cy > ylower and cy < yupper)):
-            return 0, (0, 0, 0, 0), platform_image, navdata
+        #if ((cx > xlower and cx < xupper) or (cy > ylower and cy < yupper)):
+        #    return -1, (0, 0, 0, 0), platform_image, navdata
      
-        xspeed, yspeed, _ = self.process.ApproximateSpeed(self.cv_image, cx, cy)
+        xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(platform_image, cx, cy)
         return 0,(xspeed,yspeed, 0, 0), platform_image, navdata
         
 

@@ -40,7 +40,9 @@ class OrientPLineDirective(AbstractDroneDirective):
         # trying to be perpendicular to the colored line while being over the platform
         angle = self.processVideo.ShowLine(segLineImage, 20, 110, thresh = 45)
         cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
-
+        #draws center of circle on image
+        self.processVideo.DrawCircle(segLineImage,(cx,cy))
+        
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
         navdata["altitude"][1], self.hoverAltitude)
 

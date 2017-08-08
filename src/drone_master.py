@@ -51,7 +51,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
-        self.stateMachine = StateMachine((ReturnToColorDirective('orange'),4))
+        self.stateMachine = StateMachine((ReturnToColorDirective('orange'),10))
         
         # drone starts without any machine loaded, so that it can be controlled using the keyboard
         self.currMachine = None
