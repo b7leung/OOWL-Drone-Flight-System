@@ -190,28 +190,28 @@ class ProcessVideo(object):
     #returns how much the drone should move in the (x,y) direction such that oject stay in middle
     def ApproximateSpeed(self, image, cx, cy, currAltitude =None, desiredAltitude=None):
 
-        numrows,numcols,channels=image.shape
+        numrows,numcols,channels = image.shape
 
-        centerx=numcols/2
-        centery=numrows/2
+        centerx = numcols/2
+        centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width=90
-        height=90
-        xlower=centerx-width #left xvalue
-        ylower=centery-height #"top" yvalue
-        xupper=centerx+width #right xvalue
-        yupper=centery+height #"bottom" yvalue
+        width = 90
+        height = 90
+        xlower = centerx-width #left xvalue
+        ylower = centery-height #"top" yvalue
+        xupper = centerx+width #right xvalue
+        yupper = centery+height #"bottom" yvalue
 
         # alpha changes depending on if (cx,cy) is in blue box or not
         zoneLeft = centerx - centerx/2
         zoneRight = centerx + centerx/2
-        zoneTop= centery - centery/2
-        zoneBottom= centery + centery/2
+        zoneTop = centery - centery/2
+        zoneBottom = centery + centery/2
         
         
          # calculating if the drone should go up or down to match the desired altitude
-        tolerance = 75
+        tolerance = 200
         climbSpeed = 0.25
         if currAltitude != None and desiredAltitude != None:
             if (currAltitude < (desiredAltitude - tolerance)):
@@ -358,6 +358,7 @@ class ProcessVideo(object):
         return dst
     #takes in an image and the center coordinate as a tuple and simply draws a circle over the coordinate    
     def DrawCircle(self,image,center):
+    
         cx = center[0]
         cy = center[1]
 

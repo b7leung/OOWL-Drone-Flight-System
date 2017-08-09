@@ -30,15 +30,16 @@ class FollowLineDirective(AbstractDroneDirective):
         
         segImage = self.processVideo.DetectColor(image, self.lineColor)
 
-        angle = self.processVideo.ShowLine(segImage, 75, 120)
+        angle = self.processVideo.ShowLine(segImage, 60, 120)
         
         if angle == None:
+
             rospy.logwarn("Done following " + self.lineColor + " line")
             xspeed = 0
             directiveStatus = 1
             
-
         else:
+
             rospy.logwarn("Trying to follow " + self.lineColor + " line")
             xspeed = -0.3
             directiveStatus = 0

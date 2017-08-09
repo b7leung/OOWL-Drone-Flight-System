@@ -51,7 +51,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
-        self.stateMachine = StateMachine((ReturnToColorDirective('orange'),10))
+        self.stateMachine = StateMachine(None)
+        #self.stateMachine = StateMachine((ReturnToColorDirective('orange'),30))
         
         # drone starts without any machine loaded, so that it can be controlled using the keyboard
         self.currMachine = None
@@ -104,16 +105,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             # does the entire circle algorithm, in order.
             machineDef = [
-            ( HoverColorDirective('orange', 700), 15 ),
-            ( OrientVLineDirective('green', 'orange', 700), 7 ),
+            ( HoverColorDirective('orange', 1100), 15 ),
+            ( OrientVLineDirective('green', 'orange', 1000), 8 ),
             ( ToggleCameraDirective(), 1 ),
             # give drone time to switch cameras
-            ( IdleDirective(), 7 ),
+            ( IdleDirective(), 10 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective(), 7 ),
-            ( OrientPLineDirective('blue', 'orange', 700), 7 ),
-            ( FollowLineDirective('blue'), 10 )
+            ( IdleDirective(), 10 ),
+            ( OrientPLineDirective('blue', 'orange', 1000), 8 ),
+            ( FollowLineDirective('blue'), 20 )
             ]
             
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
@@ -167,7 +168,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # and commanding the drone to move accordingly
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
-            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],droneInstructions[2], droneInstructions[3], 0.0, 0.0)
+            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
+            droneInstructions[2], droneInstructions[3], 0.15, 0.04)
 
 
     # this function will go a certain speed for a set amount of time
@@ -199,11 +201,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             # log info
             #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
-            """
             self.logger.Log(
             " xSpeed: " + str(xSetSpeed) + " ySpeed: " + str(ySetSpeed)
             + " yawSpeed: " +str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
-            """
 
 
     # this is called by ROS when the node shuts down

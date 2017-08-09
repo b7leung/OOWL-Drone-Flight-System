@@ -48,6 +48,7 @@ class OrientPLineDirective(AbstractDroneDirective):
 
         yawspeed = self.processVideo.LineOrientation(segLineImage, cx, cy, angle)
 
+        #if xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0:
         if xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0 and cx != None and cy != None:
 
             rospy.logwarn("Perpendicular to " + self.lineColor + " line")
@@ -61,6 +62,6 @@ class OrientPLineDirective(AbstractDroneDirective):
             rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")
             directiveStatus = 0 
 
-        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (0.75*xspeed, 0.75*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 
