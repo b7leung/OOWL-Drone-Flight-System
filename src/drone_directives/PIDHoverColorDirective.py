@@ -33,7 +33,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         
         orange_image = self.processVideo.DetectColor(image, self.platformColor)
         cx, cy = self.processVideo.CenterOfMass(orange_image)
-        self.pid.UpdateDeltaTime()
+        #self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
         self.pid.SetPIDConstants(0.2, 0.03, 0.05)
         self.pid.UpdateError(cx,cy)
