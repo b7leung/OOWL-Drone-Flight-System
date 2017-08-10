@@ -15,7 +15,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.pid = PIDController()
+        self.pid = PIDController(0.18,0.05,0.55)
         
     
 
@@ -35,7 +35,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         cx, cy = self.processVideo.CenterOfMass(orange_image)
         #self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
-        self.pid.SetPIDConstants(0.4, 0.05, 0.12)
         self.pid.UpdateError(cx,cy)
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()

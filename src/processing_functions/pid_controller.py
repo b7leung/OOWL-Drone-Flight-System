@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.1, waitTime = 0.04):
+    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.05, waitTime = 0.005):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -17,6 +17,10 @@ class PIDController(object):
 
         self.xError = 0.0
         self.yError = 0.0
+
+        self.Kp = Kp
+        self.Ki = Ki
+        self.Kd = Kd
 
         self.dt = moveTime + waitTime
         self.oldTime = rospy.Time.now()
@@ -29,8 +33,8 @@ class PIDController(object):
             #Calculation for the P_term
             #Linear relationship between Error and output
             
-            self.x_pTerm = self.xP * self.xError
-            self.y_pTerm = self.yP * self.yError
+            self.x_pTerm = self.Kp * self.xError
+            self.y_pTerm = self.Kp * self.yError
 
             #Calculation for the I_term
             #Gets the accumulation of error over time to assist the P_term in pushing the drone
@@ -41,8 +45,8 @@ class PIDController(object):
             self.xIntegral += self.xIntegrator
             self.yIntegral += self.yIntegrator
 
-            self.x_iTerm = self.xI * self.xIntegral
-            self.y_iTerm = self.yI * self.yIntegral
+            self.x_iTerm = self.Ki * self.xIntegral
+            self.y_iTerm = self.Ki * self.yIntegral
 
             #Calculation for the D_term
             #Computes the rate of change of our Error to compensate for overshooting the command
@@ -56,8 +60,8 @@ class PIDController(object):
                 self.xDerivative = 0.0
                 self.yDerivative = 0.0
 
-            self.x_dTerm = self.xD * self.xDerivative
-            self.y_dTerm = self.yD * self.yDerivative
+            self.x_dTerm = self.Kd * self.xDerivative
+            self.y_dTerm = self.Kd * self.yDerivative
 
             self.xDerivator = self.xFiltered
             self.yDerivator = self.yFiltered
@@ -75,12 +79,12 @@ class PIDController(object):
 
         if self.xError != None and self.yError != None:
             if self.cx < self.xLower or self.cx > self.xUpper:
-                xPID = self.x_pTerm + self.x_iTerm + self.x_dTerm
+                xPID = (self.x_pTerm + self.x_iTerm + self.x_dTerm)/self.centerx
             else:
                 xPID = 0.0
 
             if self.cy < self.yLower or self.cy > self.yUpper:
-                yPID = self.y_pTerm + self.y_iTerm + self.y_dTerm
+                yPID = (self.y_pTerm + self.y_iTerm + self.y_dTerm)/self.centery
             else:
                 yPID = 0.0
 
@@ -125,17 +129,6 @@ class PIDController(object):
             self.xError = None
             self.yError = None
         
-   #Set the Coefficient to an appropriate value based on trial and Error 
-    def SetPIDConstants(self,Kp,Ki,Kd):
-        
-        self.xP = Kp/self.centerx
-        self.xI = Ki/self.centerx
-        self.xD = Kd/self.centerx
-        
-        self.yP = Kp/self.centery
-        self.yI = Ki/self.centery
-        self.yD = Kd/self.centery
-
     def UpdateDeltaTime(self):
         
         self.timeNow = rospy.Time.now()

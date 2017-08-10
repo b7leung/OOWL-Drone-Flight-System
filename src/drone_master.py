@@ -169,7 +169,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], 0.1, 0.04)
+            droneInstructions[2], droneInstructions[3], 0.05, 0.005)
 
 
     # this function will go a certain speed for a set amount of time
