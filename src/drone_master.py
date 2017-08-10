@@ -61,7 +61,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
-
+        self.waitTime = 0
+        self.moveTime = 0
 
     # Each state machine that drone mastercan use is defined here;
     # When key is pressed, define the machine to be used and switch over to it.
@@ -102,7 +103,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.MachineSwitch( [(FollowLineDirective('blue'), 0)], FOLLOW_BLUE_LINE_MACHINE )
 
         elif key == ord('s'):
-            
+            self.waitTime = 0.08
+            self.moveTime = 0.15
             # does the entire circle algorithm, in order.
             machineDef = [
             ( HoverColorDirective('orange', 1100), 15 ),
@@ -113,14 +115,15 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
-            ( OrientPLineDirective('blue', 'orange', 1000), 8 ),
-            ( FollowLineDirective('blue'), 20 )
+            ( OrientPLineDirective('blue', 'orange', 1000), 15 ), #8
+            ( FollowLineDirective('blue'), 40 )#10
             ]
             
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
             
         elif key == ord('p'):
-
+            self.waitTime = 0.0
+            self.moveTime = 0.0
             self.MachineSwitch( [(PIDHoverColorDirective('orange'), 0)], PID_HOVER_ORANGE_MACHINE )
 
 
@@ -169,7 +172,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], 0.05, 0.005)
+            droneInstructions[2], droneInstructions[3], self.moveTime, self.waitTime)
 
 
     # this function will go a certain speed for a set amount of time

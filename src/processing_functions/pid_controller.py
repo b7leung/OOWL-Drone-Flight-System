@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.05, waitTime = 0.005):
+    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.0, waitTime = 0.00):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -39,8 +39,8 @@ class PIDController(object):
             #Calculation for the I_term
             #Gets the accumulation of error over time to assist the P_term in pushing the drone
 
-            self.xIntegrator = self.xFiltered * self.dt#.to_sec()
-            self.yIntegrator = self.yFiltered * self.dt#.to_sec()
+            self.xIntegrator = self.xFiltered * self.dt.to_sec()
+            self.yIntegrator = self.yFiltered * self.dt.to_sec()
 
             self.xIntegral += self.xIntegrator
             self.yIntegral += self.yIntegrator
@@ -53,9 +53,9 @@ class PIDController(object):
             self.xTemp = self.xFiltered - self.xDerivator
             self.yTemp = self.yFiltered - self.yDerivator
             
-            if self.dt > 0.0: #.to_sec()
-                self.xDerivative = self.xTemp/self.dt#.to_sec()
-                self.yDerivative = self.yTemp/self.dt#.to_sec()
+            if self.dt.to_sec() > 0.0:
+                self.xDerivative = self.xTemp/self.dt.to_sec()
+                self.yDerivative = self.yTemp/self.dt.to_sec()
             else:
                 self.xDerivative = 0.0
                 self.yDerivative = 0.0
@@ -79,6 +79,7 @@ class PIDController(object):
 
         if self.xError != None and self.yError != None:
             if self.cx < self.xLower or self.cx > self.xUpper:
+                rospy.logwarn( "p:" + str(self.x_pTerm)+ " i:"+ str(self.x_iTerm)+" d:"+str(self.x_dTerm))
                 xPID = (self.x_pTerm + self.x_iTerm + self.x_dTerm)/self.centerx
             else:
                 xPID = 0.0

@@ -15,7 +15,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.pid = PIDController(0.18,0.05,0.55)
+        self.pid = PIDController(0.09, 0.00, 0.00)
         
     
 
@@ -33,16 +33,14 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         
         orange_image = self.processVideo.DetectColor(image, self.platformColor)
         cx, cy = self.processVideo.CenterOfMass(orange_image)
-        #self.pid.UpdateDeltaTime()
+        self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
         self.pid.UpdateError(cx,cy)
         self.pid.SetPIDTerms()
+        #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()
 
-        #rospy.logwarn("X Terms: "+str(x_P)+", " + str(x_I)+", "+ str(x_D))
-        #rospy.logwarn("Y Terms: "+str(y_P)+", " + str(y_I)+", "+ str(y_D))
-
-        rospy.logwarn("xPID, yPID: "+str(xspeed) +", " + str(yspeed))
+        #rospy.logwarn(str(xspeed)+"  "+ str(yspeed))
         #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
 
         # if there is orange in the screen, and the drone is in the middle, return true
@@ -60,7 +58,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, 0), orange_image, (cx,cy)
+        return directiveStatus, (xspeed, 0, 0, 0), orange_image, (cx,cy)
 
 
 

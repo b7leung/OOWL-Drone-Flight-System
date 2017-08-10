@@ -75,12 +75,12 @@ class ProcessVideo(object):
         #lines contains rho and theta values
         
         lines = cv2.HoughLines(edges,1,pi/180,thresh)
-        while(type(lines)==type(None) and thresh > 0):
+        """while(type(lines)==type(None) and thresh > 30):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
-            thresh-=thresh
-       
+            thresh-=1
+       """
         #average rho and theta values
-        if(thresh!=0):
+        if(lines!= None):
         
             Lines=array(lines)
             thetas=Lines[:,:,1]
@@ -196,8 +196,8 @@ class ProcessVideo(object):
         centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width = 90
-        height = 90
+        width = 35
+        height = 35
         xlower = centerx-width #left xvalue
         ylower = centery-height #"top" yvalue
         xupper = centerx+width #right xvalue

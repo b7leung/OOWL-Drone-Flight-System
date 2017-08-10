@@ -30,7 +30,7 @@ class FollowLineDirective(AbstractDroneDirective):
         
         segImage = self.processVideo.DetectColor(image, self.lineColor)
 
-        angle = self.processVideo.ShowLine(segImage, 60, 120)
+        angle = self.processVideo.ShowLine(segImage, 60, 130,thresh = 40)
         
         if angle == None:
 
