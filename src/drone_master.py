@@ -73,17 +73,24 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         key=cv2.waitKey(1) & 0xFF
 
         if key == ord('1'):
-            
+
+            self.moveTime = 0.15
+            self.waitTime = 0.08
             self.MachineSwitch( [(HoverColorDirective('orange', 700), 0)], HOVER_ORANGE_MACHINE )
             
         elif key == ord('2'):
 
+            self.moveTime = 0.15
+            self.waitTime = 0.08
             self.MachineSwitch( [(OrientVLineDirective('green', 'orange', 700), 0)], FACE_OBJECT_MACHINE)
 
         elif key == ord('3'):
 
+
             # toggles cameras back and forth to take a photo once every 200 frames
             # The 7 frame idles in between are to give the drone time to switch the camera
+            self.moveTime = 0.15
+            self.waitTime = 0.08
             machineDef = [
             (ToggleCameraDirective(), 1),
             (IdleDirective(), 7),
@@ -96,34 +103,41 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('4'):
 
+            self.moveTime = 0.15
+            self.waitTime = 0.08
             self.MachineSwitch( [(OrientPLineDirective('blue', 'orange', 700), 0)], FIX_TO_BLUE_LINE_MACHINE)
 
         elif key == ord('5'):
             
+            self.moveTime = 0.15
+            self.waitTime = 0.08
             self.MachineSwitch( [(FollowLineDirective('blue'), 0)], FOLLOW_BLUE_LINE_MACHINE )
 
         elif key == ord('s'):
-            self.waitTime = 0.08
+
             self.moveTime = 0.15
+            self.waitTime = 0.08
+
             # does the entire circle algorithm, in order.
             machineDef = [
-            ( HoverColorDirective('orange', 1100), 15 ),
-            ( OrientVLineDirective('green', 'orange', 1000), 8 ),
+            ( HoverColorDirective('orange', 1000), 3 ),
+            ( OrientVLineDirective('green', 'orange', 1000), 4 ),
             ( ToggleCameraDirective(), 1 ),
             # give drone time to switch cameras
             ( IdleDirective(), 10 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
-            ( OrientPLineDirective('blue', 'orange', 1000), 15 ), #8
-            ( FollowLineDirective('blue'), 40 )#10
+            ( OrientPLineDirective('blue', 'orange', 1000), 4 ),
+            ( FollowLineDirective('blue'), 20 )
             ]
             
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
             
         elif key == ord('p'):
-            self.waitTime = 0.0
+
             self.moveTime = 0.0
+            self.waitTime = 0.0
             self.MachineSwitch( [(PIDHoverColorDirective('orange'), 0)], PID_HOVER_ORANGE_MACHINE )
 
 

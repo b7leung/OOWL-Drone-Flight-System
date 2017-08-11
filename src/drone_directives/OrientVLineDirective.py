@@ -46,9 +46,10 @@ class OrientVLineDirective(AbstractDroneDirective):
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
         navdata["altitude"][1], self.hoverAltitude)
 
-        yawspeed = self.processVideo.ObjectOrientation(segLineImage, cx, cy, angle)
+        yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 6)
 
-        if xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0 and cx != None and cy != None:
+        if ( xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0
+        and cx != None and cy != None ):
 
             rospy.logwarn("Vertically facing " + self.lineColor + " line")
             directiveStatus = 1
@@ -59,10 +60,14 @@ class OrientVLineDirective(AbstractDroneDirective):
 
         else:
 
-            rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
+            # if this frame failed to detect a line, just set a yawspeed of 0
+            # in hopes that the next frames will detect one again
+            if yawspeed == None:
+                yawspeed = 0
             directiveStatus = 0 
+            rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
 
-        return directiveStatus, (0.7*xspeed, 0.7*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (0.85*xspeed, 0.85*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 
 

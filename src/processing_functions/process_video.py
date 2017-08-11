@@ -155,6 +155,7 @@ class ProcessVideo(object):
             angle=None
             rho=None
             radians=None
+
         return angle
 
 
@@ -274,50 +275,59 @@ class ProcessVideo(object):
         return (xspeed, yspeed, zVelocity)
 
 
-    #returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
-    #keep blue line between 87-93 degrees (perfect at 90 degrees)
-    def LineOrientation(self,image,cx,cy,angle):
-        numrows,numcols,channels=image.shape
-        
-        centerx=numcols/2
-        centery=numrows/2
-        
-        upperangle = 93
-        lowerangle = 87
-        
-        #Drone rotates Counter Clock_Wise
-        if angle<lowerangle and angle>0:
-            yawspeed=0.7
-        #Drone rotates Clock_Wise
-        elif angle>upperangle and angle<180:
-            yawspeed=-0.7
+    # returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
+    # keep blue line between +/- thresh of 90 degrees (considered perfect at 90 degrees)
+    # returns None if no yawspeed could be calculated
+    def LineOrientation(self, image, angle, thresh):
+
+        if angle == None:
+            return None
+
+        numrows, numcols, _ = image.shape
+        centerx = numcols/2
+        centery = numrows/2
+        upperAngle = 90 + thresh
+        lowerAngle = 90 - thresh
+
+        # Drone rotates Counter Clock_Wise
+        if angle < lowerAngle and angle > 0:
+            yawspeed=0.5
+
+        # Drone rotates Clock_Wise
+        elif angle > upperAngle and angle < 180:
+            yawspeed=-0.5
+
+        # Drone is at the right angle; no need to rotate 
         else:
             yawspeed=0
         
         return yawspeed
     
 
-    #return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
-    #keeps line between 177-183 degrees (equal to 178-2 degrees, perfect at 0 degrees)
-    def ObjectOrientation(self,image,cx,cy,angle):
-        numrows,numcols,channels=image.shape
+    # return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
+    # keeps line between +/- thresh from 0 degrees (perfect at 0 degrees)
+    # returns None if no yawspeed could be calculated
+    def ObjectOrientation(self, image, angle, thresh):
+        
+        if angle == None:
+            return None
 
+        numrows, numcols, _ = image.shape
         centerx = numcols/2
         centery = numrows/2
+        upperAngle = 180 - thresh
+        lowerAngle = 0 + thresh
         
-        
-        upperangle=177
-        lowerangle=3
+        # Drone rotates Counter Clock-Wise
+        if angle < upperAngle and angle > 90:
+            yawspeed = 0.5
 
-        
-        #Drone rotates Counter Clock-Wise
-        if angle<upperangle and angle>90:
-            yawspeed=0.5
-        #Drone rotates Clock_Wise
-        elif angle>lowerangle and angle<90:
-            yawspeed=-0.5
+        # Drone rotates Clock_Wise
+        elif angle > lowerAngle and angle < 90:
+            yawspeed = -0.5
+
         else:
-            yawspeed=0
+            yawspeed = 0
 
         return yawspeed
         

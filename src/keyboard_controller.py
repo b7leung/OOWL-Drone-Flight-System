@@ -18,7 +18,7 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands2.png")
+	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands3.png")
 	self.screen.blit(background,[0,0])
         pygame.display.update()
 
@@ -54,9 +54,8 @@ class KeyboardController(object):
                     elif event.key == pygame.K_c:
                         self.controller.ToggleCamera()
                         print "toggle camera"
-                    elif event.key == pygame.K_l:
+                    elif event.key == pygame.K_z:
                         self.controller.FlatTrim()
-                        print "Flat Trim"
                     else:
                     
                         if event.key == pygame.K_w:
