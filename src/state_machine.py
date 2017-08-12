@@ -64,17 +64,23 @@ class StateMachine(object):
         else:
 
             if self.errorFunction != None:
-                self.errorCounter += 1
-                if self.errorCounter < self.errorDuration:
-                    status, droneInstructions, image, coordinate = self.errorFunction.RetrieveNextInstruction(image, self.lastLocation)
-                    rospy.logwarn(str(droneInstructions))
-                else:
-                    rospy.logwarn("The drone was not able to return")
 
-                if status == 0:
-                    rospy.logwarn("The drone is returning to platform")
+                if self.errorCounter < self.errorDuration:
+
+                    status, droneInstructions, image, coordinate = self.errorFunction.RetrieveNextInstruction(image, self.lastLocation)
+                    self.errorCounter += 1
+                    
+                    if status == 1:
+                        rospy.logwarn("The drone has returned to platform")
+                    elif status == 0:
+                        rospy.logwarn("Trying to return")
+                    else:
+                        rospy.logwarn("Nothing to return to")
+
                 else:
-                    rospy.logwarn("Nothing to return to")
+
+                    rospy.logwarn("FUBAR -- state machine failed")
+
                 
         return droneInstructions, image
     

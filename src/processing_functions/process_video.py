@@ -70,7 +70,7 @@ class ProcessVideo(object):
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
         #now we have binary image with edges of tape
-        gray = cv2.GaussianBlur( gray, (9,9),0)
+        gray = cv2.GaussianBlur( gray, (7,7),0)
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
         #lines contains rho and theta values
         
@@ -187,9 +187,11 @@ class ProcessVideo(object):
             return (None, None)
 
 
-    #takes in an image and the center of masses for its segmented version, 
-    #returns how much the drone should move in the (x,y) direction such that oject stay in middle
-    def ApproximateSpeed(self, image, cx, cy, currAltitude =None, desiredAltitude=None):
+    # takes in an image and the center of masses for its segmented version, 
+    # returns how much the drone should move in the (x,y) direction such that
+    # object stays in middle, within +/- tolerance pixels of the center
+    
+    def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None, tolerance = 20 ):
 
         numrows,numcols,channels = image.shape
 
@@ -197,8 +199,8 @@ class ProcessVideo(object):
         centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width = 35
-        height = 35
+        width = tolerance * 2
+        height = tolerance * 2
         xlower = centerx-width #left xvalue
         ylower = centery-height #"top" yvalue
         xupper = centerx+width #right xvalue
@@ -291,15 +293,15 @@ class ProcessVideo(object):
 
         # Drone rotates Counter Clock_Wise
         if angle < lowerAngle and angle > 0:
-            yawspeed=0.5
+            yawspeed = 1
 
         # Drone rotates Clock_Wise
         elif angle > upperAngle and angle < 180:
-            yawspeed=-0.5
+            yawspeed = -1
 
         # Drone is at the right angle; no need to rotate 
         else:
-            yawspeed=0
+            yawspeed = 0
         
         return yawspeed
     

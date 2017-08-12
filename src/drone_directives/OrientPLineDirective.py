@@ -38,36 +38,47 @@ class OrientPLineDirective(AbstractDroneDirective):
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
         # trying to be perpendicular to the colored line while being over the platform
-        angle = self.processVideo.ShowLine(segLineImage, thresh = 40)
+        angle = self.processVideo.ShowLine(segLineImage, thresh = 20)
         #angle = self.processVideo.ShowLine(segLineImage, 20, 110, thresh = 45)
         cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
         #draws center of circle on image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
-        navdata["altitude"][1], self.hoverAltitude)
+        navdata["altitude"][1], self.hoverAltitude, tolerance = 15)
 
         yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10)
 
         if ( xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0
         and cx != None and cy != None ):
 
-            #rospy.logwarn("Perpendicular to " + self.lineColor + " line")
+            rospy.logwarn("Perpendicular to " + self.lineColor + " line")
             directiveStatus = 1
 
         elif cx == None or cy == None:
+
+            rospy.logwarn("*** ERROR: Lost " + self.platformColor + " platform ***")
             directiveStatus = -1
 
         else:
+            
+            # If drone is still trying to align, it adapts to one of two algorithms:
 
-            # if this frame failed to detect a line, just set a yawspeed of 0
-            # in hopes that the next frames will detect one again
+            # if this frame failed to detect a line, go towards platform
+            # without turning in hopes that the next frames will detect one again
             if yawspeed == None:
                 yawspeed = 0
-            directiveStatus = 0 
-            #rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")
 
-        rospy.logwarn("yaw: " + str(yawspeed))
-        return directiveStatus, (0.85*xspeed, 0.85*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+            # if a line was found and drone isn't perpendicular yet,
+            # just turn the drone; no need move drone
+            elif yawspeed != 0:
+                xspeed = 0
+                yspeed = 0
+                zspeed = 0
+                
+            directiveStatus = 0 
+            rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")
+            
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 

@@ -38,13 +38,13 @@ class OrientVLineDirective(AbstractDroneDirective):
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
         # trying to be parallel to the colored line while being over the platform
-        angle = self.processVideo.ShowLine(segLineImage, thresh = 40)
+        angle = self.processVideo.ShowLine(segLineImage, thresh = 35)
         cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
         #Draws a circle over the center of platform on lined image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
-        navdata["altitude"][1], self.hoverAltitude)
+        navdata["altitude"][1], self.hoverAltitude, tolerance = 30)
 
         yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 6)
 
@@ -56,18 +56,29 @@ class OrientVLineDirective(AbstractDroneDirective):
 
         elif cx == None or cy == None:
             
+            rospy.logwarn("*** ERROR: Lost " + self.platformColor + " platform ***")
             directiveStatus = -1
 
         else:
 
-            # if this frame failed to detect a line, just set a yawspeed of 0
-            # in hopes that the next frames will detect one again
+            # If drone is still trying to align, it adapts to one of two algorithms:
+
+            # if this frame failed to detect a line, go towards platform
+            # without turning in hopes that the next frames will detect one again
             if yawspeed == None:
                 yawspeed = 0
+
+            # if a line was found and drone isn't vertical yet,
+            # just turn the drone; no need move drone
+            elif yawspeed != 0:
+                xspeed = 0
+                yspeed = 0
+                zspeed = 0
+
             directiveStatus = 0 
             rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
 
-        return directiveStatus, (0.85*xspeed, 0.85*yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 
 

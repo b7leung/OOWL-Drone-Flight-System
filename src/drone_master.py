@@ -51,7 +51,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
-        self.stateMachine = StateMachine(None)
+        self.stateMachine = StateMachine( (ReturnToColorDirective('orange'), 80) )
         #self.stateMachine = StateMachine((ReturnToColorDirective('orange'),30))
         
         # drone starts without any machine loaded, so that it can be controlled using the keyboard
@@ -105,7 +105,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            self.MachineSwitch( [(OrientPLineDirective('blue', 'orange', 700), 0)], FIX_TO_BLUE_LINE_MACHINE)
+
+            machineDef = [
+            (OrientPLineDirective('blue', 'orange', 700), 4)
+            ]
+
+            self.MachineSwitch( machineDef, FIX_TO_BLUE_LINE_MACHINE)
 
         elif key == ord('5'):
             
@@ -120,7 +125,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             # does the entire circle algorithm, in order.
             machineDef = [
-            ( HoverColorDirective('orange', 1000), 3 ),
+            #( HoverColorDirective('orange', 1000), 3 ),
             ( OrientVLineDirective('green', 'orange', 1000), 4 ),
             ( ToggleCameraDirective(), 1 ),
             # give drone time to switch cameras
@@ -129,7 +134,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
             ( OrientPLineDirective('blue', 'orange', 1000), 4 ),
-            ( FollowLineDirective('blue'), 20 )
+            ( FollowLineDirective('blue'), 25 )
             ]
             
             self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
