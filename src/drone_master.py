@@ -133,7 +133,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            altitude = 1000
+            altitude = 1200
             
             """
             init = [
@@ -163,12 +163,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ]
             """
 
-            """
-            error = 
-            (ReturnToColorDirective('orange'), 20)
-            """
+            error = (ReturnToColorDirective('orange'), 5)
             
-            self.MachineSwitch( None, alg, algCycles, None, None, AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, error, AUTO_CIRCLE_MACHINE)
             
         elif key == ord('p'):
 

@@ -45,8 +45,9 @@ class StateMachine(object):
         self.errorInstructions = errorInstructions
         self.errorFlag = False
         self.errorDuration = 0
-        self.errorMaxDuration = 80
+        self.errorMaxDuration = 400
         self.lastLocation = (None, None)
+        self.errorCount = 0
 
         self.MachineFinished = False
 
@@ -68,21 +69,19 @@ class StateMachine(object):
 
             # if the error flag was set, use it as the current state instead of the normal one
             if self.errorFlag:
-
-                currState = errorInstructions[0]
-                currStateDuration = errorInstructions[1]
+                currState = self.errorInstructions[0]
+                currStateDuration = self.errorInstructions[1]
                 self.errorDuration += 1
+                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,self.lastLocation)
                 # if it's been over the specified limit without success, abort
-                if self.errorDuration > self.errorMaxDuration:
+                if self.errorDuration > self.errorMaxDuration or status == -1:
                     rospy.logwarn("********** ABORTING -- MACHINE FAILED **********") 
                     self.MachineFinished = True
-
             else:
                 
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][1]
-            
-            status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,navdata)
+                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,navdata)
 
             # if the current state is finished, increment counter
             if status == 1:
@@ -112,17 +111,19 @@ class StateMachine(object):
                             if ( self.stateMachineDef[self.currPhase][1] != -1 and
                             self.phaseCycles >= self.stateMachineDef[self.currPhase][1]) :
                                 self.currPhase += 1
+                self.errorCount = 0
 
             # if state is still running, reset counter and let it keep continue running
             elif status == 0:
 
                 self.stateFinishedCounter = 0
                 self.lastLocation = coordinate
+                self.errorCount = 0
 
             # if status = -1; error occured.
             else:
-                
-                if self.errorInstructions is not None:
+                self.errorCount +=1 
+                if self.errorInstructions != None and self.errorCount >=17:
                     self.errorFlag = True
 
             return droneInstructions, image
