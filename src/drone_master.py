@@ -51,7 +51,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
-        self.stateMachine = StateMachine( (ReturnToColorDirective('orange'), 80) )
+        self.stateMachine = StateMachine()
         #self.stateMachine = StateMachine((ReturnToColorDirective('orange'),30))
         
         # drone starts without any machine loaded, so that it can be controlled using the keyboard
@@ -76,13 +76,17 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            self.MachineSwitch( [(HoverColorDirective('orange', 700), 0)], HOVER_ORANGE_MACHINE )
+            alg = [(HoverColorDirective('orange', 700), 0)]
+            algCycles = -1
+            self.MachineSwitch( None , alg, algCycles, None, None, HOVER_ORANGE_MACHINE )
             
         elif key == ord('2'):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            self.MachineSwitch( [(OrientVLineDirective('green', 'orange', 700), 0)], FACE_OBJECT_MACHINE)
+            alg = [(OrientVLineDirective('green', 'orange', 700), 0)]
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
 
         elif key == ord('3'):
 
@@ -91,90 +95,116 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # The 7 frame idles in between are to give the drone time to switch the camera
             self.moveTime = 0.15
             self.waitTime = 0.08
-            machineDef = [
+            alg = [
             (ToggleCameraDirective(), 1),
             (IdleDirective(), 7),
             (CapturePhotoDirective(self.droneRecordPath), 1),
             (ToggleCameraDirective(), 1),
             (IdleDirective(), 200)
             ]
+            algCycles = -1
 
-            self.MachineSwitch( machineDef, CAPTURE_PHOTO_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
 
         elif key == ord('4'):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-
-            machineDef = [
+            alg = [
             (OrientPLineDirective('blue', 'orange', 700), 4)
             ]
+            algCycles = -1
 
-            self.MachineSwitch( machineDef, FIX_TO_BLUE_LINE_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, None, FIX_TO_BLUE_LINE_MACHINE)
 
         elif key == ord('5'):
             
             self.moveTime = 0.15
             self.waitTime = 0.08
-            self.MachineSwitch( [(FollowLineDirective('blue'), 0)], FOLLOW_BLUE_LINE_MACHINE )
+            alg = [
+            (FollowLineDirective('blue'), 0)
+            ]
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
 
         elif key == ord('s'):
 
+            # does the entire circle algorithm, in order.
+
             self.moveTime = 0.15
             self.waitTime = 0.08
+            altitude = 1000
+            
+            """
+            init = [
+            ( SetFlatTrimDirective(), 1),
+            ( TakeoffDirective(), 1),
+            ( HoverColorDirective('orange', altitude), 15 )
+            ]
+            """
 
-            # does the entire circle algorithm, in order.
-            machineDef = [
-            #( HoverColorDirective('orange', 1000), 3 ),
-            ( OrientVLineDirective('green', 'orange', 1000), 4 ),
+            alg = [
+            ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
             ( ToggleCameraDirective(), 1 ),
             # give drone time to switch cameras
             ( IdleDirective(), 10 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
-            ( OrientPLineDirective('blue', 'orange', 1000), 4 ),
+            ( OrientPLineDirective('blue', 'orange', altitude ), 4 ),
             ( FollowLineDirective('blue'), 25 )
             ]
+
+            algCycles = 4
             
-            self.MachineSwitch( machineDef, AUTO_CIRCLE_MACHINE)
+            """
+            end = [
+            ( LandDirective(), 1)
+            ]
+            """
+
+            """
+            error = 
+            (ReturnToColorDirective('orange'), 20)
+            """
+            
+            self.MachineSwitch( None, alg, algCycles, None, None, AUTO_CIRCLE_MACHINE)
             
         elif key == ord('p'):
 
             self.moveTime = 0.0
             self.waitTime = 0.0
-            self.MachineSwitch( [(PIDHoverColorDirective('orange'), 0)], PID_HOVER_ORANGE_MACHINE )
+            alg = [
+            (PIDHoverColorDirective('orange'), 0)
+            ]
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
 
 
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
     # drone master uses to control the drone
-    def MachineSwitch(self, newMachineDefinition, newMachineName):
+    def MachineSwitch(self, newMachineInit, newMachineAlg,
+    newMachineEnd, newMachineErr, newMachineAlgCycles, newMachineName):
+        
+        # pause the current state
+        self.controller.SetCommand(0,0,0,0)
 
-        originalMachine = self.currMachine
-
-        if originalMachine == None:
-            # if no machine is loaded (drone is idle), set 
-            # the current machine as specified in the parameter
-            self.stateMachine.SetStates(newMachineDefinition)
-            self.currMachine = newMachineName
-
-        elif originalMachine == newMachineName:
-            # if the current machine is toggled again with the same machine,
-            # remove the machine and return back to the idle 
-            self.controller.SetCommand(0,0,0,0)
+        oldMachine = self.currMachine
+        # if the current machine is toggled again with the same machine,
+        # remove the machine and return back to the idle 
+        if oldMachine == newMachineName:
             self.currMachine = None
-
+        
+        # Otherwise, just switch to the machine
         else:
-            # if the drone was in an non-idle state and the new state is different than the original,
-            # directly switch to it
-            self.controller.SetCommand(0,0,0,0)
-            self.stateMachine.SetStates(newMachineDefinition)
+            self.stateMachine.DefineMachine(newMachineInit, newMachineAlg,
+            newMachineEnd, newMachineErr, newMachineAlgCycles)
             self.currMachine = newMachineName
-            
-        rospy.logwarn('======= Changed from the "' + str(originalMachine) + '" machine to the "' +
-        str(self.currMachine) + '" machine =======')
-            
+        
+        rospy.logwarn('======= Drone Master: Changing from the "' + str(oldMachine) +
+        '" machine to the "' + str(self.currMachine) + '" machine =======')
+
 
     # This is called every time a frame (in self.cv_image) is updated.
     # Runs an iteration of the current state machine to get the next set of instructions, depending on the 
