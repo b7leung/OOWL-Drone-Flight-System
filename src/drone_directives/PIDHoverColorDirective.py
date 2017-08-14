@@ -9,13 +9,13 @@ from processing_functions.pid_controller import PIDController
 # a specified color underneath it
 class PIDHoverColorDirective(AbstractDroneDirective):
     
-    # sets up this directive
+    # sets up this directivep
     # platformColor: color to hover over
     def __init__(self, platformColor):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.pid = PIDController(0.09, 0.00, 0.00)
+        self.pid = PIDController(0.06, 0.004, 0.05)
         
     
 
@@ -39,6 +39,8 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.SetPIDTerms()
         #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()
+        self.pid.DrawArrow(orange_image,xspeed,yspeed)
+
 
         #rospy.logwarn(str(xspeed)+"  "+ str(yspeed))
         #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
@@ -58,7 +60,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, 0, 0, 0), orange_image, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, 0, 0), orange_image, (cx,cy)
 
 
 
