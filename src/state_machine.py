@@ -111,6 +111,7 @@ class StateMachine(object):
                             if ( self.stateMachineDef[self.currPhase][1] != -1 and
                             self.phaseCycles >= self.stateMachineDef[self.currPhase][1]) :
                                 self.currPhase += 1
+                                self.phaseCycles = 0
                 self.errorCount = 0
 
             # if state is still running, reset counter and let it keep continue running

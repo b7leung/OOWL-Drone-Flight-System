@@ -4,6 +4,7 @@ import rospy
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 from processing_functions.pid_controller import PIDController
+from os.path import expanduser
 
 # describes instruction on what the drone should do in order to hover over 
 # a specified color underneath it
@@ -15,9 +16,25 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.pid = PIDController(0.09, 0.00, 0.00)
-        
+        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+
+        self.pid = PIDController(0.5, 0.0, 0.0)
+        self.WriteSettings(0.5,0.0,0.0)
     
+        
+    def WriteSettings(self,P,I,D):
+        File  = open(self.settingsPath, 'w') 
+        File.write(str(P)+" ")
+        File.write(str(I)+" ")
+        File.write(str(D))
+        File.close()
+
+    def GetSettings(self):
+        File  = open(self.settingsPath, 'r') 
+        p, i, d = [float(x) for x in next(File).split()]
+        File.close()
+        return p, i ,d
+
 
     # given the image and navdata of the drone, returns the following in order:
     #
@@ -36,6 +53,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
         self.pid.UpdateError(cx,cy)
+        p,i,d= self.GetSettings()
+        
+        self.pid.resetPID(p,i,d)
         self.pid.SetPIDTerms()
         #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()

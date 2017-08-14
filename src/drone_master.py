@@ -60,6 +60,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # initalizing helper objects
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
+        
+
         self.startTimer = time.clock()
         self.waitTime = 0
         self.moveTime = 0
@@ -132,15 +134,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # does the entire circle algorithm, in order.
 
             self.moveTime = 0.15
-            self.waitTime = 0.08
+            self.waitTime = 0.04
             altitude = 1200
             
             init = [
             ( FlatTrimDirective(), 1),
+            ( IdleDirective(), 10 ),
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
             ( TakeoffDirective(), 1),
-            ( IdleDirective(), 300 ),
+            ( IdleDirective(), 140 ),
             ( HoverColorDirective('orange', altitude), 10 )
             ]
 

@@ -41,7 +41,7 @@ class FollowLineDirective(AbstractDroneDirective):
         else:
 
             rospy.logwarn("Trying to follow " + self.lineColor + " line")
-            xspeed = -0.6
+            xspeed = -0.9
             directiveStatus = 0
 
         return directiveStatus, (xspeed, 0, 0, 0), segImage, (None, None)
