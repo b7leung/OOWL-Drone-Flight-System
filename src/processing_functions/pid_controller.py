@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.5, Ki=0.0, Kd=0.0, moveTime = 0.0, waitTime = 0.00):
+    def __init__(self,Kp=0.2, Ki=0.0, Kd=0.0, moveTime = 0.0, waitTime = 0.00):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -45,13 +45,18 @@ class PIDController(object):
             self.xIntegral += self.xIntegrator
             self.yIntegral += self.yIntegrator
 
+            if self.cx < self.xLower or self.cx > self.xUpper:
+                self.xIntegral = 0.0
+            if self.cy < self.yLower or self.cy > self.yUpper:
+                self.yIntegral = 0.0
+
             self.x_iTerm = self.Ki * self.xIntegral
             self.y_iTerm = self.Ki * self.yIntegral
 
             #Calculation for the D_term
             #Computes the rate of change of our Error to compensate for overshooting the command
-            self.xTemp = self.xFiltered - self.xDerivator
-            self.yTemp = self.yFiltered - self.yDerivator
+            self.xTemp = self.xD - self.xDerivator
+            self.yTemp = self.yD - self.yDerivator
             
             if self.dt.to_sec() > 0.0:
                 self.xDerivative = self.xTemp/self.dt.to_sec()
@@ -63,8 +68,8 @@ class PIDController(object):
             self.x_dTerm = self.Kd * self.xDerivative
             self.y_dTerm = self.Kd * self.yDerivative
 
-            self.xDerivator = self.xFiltered
-            self.yDerivator = self.yFiltered
+            self.xDerivator = self.xD
+            self.yDerivator = self.yD
 
         else:
             self.xIntegral = 0.0
@@ -125,6 +130,7 @@ class PIDController(object):
             self.xError = self.centerx - self.cx
             self.yError = self.centery - self.cy
             self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
+            self.xD, self.yD = self.LowPassFilter(-self.cx, -self.cy)
         
         else:
             self.xError = None
@@ -173,3 +179,23 @@ class PIDController(object):
             self.yBuffer[i] = self.yBuffer[i-1]
 
         return xFiltered, yFiltered
+    
+    def ResetPID(self, P=None, I=None, D=None):
+        
+        if P != None:
+            self.Kp = P
+        if I != None:
+            self.Ki = I
+        if D != None:
+            self.Kd = D
+        
+        self.InitializeFilter()
+        self.oldTime = rospy.Time.now()
+
+    def DrawArrow(self,image,xspeed,yspeed):
+        dx=int((-100*xspeed)+self.centerx)
+        dy=int((-100*yspeed)+self.centery)
+        cv2.arrowedLine(image,(dx,dy),(int(self.centerx),int(self.centery)),(255,0,0),3)
+
+
+
