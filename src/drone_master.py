@@ -135,13 +135,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.08
             altitude = 1200
             
-            """
             init = [
-            ( SetFlatTrimDirective(), 1),
+            ( FlatTrimDirective(), 1),
+            ( ToggleCameraDirective(), 1 ),
+            ( IdleDirective(), 10 ),
             ( TakeoffDirective(), 1),
-            ( HoverColorDirective('orange', altitude), 15 )
+            ( IdleDirective(), 300 ),
+            ( HoverColorDirective('orange', altitude), 10 )
             ]
-            """
 
             alg = [
             ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
@@ -154,27 +155,26 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( OrientPLineDirective('blue', 'orange', altitude ), 4 ),
             ( FollowLineDirective('blue'), 25 )
             ]
-
             algCycles = 4
             
-            """
             end = [
             ( LandDirective(), 1)
             ]
-            """
 
             error = (ReturnToColorDirective('orange'), 5)
             
-            self.MachineSwitch( None, alg, algCycles, None, error, AUTO_CIRCLE_MACHINE)
-            
+            self.MachineSwitch( init, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
+
         elif key == ord('p'):
 
             self.moveTime = 0.0
             self.waitTime = 0.0
+
             alg = [
             (PIDHoverColorDirective('orange'), 0)
             ]
             algCycles = -1
+
             self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
 
 

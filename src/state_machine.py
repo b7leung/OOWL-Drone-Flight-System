@@ -57,14 +57,14 @@ class StateMachine(object):
         
         if not self.MachineFinished:
 
-            # edge case: if the current phase is "None", just go to the next phase
-            if self.stateMachineDef[self.currPhase][0] == None:
-                self.currPhase += 1
-                return (0,0,0,0), image
-            
             # edge case: when the machine has run through all its phases, it's finished
             if self.currPhase >= len( self.stateMachineDef ):
                 self.MachineFinished = True
+                return (0,0,0,0), image
+
+            # edge case: if the current phase is "None", just go to the next phase
+            if self.stateMachineDef[self.currPhase][0] == None:
+                self.currPhase += 1
                 return (0,0,0,0), image
 
             # if the error flag was set, use it as the current state instead of the normal one
