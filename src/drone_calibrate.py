@@ -49,7 +49,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             os.makedirs(self.droneRecordPath)
         self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
-        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
@@ -155,7 +155,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
 
         elif key == ord('d'):
+            #load all settings from the default settings and append them to the calibrater settings
+            defaultPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/default_settings.txt"
+            self.WriteAll(defaultPath)
             
+    def WriteAll(self, defaultPath):
+        # read a text file as a list of lines
+        # find the last line, change to a file you have
+        fileHandle = open ( self.defaultPath,'r' )
+        last = fileHandle.readlines()
+        fileHandle.close()        
+        last=str(last[len(last)-1]).split()
+        #rospy.logwarn(str(last))
+        P,I,D = [float(x) for x in (last)]
+
+        File  = open(self.settingsPath, 'a') 
+        File.write(str(P)+" ")
+        File.write(str(I)+" ")
+        File.write(str(D)+"\n")
+        File.close()
+
+
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
     # drone master uses to control the drone

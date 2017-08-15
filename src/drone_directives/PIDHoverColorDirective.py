@@ -4,7 +4,7 @@ import rospy
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 from processing_functions.pid_controller import PIDController
-
+from os import expanduser
 
 # describes instruction on what the drone should do in order to hover over 
 # a specified color underneath it
@@ -13,6 +13,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     # sets up this directivep
     # platformColor: color to hover over
     def __init__(self, platformColor,settingsPath):
+        
+        #only write to calibrater settings file
+        self.writePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
@@ -21,14 +24,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         P,I,D = self.GetSettings()
         self.pid = PIDController(P, I, D)
         #self.WriteSettings(P,I,D)
-    
-        
-    def WriteSettings(self,P,I,D):
-        File  = open(self.settingsPath, 'a') 
-        File.write(str(P)+" ")
-        File.write(str(I)+" ")
-        File.write(str(D)+"\n")
-        File.close()
 
     def GetSettings(self):
         # read a text file as a list of lines

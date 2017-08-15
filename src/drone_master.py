@@ -50,7 +50,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
         #import PID and color constants
-         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
