@@ -49,8 +49,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             os.makedirs(self.droneRecordPath)
         self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
-        #import PID and color constants
-         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
@@ -77,62 +76,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         
         key=cv2.waitKey(1) & 0xFF
 
-        if key == ord('1'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(HoverColorDirective('orange', 700), 0)]
-            algCycles = -1
-            self.MachineSwitch( None , alg, algCycles, None, None, HOVER_ORANGE_MACHINE )
-            
-        elif key == ord('2'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(OrientVLineDirective('green', 'orange', 700), 0)]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
-
-        elif key == ord('3'):
-
-
-            # toggles cameras back and forth to take a photo once every 200 frames
-            # The 7 frame idles in between are to give the drone time to switch the camera
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (ToggleCameraDirective(), 1),
-            (IdleDirective(), 7),
-            (CapturePhotoDirective(self.droneRecordPath), 1),
-            (ToggleCameraDirective(), 1),
-            (IdleDirective(), 200)
-            ]
-            algCycles = -1
-
-            self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
-
-        elif key == ord('4'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (OrientPLineDirective('blue', 'orange', 700), 4)
-            ]
-            algCycles = -1
-
-            self.MachineSwitch( None, alg, algCycles, None, None, FIX_TO_BLUE_LINE_MACHINE)
-
-        elif key == ord('5'):
-            
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (FollowLineDirective('blue'), 0)
-            ]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
-
-        elif key == ord('s'):
+         if key == ord('s'):
 
             # does the entire circle algorithm, in order.
 
@@ -210,7 +154,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
 
-
+        elif key == ord('d'):
+            
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
     # drone master uses to control the drone
