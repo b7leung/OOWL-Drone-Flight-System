@@ -196,10 +196,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.0
             self.waitTime = 0.0
-
+            
+            pidAlg = PIDHoverColorDirective('orange')
             alg = [
-            (PIDHoverColorDirective('orange'), 0)
+            (pidAlg, 0)
             ]
+            p,i,d = pidAlg.GetSettings()
+            pidAlg.pid.ResetPID(p,i,d)
+
             algCycles = -1
 
             self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )

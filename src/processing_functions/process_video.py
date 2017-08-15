@@ -55,8 +55,6 @@ class ProcessVideo(object):
         #find the outline of all orange objects in image
 	#set any pixel != 0 to its original color value from unsegented image
         hsv_output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
-        rospy.logwarn(hsv_output[numrows/2][numcols/2])
-        rospy.logwarn(hsv_image[numrows/2][numcols/2])
         output = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
         cv2.circle(output,(numcols/2,numrows/2),4,150,1)
         #return the segmented image

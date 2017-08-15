@@ -37,8 +37,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         fileHandle = open ( self.settingsPath,'r' )
         last = fileHandle.readlines()
         fileHandle.close()        
-        rospy.logwarn(str(last[0]))
+        
         last=str(last[len(last)-1]).split()
+        rospy.logwarn(str(last))
         p, i, d = [float(x) for x in (last)]
         return p, i ,d
 
@@ -62,7 +63,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.UpdateError(cx,cy)
         p,i,d= self.GetSettings()
         
-        self.pid.resetPID(p,i,d)
         self.pid.SetPIDTerms()
         #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()
