@@ -19,5 +19,8 @@
 
         <!-- Launches flight statistics display -->
 	<node name="FlightstatsDisplay" pkg="ardrone_lab" type="flightstats_display.py" required="true"/> -->
+        
+        <!-- Launches PID calibrater GUI -->
+	<node name="PID_Calibrater" pkg="ardrone_lab" type="pid_calibrater.py" required="true"/> -->
 
 </launch>
