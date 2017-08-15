@@ -15,7 +15,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.pid = PIDController(0.06, 0.004, 0.05)
+        self.pid = PIDController(0.08, 0.004, 0.05)
         
     
 
