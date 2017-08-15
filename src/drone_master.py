@@ -28,6 +28,7 @@ FOLLOW_BLUE_LINE_MACHINE = "follow_blue"
 AUTO_CIRCLE_MACHINE= "auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 RETURN_MACHINE = "return"
+SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
 
 
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
@@ -161,12 +162,35 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = 4
             
             end = [
+            ( HoverColorDirective('orange', altitude), 10 )
             ( LandDirective(), 1)
             ]
 
             error = (ReturnToColorDirective('orange'), 5)
             
             self.MachineSwitch( init, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
+
+        elif key == ord('t'):
+            
+            # self correcting takeoff
+            
+            self.moveTime = 0.15
+            self.waitTime = 0.04
+
+            init = [
+            ( FlatTrimDirective(), 1),
+            ( IdleDirective(), 10 ),
+            ( ToggleCameraDirective(), 1 ),
+            ( IdleDirective(), 10 ),
+            ( TakeoffDirective(), 1),
+            ( IdleDirective(), 140 ),
+            ( GoStraightDirective( "GO_FORWARDS", 1), 20 ),
+            ( IdleDirective(), 100 ),
+            ( GoStraightDirective( "GO_LEFT", 1), 20 ),
+            #( HoverColorDirective('orange', altitude), 10 )
+            ]
+
+            self.MachineSwitch( init, None, 0, None, None, SELF_CORRECTING_TAKEOFF_MACHINE)
 
         elif key == ord('p'):
 

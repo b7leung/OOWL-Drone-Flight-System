@@ -4,7 +4,9 @@ import pygame
 import rospy
 from drone_controller import BasicDroneController
 from os.path import expanduser
+#from processing_functions/pid_controller import PIDController
 
+#from os import *
 # global pygame color constants, in form (r,g,b) where 0 <= r/g/b <= 255
 GREY = (192,192,192)
 
@@ -28,6 +30,11 @@ class Calibrater(object):
         # config file path
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
         
+        #self.pid = PIDController()
+       # tempP=P
+        #if press up:
+        #tempP+1
+        
         self.CALIBRATE_P = "p"
         self.CALIBRATE_I = "i"
         self.CALIBRATE_D = "d"
@@ -38,10 +45,24 @@ class Calibrater(object):
         self.increment = 0.001
         
     def GetSettings(self):
-        File  = open(self.settingsPath, 'r') 
-        p, i, d = [float(x) for x in next(File).split()]
-        File.close()
+    
+        # read a text file as a list of lines
+        # find the last line, change to a file you have
+        fileHandle = open ( self.settingsPath,'r' )
+        last = fileHandle.readlines()
+        fileHandle.close()        
+        rospy.logwarn(str(last[0]))
+        last=str(last[len(last)-1]).split()
+        p, i, d = [float(x) for x in (last)]
+
         return p, i ,d
+        
+    def WriteAll(self):
+        calibraterFile  = open(self.settingsPath, 'a') 
+        calibraterFile.write(str(self.Kp)+" ")
+        calibraterFile.write(str(self.Ki)+" ")
+        calibraterFile.write(str(self.Kd)+"\n")
+        calibraterFile.close()
 
     def setPID(self, Kp,Ki,Kd):
         self.Kp = Kp
@@ -92,71 +113,42 @@ class Calibrater(object):
                             if(self.editValue ==self.CALIBRATE_P):
                                 self.Kp += self.increment
                                 self.Kp = self.isZero(self.Kp)
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("P: " + str(self.Kp))
-
-                                calibraterFile.write(str(self.Kp)+" ") 
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
                             elif(self.editValue == self.CALIBRATE_I):
                                 self.Ki += self.increment
                                 self.Ki = self.isZero(self.Ki)
 
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("I: " + str(self.Ki))
-                                calibraterFile.write(str(self.Kp)+" ")
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
                             elif(self.editValue == self.CALIBRATE_D):
                                 self.Kd += self.increment
                                 self.Kd = self.isZero(self.Kd)
 
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("D: " + str(self.Kd))
-
-                                calibraterFile.write(str(self.Kp)+" ")
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
 
                         elif event.key == pygame.K_DOWN:
                             if(self.editValue == self.CALIBRATE_P):
                                 self.Kp = self.Kp - self.increment
                                 self.Kp = self.isZero(self.Kp)
 
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("P: " + str(self.Kp))
-
-                                calibraterFile.write(str(self.Kp)+" ") 
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
 
                             elif(self.editValue == self.CALIBRATE_I):
                                 self.Ki = self.Ki - self.increment
                                 self.Ki = self.isZero(self.Ki)
 
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("I: " + str(self.Ki))
-
-                                calibraterFile.write(str(self.Kp)+" ") 
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
 
                             elif(self.editValue == self.CALIBRATE_D):
                                 self.Kd = self.Kd - self.increment
                                 self.Kd = self.isZero(self.Kd)
 
-                                calibraterFile  = open(self.settingsPath, 'w') 
                                 rospy.logwarn("D: " + str(self.Kd))
-
-                                calibraterFile.write(str(self.Kp)+" ") 
-                                calibraterFile.write(str(self.Ki)+" ")
-                                calibraterFile.write(str(self.Kd))
-                                calibraterFile.close()
+                                self.WriteAll()
 
 
                         

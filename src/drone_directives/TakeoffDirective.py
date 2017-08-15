@@ -5,7 +5,7 @@ from AbstractDroneDirective import *
 from drone_controller import BasicDroneController
 
 
-# Will make the land 
+# Will make the drone land 
 class TakeoffDirective(AbstractDroneDirective):
 
     # sets up this directive

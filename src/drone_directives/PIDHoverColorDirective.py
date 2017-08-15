@@ -16,28 +16,29 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-<<<<<<< HEAD
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
 
-        self.pid = PIDController(0.5, 0.0, 0.0)
-        self.WriteSettings(0.5,0.0,0.0)
-=======
-        self.pid = PIDController(0.06, 0.004, 0.05)
-        
->>>>>>> a789603ebc4044664ca4710ce253e7aa2c865015
+        P,I,D = self.GetSettings()
+        self.pid = PIDController(P, I, D)
+        #self.WriteSettings(P,I,D)
     
         
     def WriteSettings(self,P,I,D):
-        File  = open(self.settingsPath, 'w') 
+        File  = open(self.settingsPath, 'a') 
         File.write(str(P)+" ")
         File.write(str(I)+" ")
-        File.write(str(D))
+        File.write(str(D)+"\n")
         File.close()
 
     def GetSettings(self):
-        File  = open(self.settingsPath, 'r') 
-        p, i, d = [float(x) for x in next(File).split()]
-        File.close()
+        # read a text file as a list of lines
+        # find the last line, change to a file you have
+        fileHandle = open ( self.settingsPath,'r' )
+        last = fileHandle.readlines()
+        fileHandle.close()        
+        rospy.logwarn(str(last[0]))
+        last=str(last[len(last)-1]).split()
+        p, i, d = [float(x) for x in (last)]
         return p, i ,d
 
 
