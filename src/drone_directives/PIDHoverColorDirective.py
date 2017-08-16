@@ -4,7 +4,7 @@ import rospy
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 from processing_functions.pid_controller import PIDController
-from os import expanduser
+from os.path import expanduser
 
 # describes instruction on what the drone should do in order to hover over 
 # a specified color underneath it
