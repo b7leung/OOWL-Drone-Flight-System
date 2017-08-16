@@ -12,23 +12,18 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     
     # sets up this directivep
     # platformColor: color to hover over
-    def __init__(self, platformColor):
+    def __init__(self, platformColor,settingsPath):
+        
+        #only write to calibrater settings file
+        self.writePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+        self.settingsPath = settingsPath
 
         P,I,D = self.GetSettings()
         self.pid = PIDController(P, I, D)
         #self.WriteSettings(P,I,D)
-    
-        
-    def WriteSettings(self,P,I,D):
-        File  = open(self.settingsPath, 'a') 
-        File.write(str(P)+" ")
-        File.write(str(I)+" ")
-        File.write(str(D)+"\n")
-        File.close()
 
     def GetSettings(self):
         # read a text file as a list of lines
@@ -36,9 +31,11 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         fileHandle = open ( self.settingsPath,'r' )
         last = fileHandle.readlines()
         fileHandle.close()        
-        rospy.logwarn(str(last[0]))
+        
         last=str(last[len(last)-1]).split()
+        #rospy.logwarn(str(last))
         p, i, d = [float(x) for x in (last)]
+        
         return p, i ,d
 
 
@@ -61,7 +58,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.UpdateError(cx,cy)
         p,i,d= self.GetSettings()
         
-        self.pid.ResetPID(p,i,d)
         self.pid.SetPIDTerms()
         #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()

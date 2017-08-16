@@ -45,9 +45,9 @@ class PIDController(object):
             self.xIntegral += self.xIntegrator
             self.yIntegral += self.yIntegrator
 
-            if self.cx < self.xLower or self.cx > self.xUpper:
+            if self.cx > self.xLower and self.cx < self.xUpper:
                 self.xIntegral = 0.0
-            if self.cy < self.yLower or self.cy > self.yUpper:
+            if self.cy > self.yLower and self.cy < self.yUpper:
                 self.yIntegral = 0.0
 
             self.x_iTerm = self.Ki * self.xIntegral

@@ -8,7 +8,7 @@ import cv2
 from numpy import *
 import time
 from cv_bridge import CvBridge, CvBridgeError
-
+from os.path import expanduser
 
 # This class contains helper functions that each process
 # video frames in some way
@@ -22,7 +22,7 @@ class ProcessVideo(object):
 
 	#upper orange hsv boundary
         if(color=='orange'):
-            hsv_boundaries = [ ([0, 150, 200],[7, 255, 255])]
+            hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
             #lower  hsv boundary
             hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
@@ -409,4 +409,27 @@ class ProcessVideo(object):
         # array
         rect_image[y:y+height,x:x+width, 0:3:1] = image[y:y+height,x:x+width, 0:3:1]
         return rect_image 
-                    
+    def DetectFaces(self,image):
+        cascPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/haarcascade_frontalface_default.xml"
+
+        # Create the haar cascade
+        faceCascade = cv2.CascadeClassifier(cascPath)
+
+        # Convert image to gray
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Detect faces in the image
+        faces = faceCascade.detectMultiScale(
+        gray,
+        scaleFactor=1.2,
+        minNeighbors=5,
+        minSize=(30, 30),
+        flags = cv2.CASCADE_SCALE_IMAGE)
+
+        # Draw a rectangle around the faces
+        for (x, y, w, h) in faces:
+            cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            cx = (2*x + w)/2
+            cy = (2*y + w)/2
+            return cx,cy
+

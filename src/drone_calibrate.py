@@ -49,7 +49,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             os.makedirs(self.droneRecordPath)
         self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
-        #import PID and color constants
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         # initalizing the state machine that will handle which algorithms to run at which time;
@@ -77,62 +76,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         
         key=cv2.waitKey(1) & 0xFF
 
-        if key == ord('1'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(HoverColorDirective('orange', 700), 0)]
-            algCycles = -1
-            self.MachineSwitch( None , alg, algCycles, None, None, HOVER_ORANGE_MACHINE )
-            
-        elif key == ord('2'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(OrientVLineDirective('green', 'orange', 700), 0)]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
-
-        elif key == ord('3'):
-
-
-            # toggles cameras back and forth to take a photo once every 200 frames
-            # The 7 frame idles in between are to give the drone time to switch the camera
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (ToggleCameraDirective(), 1),
-            (IdleDirective(), 7),
-            (CapturePhotoDirective(self.droneRecordPath), 1),
-            (ToggleCameraDirective(), 1),
-            (IdleDirective(), 200)
-            ]
-            algCycles = -1
-
-            self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
-
-        elif key == ord('4'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (OrientPLineDirective('blue', 'orange', 700), 4)
-            ]
-            algCycles = -1
-
-            self.MachineSwitch( None, alg, algCycles, None, None, FIX_TO_BLUE_LINE_MACHINE)
-
-        elif key == ord('5'):
-            
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            (FollowLineDirective('blue'), 0)
-            ]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
-
-        elif key == ord('s'):
+         if key == ord('s'):
 
             # does the entire circle algorithm, in order.
 
@@ -146,7 +90,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
             ( TakeoffDirective(), 1),
-            ( IdleDirective(), 130 ),
+            ( IdleDirective(), 140 ),
             ( HoverColorDirective('orange', altitude), 10 )
             ]
 
@@ -164,7 +108,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = 4
             
             end = [
-            ( HoverColorDirective('orange', altitude), 10 ),
+            ( HoverColorDirective('orange', altitude), 10 )
             ( LandDirective(), 1)
             ]
 
@@ -176,23 +120,19 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             # self correcting takeoff
             
-            self.moveTime = 0.0
-            self.waitTime = 0.0
+            self.moveTime = 0.15
+            self.waitTime = 0.04
 
             init = [
             ( FlatTrimDirective(), 1),
-            ( IdleDirective("pause for flat trim"), 10 ),
-
+            ( IdleDirective(), 10 ),
             ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective("pause to toggle camera"), 10 ),
-
+            ( IdleDirective(), 10 ),
             ( TakeoffDirective(), 1),
-            ( IdleDirective("pause for takeoff"), 130 ),
-
-            ( ReturnToOriginDirective(100), 15 )
-            #( ReturnToOriginDirective(130), 15 )
-
-            #( ReachAltitudeDirective(1300, 50), 5 )
+            ( IdleDirective(), 140 ),
+            ( GoStraightDirective( "GO_FORWARDS", 1), 20 ),
+            ( IdleDirective(), 100 ),
+            ( GoStraightDirective( "GO_LEFT", 1), 20 ),
             #( HoverColorDirective('orange', altitude), 10 )
             ]
 
@@ -213,6 +153,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
 
             self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
+
+        elif key == ord('d'):
+            #load all settings from the default settings and append them to the calibrater settings
+            defaultPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/default_settings.txt"
+            self.WriteAll(defaultPath)
+            
+    def WriteAll(self, defaultPath):
+        # read a text file as a list of lines
+        # find the last line, change to a file you have
+        fileHandle = open ( self.defaultPath,'r' )
+        last = fileHandle.readlines()
+        fileHandle.close()        
+        last=str(last[len(last)-1]).split()
+        #rospy.logwarn(str(last))
+        P,I,D = [float(x) for x in (last)]
+
+        File  = open(self.settingsPath, 'a') 
+        File.write(str(P)+" ")
+        File.write(str(I)+" ")
+        File.write(str(D)+"\n")
+        File.close()
 
 
     # Taking in some machine's definition of states and a string name,
