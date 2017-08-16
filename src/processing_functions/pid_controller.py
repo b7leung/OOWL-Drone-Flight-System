@@ -198,4 +198,9 @@ class PIDController(object):
         cv2.arrowedLine(image,(dx,dy),(int(self.centerx),int(self.centery)),(255,0,0),3)
 
 
+    def ReturnPIDvalues(self):
+        return self.Kp, self.Ki, self.Kd
 
+    def AdjustPID(self, direction):
+        if direction==UP:
+            self.Kp+= 0.01

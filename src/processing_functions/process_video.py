@@ -212,7 +212,6 @@ class ProcessVideo(object):
         zoneTop = centery - centery/2
         zoneBottom = centery + centery/2
         
-        
          # calculating if the drone should go up or down to match the desired altitude
         tolerance = 200
         climbSpeed = 0.25

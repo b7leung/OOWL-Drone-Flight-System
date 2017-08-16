@@ -8,10 +8,17 @@ from AbstractDroneDirective import *
 # keyboard controller)
 class IdleDirective(AbstractDroneDirective):
 
+
     # sets up this directive
-    def __init__(self):
-        pass
+    # reason is an optional description that states why drone was set to idle
+    def __init__(self, reason = None):
+
+        if reason == None:
+            self.reason = "Not Given"
+        else:
+            self.reason = reason
         
+
     # given the image and navdata of the drone, returns the following in order:
     #
     # A directive status int:
@@ -23,6 +30,6 @@ class IdleDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        rospy.logwarn("Drone is idle")
+        rospy.logwarn("Drone is idle; Reason: " + self.reason)
         return 1, (0, 0, 0, 0), image, (None, None)
 

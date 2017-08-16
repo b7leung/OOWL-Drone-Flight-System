@@ -144,7 +144,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( ToggleCameraDirective(), 1 ),
             ( IdleDirective(), 10 ),
             ( TakeoffDirective(), 1),
-            ( IdleDirective(), 140 ),
+            ( IdleDirective(), 130 ),
             ( HoverColorDirective('orange', altitude), 10 )
             ]
 
@@ -162,7 +162,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = 4
             
             end = [
-            ( HoverColorDirective('orange', altitude), 10 )
+            ( HoverColorDirective('orange', altitude), 10 ),
             ( LandDirective(), 1)
             ]
 
@@ -174,19 +174,23 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             # self correcting takeoff
             
-            self.moveTime = 0.15
-            self.waitTime = 0.04
+            self.moveTime = 0.0
+            self.waitTime = 0.0
 
             init = [
             ( FlatTrimDirective(), 1),
-            ( IdleDirective(), 10 ),
+            ( IdleDirective("pause for flat trim"), 10 ),
+
             ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective(), 10 ),
+            ( IdleDirective("pause to toggle camera"), 10 ),
+
             ( TakeoffDirective(), 1),
-            ( IdleDirective(), 140 ),
-            ( GoStraightDirective( "GO_FORWARDS", 1), 20 ),
-            ( IdleDirective(), 100 ),
-            ( GoStraightDirective( "GO_LEFT", 1), 20 ),
+            ( IdleDirective("pause for takeoff"), 130 ),
+
+            ( ReturnToOriginDirective(100), 15 )
+            #( ReturnToOriginDirective(130), 15 )
+
+            #( ReachAltitudeDirective(1300, 50), 5 )
             #( HoverColorDirective('orange', altitude), 10 )
             ]
 

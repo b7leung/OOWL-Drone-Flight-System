@@ -6,6 +6,7 @@ import collections
 import copy
 import functools
 
+
 from flightstats_receiver import FlightstatsReceiver
 from drone_status import DroneStatus
 
@@ -19,8 +20,8 @@ curr_view = None
 
 # frequency to update GUI display, in ms
 FREEZE_FREQ = -1
-LOW_FREQ= 400
-MEDIUM_FREQ=200
+LOW_FREQ= 250
+MEDIUM_FREQ=130
 HIGH_FREQ = 10
 REAL_TIME_FREQ = 2
 curr_refresh_rate = None
@@ -78,7 +79,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                 line.setFrameShape(QtGui.QFrame.Shape.HLine)
                 self.grid.addWidget(line, row, 0, 1, 2)
             row +=1
-
+        
 
     # Performs unit conversions, rounding, etc so that raw data will be easy to read
     # Returns the processed dictionary
@@ -129,7 +130,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                     (dict[vel])[2] = "in/s"
 
         # rounding all values to make it easier to view
-        for num in ["altitude", "rotX", "rotY", "rotZ", "velX", "velY", "velZ"]:
+        for num in ["altitude", "rotX", "rotY", "rotZ", "velX", "velY", "velZ", "dispH", "dispV"]:
             if (dict[num])[1] != self.defaultValue:
                 if curr_view == SIMPLE_VIEW:
                     # rounds to whole numbers
@@ -142,7 +143,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                     (dict[num])[1]= int((dict[num])[1] * fullround) / fullround
         
         # Add corresponding direction strings
-        for direction in ["rotX", "velX"]:
+        for direction in ["rotX"]:
             if (dict[direction])[1] != self.defaultValue:
                 if (dict[direction])[1] < 0:
                     
@@ -151,7 +152,18 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                     (dict[direction])[3] = "to the right"
                 (dict[direction])[1] = abs((dict[direction])[1])
 
-        for direction in ["rotY", "velY"]:
+        # Add corresponding direction strings
+        for direction in ["velY","dispH"]:
+            if (dict[direction])[1] != self.defaultValue:
+                if (dict[direction])[1] > 0:
+                    
+                    (dict[direction])[3] = "to the left" 
+                elif (dict[direction])[1] < 0:
+                    (dict[direction])[3] = "to the right"
+                (dict[direction])[1] = abs((dict[direction])[1])
+
+
+        for direction in ["rotY", "velX", "dispV"]:
             if (dict[direction])[1] != self.defaultValue:
                 if (dict[direction])[1] < 0:
                     (dict[direction])[3] = "backwards" 

@@ -61,7 +61,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.UpdateError(cx,cy)
         p,i,d= self.GetSettings()
         
-        self.pid.resetPID(p,i,d)
+        self.pid.ResetPID(p,i,d)
         self.pid.SetPIDTerms()
         #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()

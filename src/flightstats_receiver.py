@@ -27,13 +27,20 @@ class FlightstatsReceiver(object):
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotZ"]=["Rotation Amount: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
-        self.flightInfo["velX"]=["Left/Right Velocity: ", self.defaultValue, "mm/s", ""]
-        self.flightInfo["velY"]=["Front/Back Velocity: ", self.defaultValue, "mm/s", ""]
+        self.flightInfo["velX"]=["Front/Back Velocity: ", self.defaultValue, "mm/s", ""]
+        self.flightInfo["velY"]=["Left/Right Velocity: ", self.defaultValue, "mm/s", ""]
         self.flightInfo["velZ"]=["Up/Down Velocity: ", self.defaultValue, "mm/s", ""]
+        self.flightInfo["dispH"]=["Horizontal Displacement: ", self.defaultValue, "mm", ""]
+        self.flightInfo["dispV"]=["Vertical Displacement: ", self.defaultValue, "mm", ""]
+
+        self.horizDisplacement = 0.0
+        self.vertDisplacement = 0.0
+        self.oldTime = rospy.Time.now()
 
     
     # update dictionary as new info from drone comes
     def UpdateNavdata(self, navdata):
+
         # first, update instance variables
         (self.flightInfo["batteryPercent"])[1]=navdata.batteryPercent
         (self.flightInfo["state"])[1]=navdata.state
@@ -45,5 +52,17 @@ class FlightstatsReceiver(object):
         (self.flightInfo["velY"])[1]=navdata.vy
         (self.flightInfo["velZ"])[1]=navdata.vz
         
+        dt = rospy.Time.now() - self.oldTime
+        # Calculating horizontal displacement
+        currHVelocity = self.flightInfo["velY"][1]
+        self.horizDisplacement += float(currHVelocity) * dt.to_sec()
+        (self.flightInfo["dispH"])[1]=self.horizDisplacement
+
+        # Calculating vertical displacement
+        currVVelocity = self.flightInfo["velX"][1]
+        self.vertDisplacement += float(currVVelocity) * dt.to_sec()
+        (self.flightInfo["dispV"])[1]=self.vertDisplacement
+
+        self.oldTime = rospy.Time.now()
 
  
