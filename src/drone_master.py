@@ -29,6 +29,7 @@ AUTO_CIRCLE_MACHINE= "auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 RETURN_MACHINE = "return"
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
+TEST_SLOW_MACHINE = "test_slow"
 
 
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
@@ -131,6 +132,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ]
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
+
+        elif key == ord('6'):
+            
+            self.moveTime = 0.0
+            self.waitTime = 0.0
+            alg = [
+                (TestSlowDirective(), 0)
+            ]
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, None, TEST_SLOW_MACHINE)
 
         elif key == ord('s'):
 
