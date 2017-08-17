@@ -40,7 +40,7 @@ class HoverColorDirective(AbstractDroneDirective):
         segImage = self.processVideo.DetectColor(image, self.platformColor)
         cx, cy = self.processVideo.CenterOfMass(segImage)
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segImage, cx, cy,
-        navdata["altitude"][1], self.hoverAltitude, tolerance = 55)
+        navdata["altitude"][1], self.hoverAltitude, xtolerance = 55, ytolerance = 55)
 
         # if there is orange in the screen, and the drone is in the middle, return true
         if cx != None and cy != None and xspeed == 0 and yspeed == 0 and zspeed == 0:
@@ -50,6 +50,7 @@ class HoverColorDirective(AbstractDroneDirective):
 
         elif cx == None or cy == None:
             
+            rospy.logwarn("Can't Hover on " + self.platformColor + "; lost platform")
             directiveStatus = -1
 
         else:

@@ -71,6 +71,12 @@ class PIDController(object):
             self.xDerivator = self.xD
             self.yDerivator = self.yD
 
+            if (self.x_pTerm > 0.0 and self.x_dTerm > 0.0) or (self.x_pTerm < 0.0 and self.x_dTerm < 0.0):
+                self.x_pTerm = self.x_pTerm * 2
+
+            if (self.y_pTerm > 0.0 and self.y_dTerm > 0.0) or (self.y_pTerm < 0.0 and self.y_dTerm < 0.0):
+                self.y_pTerm = self.y_pTerm * 2
+
         else:
             self.xIntegral = 0.0
             self.yIntegral = 0.0
@@ -84,7 +90,7 @@ class PIDController(object):
 
         if self.xError != None and self.yError != None:
             if self.cx < self.xLower or self.cx > self.xUpper:
-                rospy.logwarn( "p:" + str(self.x_pTerm)+ " i:"+ str(self.x_iTerm)+" d:"+str(self.x_dTerm))
+               # rospy.logwarn( "p:" + str(self.x_pTerm)+ " i:"+ str(self.x_iTerm)+" d:"+str(self.x_dTerm))
                 xPID = (self.x_pTerm + self.x_iTerm + self.x_dTerm)/self.centerx
             else:
                 xPID = 0.0
@@ -105,7 +111,7 @@ class PIDController(object):
         
     #Compute the desired SetPoint for the Drone - the center of the image
     #Set the desired window size for drone to hover in
-    def SetPoint(self,image,windowSize=25):
+    def SetPoint(self, image, windowSize=40):
         
         self.numRows, self.numCols, self.channels = image.shape
         self.centerx = self.numCols/2.0

@@ -28,7 +28,7 @@ class Calibrater(object):
         self.controller = BasicDroneController("Keyboard")
         self.editValue = None
         # config file path
-        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibratersettings.txt"
+        self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
         
         #self.pid = PIDController()
        # tempP=P

@@ -132,43 +132,61 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
 
+        elif key == ord('r'):
+            
+            self.moveTime = 0.15
+            self.waitTime = 0.08
+            alg = [
+            ( OrientVLineDirective('green', 'orange', 0 ), 4 )
+            ]
+            error = (ReturnToColorDirective('orange'), 30)
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, error, RETURN_MACHINE)
+
+        elif key == ord('w'):  
+            
+            self.moveTime = 0.15
+            self.waitTime = 0.08
+            alg = [
+            ( FindPlatformAltitudeDirective('orange', 100), 20 )
+            ]
+            algCycles = -1
+            self.MachineSwitch( None, alg, algCycles, None, None, RETURN_MACHINE)
+
+
         elif key == ord('s'):
 
             # does the entire circle algorithm, in order.
 
             self.moveTime = 0.15
-            self.waitTime = 0.04
+            self.waitTime = 0.08
             altitude = 1200
             
             init = [
-            ( FlatTrimDirective(), 1),
-            ( IdleDirective(), 10 ),
-            ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective(), 10 ),
-            ( TakeoffDirective(), 1),
-            ( IdleDirective(), 130 ),
-            ( HoverColorDirective('orange', altitude), 10 )
+            ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
+            ( FlatTrimDirective(), 1), ( IdleDirective("Pause for flat trim"), 10 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
+            ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
+            ( ReturnToOriginDirective('orange',50), 7 ),
+            ( FindPlatformAltitudeDirective('orange', altitude + 200), 5),
             ]
 
             alg = [
             ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
-            ( ToggleCameraDirective(), 1 ),
-            # give drone time to switch cameras
-            ( IdleDirective(), 10 ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 13 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
-            ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective(), 10 ),
-            ( OrientPLineDirective('blue', 'orange', altitude ), 4 ),
-            ( FollowLineDirective('blue'), 25 )
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 10 ),
+            ( OrientPLineDirective('blue', 'orange', altitude - 400 ), 4 ),
+            ( FollowLineDirective('blue'), 10 )
             ]
             algCycles = 4
             
             end = [
-            ( HoverColorDirective('orange', altitude), 10 ),
+            ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
             ( LandDirective(), 1)
             ]
 
-            error = (ReturnToColorDirective('orange'), 5)
+            error = (ReturnToColorDirective('orange'), 10)
             
             self.MachineSwitch( init, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
 
@@ -190,9 +208,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( IdleDirective("pause for takeoff"), 130 ),
 
             ( ReturnToOriginDirective(100), 15 )
-            #( ReturnToOriginDirective(130), 15 )
 
-            #( ReachAltitudeDirective(1300, 50), 5 )
             #( HoverColorDirective('orange', altitude), 10 )
             ]
 

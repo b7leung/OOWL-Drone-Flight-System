@@ -1,16 +1,23 @@
 #!usr/bin/env python
 
 import rospy
+from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 
 
 # Will make the drone return to where it took off
+# given some platform color
 class ReturnToOriginDirective(AbstractDroneDirective):
+
 
     # sets up this directive
     # tolerance is in mm; how close it needs to be from where it took off
-    def __init__(self, tolerance):
+    def __init__(self, platformColor, tolerance):
+
+        self.platformColor = platformColor
         self.tolerance = tolerance
+        self.processVideo = ProcessVideo()
+
 
     # given the image and navdata of the drone, returns the following in order:
     #
@@ -54,9 +61,14 @@ class ReturnToOriginDirective(AbstractDroneDirective):
 
         else:
             pitch = 0
+        
+        # check if the platform is visible
+        platform_image = self.processVideo.DetectColor(image, self.platformColor)
+        hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.2)   
 
-        if pitch == 0 and roll == 0:
+        if (pitch == 0 and roll == 0) or hasPlatform:
             directiveStatus = 1
+            rospy.logwarn("Drone has returned to origin")
         else:
             directiveStatus = 0
 

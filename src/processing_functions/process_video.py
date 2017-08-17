@@ -191,7 +191,8 @@ class ProcessVideo(object):
     # returns how much the drone should move in the (x,y) direction such that
     # object stays in middle, within +/- tolerance pixels of the center
     
-    def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None, tolerance = 20 ):
+    def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None,
+    xtolerance = 20, ytolerance = 20 ):
 
         numrows,numcols,channels = image.shape
 
@@ -199,8 +200,8 @@ class ProcessVideo(object):
         centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width = tolerance * 2
-        height = tolerance * 2
+        width = xtolerance * 2
+        height = ytolerance * 2
         xlower = centerx-width #left xvalue
         ylower = centery-height #"top" yvalue
         xupper = centerx+width #right xvalue
@@ -409,6 +410,8 @@ class ProcessVideo(object):
         # array
         rect_image[y:y+height,x:x+width, 0:3:1] = image[y:y+height,x:x+width, 0:3:1]
         return rect_image 
+
+
     def DetectFaces(self,image):
         cascPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/haarcascade_frontalface_default.xml"
 

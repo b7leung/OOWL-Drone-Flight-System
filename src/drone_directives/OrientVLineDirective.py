@@ -44,7 +44,7 @@ class OrientVLineDirective(AbstractDroneDirective):
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
-        navdata["altitude"][1], self.hoverAltitude, tolerance = 30)
+        navdata["altitude"][1], self.hoverAltitude, ytolerance = 30, xtolerance = 30)
 
         yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 6)
 

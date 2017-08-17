@@ -87,6 +87,8 @@ class StateMachine(object):
             if status == 1:
 
                 self.stateFinishedCounter += 1
+                if coordinate != (None,None):
+                    self.lastLocation = coordinate
                 self.lastLocation = coordinate
 
                 # if the state has hit the specified duration to be considered "finished"
@@ -98,6 +100,7 @@ class StateMachine(object):
 
                     # if error flag was on, just turn it off and go back the state before error occurred
                     if self.errorFlag:
+                        rospy.logwarn("Error state over; returning")
                         self.errorFlag = False
                     else:
 
@@ -118,7 +121,8 @@ class StateMachine(object):
             elif status == 0:
 
                 self.stateFinishedCounter = 0
-                self.lastLocation = coordinate
+                if coordinate != (None,None):
+                    self.lastLocation = coordinate
                 self.errorCount = 0
 
             # if status = -1; error occured.
