@@ -8,3 +8,4 @@ output.txt
 Flight_Info
 *.ods
 *.ods#
+*.calibrater_settings.txt
