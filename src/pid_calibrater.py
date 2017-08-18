@@ -54,7 +54,7 @@ class Calibrater(object):
         
         last=str(last[len(last)-1]).split()
         rospy.logwarn(str(last))
-        p, i, d = [float(x) for x in (last)]
+        p, i, d = [float(x) for x in last]
 
         return p, i ,d
         

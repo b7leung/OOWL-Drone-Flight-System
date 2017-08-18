@@ -130,7 +130,8 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                     (dict[vel])[2] = "in/s"
 
         # rounding all values to make it easier to view
-        for num in ["altitude", "rotX", "rotY", "rotZ", "velX", "velY", "velZ", "dispH", "dispV"]:
+        for num in ["altitude", "rotX", "rotY", "rotZ", "velX", "velY",
+        "velZ", "dispLR", "dispFB", "dispUD", "accelZ"]:
             if (dict[num])[1] != self.defaultValue:
                 if curr_view == SIMPLE_VIEW:
                     # rounds to whole numbers
@@ -153,7 +154,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                 (dict[direction])[1] = abs((dict[direction])[1])
 
         # Add corresponding direction strings
-        for direction in ["velY","dispH"]:
+        for direction in ["velY","dispLR"]:
             if (dict[direction])[1] != self.defaultValue:
                 if (dict[direction])[1] > 0:
                     
@@ -163,7 +164,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
                 (dict[direction])[1] = abs((dict[direction])[1])
 
 
-        for direction in ["rotY", "velX", "dispV"]:
+        for direction in ["rotY", "velX", "dispFB"]:
             if (dict[direction])[1] != self.defaultValue:
                 if (dict[direction])[1] < 0:
                     (dict[direction])[3] = "backwards" 

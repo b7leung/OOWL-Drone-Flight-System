@@ -170,7 +170,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            altitude = 1200
+            altitude = 750
             
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -183,11 +183,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             alg = [
             ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 13 ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 10 ),
             ( OrientPLineDirective('blue', 'orange', altitude - 400 ), 4 ),
-            ( FollowLineDirective('blue'), 10 )
+            ( FollowLineDirective('blue'), 14 )
             ]
             algCycles = 4
             
@@ -237,8 +237,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             pidAlg.pid.ResetPID(p,i,d)
 
             algCycles = -1
-
-            self.MachineSwitch( None, alg, algCycles, None, None, PID_HOVER_ORANGE_MACHINE )
+            error = (ReturnToColorDirective('orange'), 10)
+            self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
 
 
     # Taking in some machine's definition of states and a string name,

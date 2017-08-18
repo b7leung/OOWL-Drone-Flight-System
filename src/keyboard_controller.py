@@ -47,6 +47,7 @@ class KeyboardController(object):
                         print "Takeoff"
                     elif event.key == pygame.K_SPACE:
                         self.controller.SendLand()
+                        rospy.logwarn("-------- LANDING DRONE --------") 
                         print "Land"
                     elif event.key == pygame.K_ESCAPE:
                         self.controller.SendEmergency()

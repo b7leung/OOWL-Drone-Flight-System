@@ -71,12 +71,27 @@ class PIDController(object):
             self.xDerivator = self.xD
             self.yDerivator = self.yD
 
-            if (self.x_pTerm > 0.0 and self.x_dTerm > 0.0) or (self.x_pTerm < 0.0 and self.x_dTerm < 0.0):
-                self.x_pTerm = self.x_pTerm * 2
-
-            if (self.y_pTerm > 0.0 and self.y_dTerm > 0.0) or (self.y_pTerm < 0.0 and self.y_dTerm < 0.0):
-                self.y_pTerm = self.y_pTerm * 2
-
+            # if the P and D term are the same sign, it means the drone is drifting in the opposite direction as directed, therefore increase the proportional term to push it in the right direction.
+            if self.x_pTerm > 0.0 and self.x_dTerm > 0.0:
+                #self.x_pTerm = self.x_pTerm * 1.2
+                self.x_pTerm = 0.0
+                self.x_iTerm = 0.0
+                self.x_dTerm = 0.0
+            elif self.x_pTerm < 0.0 and self.x_dTerm < 0.0:
+                #self.x_pTerm = self.x_pTerm * 1.2
+                self.x_pTerm = 0.0
+                self.x_iTerm = 0.0
+                self.x_dTerm = 0.0
+            if self.y_pTerm > 0.0 and self.y_dTerm > 0.0:
+                #self.y_pTerm = self.y_pTerm * 1.2
+                self.y_pTerm = 0.0
+                self.y_iTerm = 0.0
+                self.y_dTerm = 0.0
+            elif self.y_pTerm < 0.0 and self.y_dTerm < 0.0:
+                #self.y_pTerm = self.y_pTerm * 1.2
+                self.y_pTerm = 0.0
+                self.y_iTerm = 0.0
+                self.y_dTerm = 0.0
         else:
             self.xIntegral = 0.0
             self.yIntegral = 0.0
@@ -105,6 +120,11 @@ class PIDController(object):
             yPID = 0.0
             self.xIntegral = 0.0
             self.yIntegral = 0.0
+
+        rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
+        
+        rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
+
         
         return xPID,yPID
 

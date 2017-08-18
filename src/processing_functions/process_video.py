@@ -65,7 +65,7 @@ class ProcessVideo(object):
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
-    def ShowLine(self,image, lowerAngleBound = 0, upperAngleBound = 180, thresh=65):
+    def ShowLine(self,image, lowerAngleBound = 0, upperAngleBound = 180, secondBounds = (None,None), thresh=65):
         
         #change bgr to gray for edge detection
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
@@ -93,6 +93,15 @@ class ProcessVideo(object):
             large = (thetasDegrees>170)
             small = (thetasDegrees<10)
             extract = logical_and((thetasDegrees > lowerAngleBound),(thetasDegrees < upperAngleBound))
+            #rospy.logwarn("first bound:" + str(extract))
+
+            if(secondBounds != (None,None)):
+                extractSecond = logical_and((thetasDegrees > secondBounds[0]),(thetasDegrees < secondBounds[1]))
+                extract = logical_or(extract,extractSecond)
+            
+                #rospy.logwarn("second bound:"+str(extractSecond))
+            #rospy.logwarn("combined:" + str(extract))
+
             #if most lines are within this range of theta
 
             if( sum(large | small) > (size(thetas)/2) and (lowerAngleBound <= 0)):
@@ -293,11 +302,11 @@ class ProcessVideo(object):
 
         # Drone rotates Counter Clock_Wise
         if angle < lowerAngle and angle > 0:
-            yawspeed = 1
+            yawspeed = .7
 
         # Drone rotates Clock_Wise
         elif angle > upperAngle and angle < 180:
-            yawspeed = -1
+            yawspeed = -.7
 
         # Drone is at the right angle; no need to rotate 
         else:

@@ -31,7 +31,7 @@ class ReturnToOriginDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        dispH = navdata["dispH"][1]
+        dispH = navdata["dispLR"][1]
         
         speed = 0.2
     
@@ -50,7 +50,7 @@ class ReturnToOriginDirective(AbstractDroneDirective):
             roll = 0
 
         # calculating vertical 
-        dispV = navdata["dispV"][1]
+        dispV = navdata["dispFB"][1]
         if dispV < self.tolerance * -1:
             rospy.logwarn("Drone is returning to origin; going forward")
             pitch = speed

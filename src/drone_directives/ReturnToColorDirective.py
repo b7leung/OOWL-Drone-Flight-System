@@ -34,8 +34,6 @@ class ReturnToColorDirective(AbstractDroneDirective):
         cx = navdata[0]
         cy = navdata[1]     
 
-        if cx == None or cy == None:
-            return -1, (0,0,0,0),image,navdata
 
         platform_image = self.processVideo.DetectColor(image, self.platformColor)
 
@@ -43,19 +41,27 @@ class ReturnToColorDirective(AbstractDroneDirective):
         hasPlatform = self.processVideo.IsHueDominant(cropped, 0, 360, 0.1)   
 
         if hasPlatform:
+            cx, cy = self.processVideo.CenterOfMass(cropped)
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
+            zspeed = 0
 
         else:
             rospy.logwarn("Returning to platform")
             directiveStatus = 0
+            zspeed = 0.5
+
+        if cx == None or cy == None:
+            rospy.logwarn("Returning -- no orange detected @ this altitude, increasing altitude")
+            return 0, (0,0,0,0.5),image, (cx,cy)
+
         
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(platform_image, cx, cy,
-        ytolerance = 100, xtolerance = 100)
+        ytolerance = 50, xtolerance = 50)
         
         rospy.logwarn("Speedx: " + str(xspeed) + " speedy: " + str(yspeed))
         self.processVideo.DrawCircle(platform_image,(cx,cy))
-        return directiveStatus, (xspeed, yspeed, 0, 0), platform_image, navdata
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), platform_image, (cx,cy)
         
 
 

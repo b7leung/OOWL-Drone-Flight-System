@@ -38,7 +38,7 @@ class OrientVLineDirective(AbstractDroneDirective):
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
         # trying to be parallel to the colored line while being over the platform
-        angle = self.processVideo.ShowLine(segLineImage, thresh = 35)
+        angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
         cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
         #Draws a circle over the center of platform on lined image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
@@ -71,6 +71,8 @@ class OrientVLineDirective(AbstractDroneDirective):
             # if a line was found and drone isn't vertical yet,
             # just turn the drone; no need move drone
             elif yawspeed != 0:
+                if yawspeed < 0:
+                else:
                 xspeed = 0
                 yspeed = 0
                 zspeed = 0

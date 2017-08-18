@@ -38,7 +38,7 @@ class OrientPLineDirective(AbstractDroneDirective):
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
         # trying to be perpendicular to the colored line while being over the platform
-        angle = self.processVideo.ShowLine(segLineImage, thresh = 20)
+        angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
         #angle = self.processVideo.ShowLine(segLineImage, 20, 110, thresh = 45)
         cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
         #draws center of circle on image
@@ -47,9 +47,10 @@ class OrientPLineDirective(AbstractDroneDirective):
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segPlatformImage, cx, cy, 
         navdata["altitude"][1], self.hoverAltitude, ytolerance = 33, xtolerance = 55)
 
-        yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10)
+        yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 7)
 
-        if ( xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0
+        if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
+        #if ( xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0
         and cx != None and cy != None ):
 
             rospy.logwarn("Perpendicular to " + self.lineColor + " line")
@@ -79,6 +80,6 @@ class OrientPLineDirective(AbstractDroneDirective):
             directiveStatus = 0 
             rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")
             
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy)
 
 
