@@ -102,13 +102,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.15
             self.waitTime = 0.08
             alg = [
-            (ToggleCameraDirective(), 1),
-            (IdleDirective(), 7),
+            #(ToggleCameraDirective(), 1),
+            #(IdleDirective(), 18),
             (CapturePhotoDirective(self.droneRecordPath), 1),
-            (ToggleCameraDirective(), 1),
+            #(ToggleCameraDirective(), 18),
             (IdleDirective(), 200)
             ]
             algCycles = -1
+
 
             self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
 
@@ -182,11 +183,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ]
 
             alg = [
-            ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
+            ( OrientVLineDirective('green', 'orange', altitude ), 10 ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 10 ),
-            ( OrientPLineDirective('blue', 'orange', altitude - 400 ), 4 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
+            ( OrientPLineDirective('blue', 'orange', altitude), 4 ),
             ( FollowLineDirective('blue'), 14 )
             ]
             algCycles = 4
@@ -314,8 +315,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # log info
             #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
             self.logger.Log(
-            " xSpeed: " + str(xSetSpeed) + " ySpeed: " + str(ySetSpeed)
-            + " yawSpeed: " +str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
+            " altitude: " + str(self.flightInfo["altitude"]) +
+            " yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
 
 
     # this is called by ROS when the node shuts down

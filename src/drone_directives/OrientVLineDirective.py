@@ -71,8 +71,6 @@ class OrientVLineDirective(AbstractDroneDirective):
             # if a line was found and drone isn't vertical yet,
             # just turn the drone; no need move drone
             elif yawspeed != 0:
-                if yawspeed < 0:
-                else:
                 xspeed = 0
                 yspeed = 0
                 zspeed = 0

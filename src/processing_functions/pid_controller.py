@@ -121,9 +121,9 @@ class PIDController(object):
             self.xIntegral = 0.0
             self.yIntegral = 0.0
 
-        rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
+        #rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
         
-        rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
+        #rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
 
         
         return xPID,yPID
