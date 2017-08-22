@@ -15,12 +15,21 @@ from os.path import expanduser
 class ProcessVideo(object):
 
 
-    #returns segemented image that only leaves a pixels within specified color value, sets else to 0
-    def DetectColor(self,image,color):
+#The purpose of this function is to segement an image by setting all of the pixels an image
+#outside of a specified color range to 0, only leaving the desired color in the image.
+
+#param2::image: the image we would like to segment, expected to be bgr
+#param3::color: string specifying the color you would like to keep. These values are defined below
+#param4::returnType: string to specify the type of image, you would like this function to return.
+#by default will return a segmented image in BGR, this can also be specified to return following.
+#"binary" returns a binary image, 1 is region within color range
+#"hsv" returns an hsv image, of pixels within color range
+
+    def DetectColor(self,image,color,returnType = "segmented"):
         
         numrows,numcols,channels=image.shape
-
-	#upper orange hsv boundary
+        lower2=upper2=0
+	#definitions for upper and lower hsv values for each color
         if(color=='orange'):
             hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
             #lower  hsv boundary
@@ -34,33 +43,39 @@ class ProcessVideo(object):
             hsv_boundaries = [ ([102,110,70],[115,255,255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
-            lower2=lower
-            upper2=upper
         
         if(color=='green'):
             hsv_boundaries = [ ([40, 70, 0],[70, 190, 254])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
-            lower2=lower
-            upper2=upper
 
 	#convert bgr to hsv image for color segmentation
         hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        #find colors within the boundaries for each color set=1, else=0
-        mask1 = cv2.inRange(hsv_image,lower,upper)
-        mask2 = cv2.inRange(hsv_image,lower2,upper2)
-	#perform logical or to combine the masks
-        mask = cv2.bitwise_or(mask1,mask2,mask=None)
+        #find colors within the boundaries for each pixel,returns binary image
+        mask = mask1 = cv2.inRange(hsv_image,lower,upper)
 
-        #find the outline of all orange objects in image
-	#set any pixel != 0 to its original color value from unsegented image
-        hsv_output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
-        output = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
-        cv2.circle(output,(numcols/2,numrows/2),4,150,1)
-        #return the segmented image
-        #show the contours on original image
+        # if a second bound exists, we combine the two masks
+        if( lower2.any() or upper2.any() ):
+            mask2 = cv2.inRange(hsv_image,lower2,upper2)
+	    #perform logical or to combine the masks
+            mask = cv2.bitwise_or(mask1,mask2,mask=None)
         
-        return output
+	#this sets any pixel in mask != 0 to its hsv color value from unsegmented image
+        hsv_output = cv2.bitwise_and(hsv_image,hsv_image, mask = mask)
+        #this converts the image from hsv to bgr
+        segmentedImage = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
+        #we put a circle in the center of the image 
+        cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
+        
+        #segmentedImage is bgr, and mask is a binary image with values within color range
+        if(returnType == "segmented"):
+            return segmentedImage
+        elif returnType == "hsv":
+            return hsv_output
+        elif returnType == "binary":
+            return mask
+        elif returnType == "all":
+            return segmented,hsv_output,mask
         
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
@@ -377,6 +392,7 @@ class ProcessVideo(object):
             rospy.logwarn("not none")
 
         return dst
+
     #takes in an image and the center coordinate as a tuple and simply draws a circle over the coordinate    
     def DrawCircle(self,image,center):
     
@@ -389,21 +405,53 @@ class ProcessVideo(object):
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
 
+    #given an image and a color of a circle, this function will segment the image according to the
+    #desired color and return the first circular object that it sees, along with its 
+    #calculated radius and center, if no circle is detected, these two values will be == None
+    def DetectCircle(self,image, circleColor):
+        
+        #first segment the image by color of circle
+        segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
+        numrows,numcols,channels=segmentedImage.shape
+        imagePerimeter = 2*numrows+2*numcols
 
-    def FindBox(self,image,mask):
-        im2, contours,hierarchy = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        contours=contours[0][:][:]
-        mx=amax(contours,0)
-        mn=amin(contours,0)
-        maxx=mx[0][0]
-        maxy=mx[0][1]
-        minx=mn[0][0]
-        miny=mn[0][1]
-        #only draw from the outer edges of square
-        contours=np.array([[[minx,miny],[minx,maxy]],[[minx,miny],[maxx,miny]],
-        [[maxx,miny],[maxx,maxy]],[[maxx,maxy],[minx,maxy]]])
-        #draw the square on the original image
-        cv2.drawContours(image, contours, -1, (0,255,0), 3)
+        contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        #use contours[0] for opencv2 or contours[1] for opencv3
+        contours = contours[1]
+        for shape in contours:
+            perimeter = cv2.arcLength(shape,True)
+            #if the shape is too small, it is most likely noise, and we wish to disregard it
+            if perimeter > (0.01)*imagePerimeter:
+            #finds shapes that are within a certain percentage of original shape perimeter
+                vertices = cv2.approxPolyDP(shape, 0.005 * perimeter,True)
+                numVertices = len(vertices)
+                #the shape is determined by the number of vertices,i.e. a triangle has 3, square has 4, 
+                #pentagon has 5, and anything above will be considered circular.
+                if numVertices > 5:
+                    M = cv2.moments(vertices)
+                    if(M["m00"] != 0):
+                        cx = int(M["m10"] / M["m00"])
+                        cy= int(M["m01"] / M["m00"])
+                        #center of circle
+                        center = (cx,cy)
+                        numPoints = 0
+                        averageRadius = 0
+                        #we want to loop through every vertex on circle and measure distance to center
+                        for points in vertices:
+                            point = points[0]
+                            dist = (point - center)
+                            averageRadius += sqrt(inner(dist,dist))
+                            numPoints += 1
+                        #we want to calculate the average radius and return it as # of pixels
+                        averageRadius = int(averageRadius/numPoints)
+                        #draw circle onto image
+                        cv2.circle(segmentedImage, center,1,(255,255,255),-1)
+                        cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
+                        #this will return after the first circle is detected
+                        return segmentedImage, averageRadius, center
+        #if we have looped through every object and dont see a circle, return None
+        return image, None, None
 
 
     # Given an image, a point (x,y), and a width/height,
