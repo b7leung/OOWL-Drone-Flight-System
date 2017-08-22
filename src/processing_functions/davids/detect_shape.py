@@ -28,7 +28,8 @@ for c in contours:
     perim = cv2.arcLength(c,True)
     if perim < 5:
         print("too small")
-    approx = cv2.approxPolyDP(c, 0.008 * perim,True)
+
+    approx = cv2.approxPolyDP(c, 0.005 * perim,True)
     
     if len(approx) < 3:
         print("error")
