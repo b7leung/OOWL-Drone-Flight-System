@@ -71,9 +71,17 @@ class OrientVLineDirective(AbstractDroneDirective):
             # if a line was found and drone isn't vertical yet,
             # just turn the drone; no need move drone
             elif yawspeed != 0:
+
                 xspeed = 0
                 yspeed = 0
                 zspeed = 0
+
+                if yawspeed < 0:
+                    pass
+                else:
+                    xspeed = 0
+                    yspeed = 0
+                    zspeed = 0
 
             directiveStatus = 0 
             rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
