@@ -190,7 +190,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( OrientPLineDirective('blue', 'orange', altitude), 4 ),
             ( FollowLineDirective('blue'), 14 )
             ]
-            algCycles = 4
+            algCycles = 6
             
             end = [
             ( OrientVLineDirective('green', 'orange', altitude ), 4 ),

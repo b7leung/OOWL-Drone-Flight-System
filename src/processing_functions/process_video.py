@@ -28,12 +28,12 @@ class ProcessVideo(object):
     def DetectColor(self,image,color,returnType = "segmented"):
         
         numrows,numcols,channels=image.shape
-        lower2=upper2=0
+        lower2=upper2=array([0,0,0])
 	#definitions for upper and lower hsv values for each color
-        if(color=='orange'):
+        if(color=='orange'): #0,80,190,7,255,255
             hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
-            #lower  hsv boundary
-            hsv_boundaries2 = [([170, 140, 150],[179, 255, 255])]
+            #lower  hsv boundary #170 140 150,179 255 255
+            hsv_boundaries2 = [([170, 30, 150],[180, 190, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -75,9 +75,28 @@ class ProcessVideo(object):
         elif returnType == "binary":
             return mask
         elif returnType == "all":
-            return segmented,hsv_output,mask
-        
+            return segmentedImage,hsv_output,mask
 
+    #this function takes in as arguements, object aproximate pixel length , the original size of an object in
+    #mm and, focal length (default is focal length of A.R. drone bottom camera). Then it finds the approximate
+    #distance in mm, from the object to the camera. (assumes flat lense)
+    def CalcDistance(self,trueObjectSize,objectPixelSize,focalLength = 459.2622):
+        #z = foc*x/x'
+        distance = (focalLength*trueObjectSize)/objectPixelSize
+        return distance
+
+    #a non classical more accurate model for calculating distance,object true size expected in mm
+    #and returns distance in mm
+    def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 781.6, offset = -319.4):
+        distance = ( (focalLength*objectTrueSize)/objectPixels)+offset
+        return distance
+        
+    #calculates the focal length of a flat lense, given as parameters: an objects apparent size in pixels,
+    #an objects true size in mm, and the distance from the object in mm
+    def CalcFocal(self,objectPixelSize,objectTrueSize,distance):
+        focal = (objectPixelSize*distance)/trueObjectSize
+        return focal
+        
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
     def ShowLine(self,image, lowerAngleBound = 0, upperAngleBound = 180, secondBounds = (None,None), thresh=65):
@@ -409,7 +428,7 @@ class ProcessVideo(object):
     #desired color and return the first circular object that it sees, along with its 
     #calculated radius and center, if no circle is detected, these two values will be == None
     def DetectCircle(self,image, circleColor):
-        
+        #bottom camera f = 408.0038
         #first segment the image by color of circle
         segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
         numrows,numcols,channels=segmentedImage.shape
@@ -422,9 +441,9 @@ class ProcessVideo(object):
         for shape in contours:
             perimeter = cv2.arcLength(shape,True)
             #if the shape is too small, it is most likely noise, and we wish to disregard it
-            if perimeter > (0.01)*imagePerimeter:
+            if perimeter > (0.05)*imagePerimeter:
             #finds shapes that are within a certain percentage of original shape perimeter
-                vertices = cv2.approxPolyDP(shape, 0.005 * perimeter,True)
+                vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
                 numVertices = len(vertices)
                 #the shape is determined by the number of vertices,i.e. a triangle has 3, square has 4, 
                 #pentagon has 5, and anything above will be considered circular.
@@ -444,10 +463,11 @@ class ProcessVideo(object):
                             averageRadius += sqrt(inner(dist,dist))
                             numPoints += 1
                         #we want to calculate the average radius and return it as # of pixels
-                        averageRadius = int(averageRadius/numPoints)
+                        averageRadius = (averageRadius/numPoints)
                         #draw circle onto image
                         cv2.circle(segmentedImage, center,1,(255,255,255),-1)
-                        cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
+                        cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
+                        #cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
                         #this will return after the first circle is detected
                         return segmentedImage, averageRadius, center
         #if we have looped through every object and dont see a circle, return None

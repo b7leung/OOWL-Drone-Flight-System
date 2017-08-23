@@ -50,9 +50,16 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
-        
-        orange_image = self.processVideo.DetectColor(image, self.platformColor)
-        cx, cy = self.processVideo.CenterOfMass(orange_image)
+        orange_image,radius,center = self.processVideo.DetectCircle(image,self.platformColor) 
+        if(radius == None):
+            orange_image = self.processVideo.DetectColor(image, self.platformColor)
+            cx, cy = self.processVideo.CenterOfMass(orange_image)
+        else:
+            (cx,cy) = center
+            distance = CalcDistanceNew(88,radius*2)
+            rospy.logwarn(str(distance))
+            
+
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)
         self.pid.UpdateError(cx,cy)
