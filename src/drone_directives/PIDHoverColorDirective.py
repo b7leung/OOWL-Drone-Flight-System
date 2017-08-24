@@ -56,7 +56,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             cx, cy = self.processVideo.CenterOfMass(orange_image)
         else:
             (cx,cy) = center
-            distance = CalcDistanceNew(88,radius*2)
+            distance = self.processVideo.CalcDistanceNew(88,radius*2)
             rospy.logwarn(str(distance))
             
 

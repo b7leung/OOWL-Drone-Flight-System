@@ -275,7 +275,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # If no machine is loaded, then drone master does nothing 
         # (so that the drone may be controlled with the keyboard)
         if self.currMachine == None:
-            pass
+
+            image,radius,center = self.process.DetectCircle(self.cv_image,"orange")
+            if radius != None:
+                distance = self.process.CalcDistanceNew(88,radius*2)
+                rospy.logwarn("alt:"+str(distance) )
+                
         else:
             # retrieving the instructions for whatever state the machine is in 
             # and commanding the drone to move accordingly

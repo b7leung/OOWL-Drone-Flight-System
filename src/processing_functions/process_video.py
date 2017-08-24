@@ -33,7 +33,7 @@ class ProcessVideo(object):
         if(color=='orange'): #0,80,190,7,255,255
             hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 30, 150],[180, 190, 255])]
+            hsv_boundaries2 = [([170, 40, 150],[180, 190, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -456,11 +456,13 @@ class ProcessVideo(object):
                         center = (cx,cy)
                         numPoints = 0
                         averageRadius = 0
+                        maxRadius = 0
                         #we want to loop through every vertex on circle and measure distance to center
                         for points in vertices:
                             point = points[0]
                             dist = (point - center)
-                            averageRadius += sqrt(inner(dist,dist))
+                            currentRadius = sqrt(inner(dist,dist))
+                            averageRadius += currentRadius
                             numPoints += 1
                         #we want to calculate the average radius and return it as # of pixels
                         averageRadius = (averageRadius/numPoints)
