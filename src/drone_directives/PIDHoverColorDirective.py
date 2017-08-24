@@ -50,7 +50,10 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
-        orange_image,radius,center = self.processVideo.DetectCircle(image,self.platformColor) 
+        orange_image,radius,center = self.processVideo.DetectShape(image,self.platformColor) 
+        #if(radius == None):
+            #orange_image,radius,center = self.processVideo.DetectCircle(image)
+            
         if(radius == None):
             orange_image = self.processVideo.DetectColor(image, self.platformColor)
             cx, cy = self.processVideo.CenterOfMass(orange_image)

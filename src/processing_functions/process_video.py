@@ -65,7 +65,7 @@ class ProcessVideo(object):
         #this converts the image from hsv to bgr
         segmentedImage = cv2.cvtColor(hsv_output,cv2.COLOR_HSV2BGR)
         #we put a circle in the center of the image 
-        cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
+        #cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
         
         #segmentedImage is bgr, and mask is a binary image with values within color range
         if(returnType == "segmented"):
@@ -427,7 +427,36 @@ class ProcessVideo(object):
     #given an image and a color of a circle, this function will segment the image according to the
     #desired color and return the first circular object that it sees, along with its 
     #calculated radius and center, if no circle is detected, these two values will be == None
-    def DetectCircle(self,image, circleColor):
+    def DetectCircle(self,image, circleColor = None):
+        numrows,numcols,channels=image.shape
+        imagePerimeter = 2*numrows+2*numcols
+        minCircumference = 0.01*imagePerimeter
+        minR = int(minCircumference/(2*pi))
+        #first segment the image by color of circle
+        if circleColor != None:
+            segmentedImage = self.DetectColor(image, circleColor)
+            grayImage = cv2.cvtColor(segmentedImage,cv2.COLOR_BGR2GRAY)
+        else:
+            grayImage = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+            segmentedImage = grayImage
+            
+        grayImage = cv2.GaussianBlur( grayImage, (7,7),0)
+        circles = cv2.HoughCircles(grayImage,cv2.HOUGH_GRADIENT,1,10,param1=50,param2=20,minRadius=minR,maxRadius=0)
+        if circles != None:
+            for param in circles[0,:]:
+                cx=int(param[0])
+                cy=int(param[1])
+                center = (cx,cy)
+                radius = param[2]
+                # draw the outer circle
+                cv2.circle(segmentedImage,center,int(radius),(0,255,0),2)
+                # draw the center of the circle
+                cv2.circle(segmentedImage,center,2,(0,0,255),3)
+                return segmentedImage, radius, center
+        #if we have looped through every object and dont see a circle, return None
+        return image, None, None
+
+    def DetectShape(self,image, circleColor):
         #bottom camera f = 408.0038
         #first segment the image by color of circle
         segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
@@ -456,16 +485,22 @@ class ProcessVideo(object):
                         center = (cx,cy)
                         numPoints = 0
                         averageRadius = 0
-                        maxRadius = 0
+                        outOfBounds = 0
                         #we want to loop through every vertex on circle and measure distance to center
                         for points in vertices:
                             point = points[0]
-                            dist = (point - center)
-                            currentRadius = sqrt(inner(dist,dist))
-                            averageRadius += currentRadius
-                            numPoints += 1
+                            if(point[0] == 0 or point[0] == numcols or point[1] == 0 or point[1] == numrows):
+                                outOfBounds+=1
+                                if(outOfBounds >10):
+                                    return image,None,None
+                            else:
+                                dist = (point - center)
+                                currentRadius = sqrt(inner(dist,dist))
+                                averageRadius += currentRadius
+                                numPoints += 1
                         #we want to calculate the average radius and return it as # of pixels
                         averageRadius = (averageRadius/numPoints)
+                        
                         #draw circle onto image
                         cv2.circle(segmentedImage, center,1,(255,255,255),-1)
                         cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
@@ -474,7 +509,6 @@ class ProcessVideo(object):
                         return segmentedImage, averageRadius, center
         #if we have looped through every object and dont see a circle, return None
         return image, None, None
-
 
     # Given an image, a point (x,y), and a width/height,
     # Will return a "cropped image" of the same dimensions
