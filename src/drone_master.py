@@ -225,6 +225,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.MachineSwitch( init, None, 0, None, None, SELF_CORRECTING_TAKEOFF_MACHINE)
 
+        elif key == ord('a'):
+
+            self.moveTime = 0.0
+            self.waitTime = 0.0
+
+            alg = [
+            ( PIDObjectOrientDirective('green', 'orange' ), 10 ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
+            ( CapturePhotoDirective(self.droneRecordPath), 1 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
+            ( PIDLineOrientDirective('blue', 'orange'), 4 ),
+            ( FollowLineDirective('blue'), 14 )
+            ]
+            
+            algCycles = 6
+
+            end = [
+            ( LandDirective(), 1)
+            ]
+
+
         elif key == ord('p'):
 
             self.moveTime = 0.0
@@ -232,6 +253,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
+
             (pidAlg, 0)
             ]
             p,i,d = pidAlg.GetSettings()
