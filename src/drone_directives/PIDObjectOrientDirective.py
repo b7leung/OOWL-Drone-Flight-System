@@ -35,6 +35,15 @@ class PIDObjectOrientDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
 
         # color segmented images
+        numRows, numCols, channels = image.shape
+        centerx = numCols/2
+        centery = numRows/2
+        windowSize = 40
+        xLower = centerx-windowSize
+        yLower = centery-windowSize
+        xUpper = centerx+windowSize
+        yUpper = centery+windowSize
+
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
@@ -46,8 +55,8 @@ class PIDObjectOrientDirective(AbstractDroneDirective):
 
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(segPlatformImage)
-        self.pid.UpdateError(self.cx,self.cy)
-        self.pid.SetPIDTerm()
+        self.pid.UpdateError(cx,cy)
+        self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
         self.pid.DrawArrow(segPlatformImage, xspeed, yspeed)
 
@@ -55,8 +64,8 @@ class PIDObjectOrientDirective(AbstractDroneDirective):
 
         yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
 
-        if ( xspeed == 0 and yspeed == 0 and zspeed == 0 and yawspeed == 0
-        and cx != None and cy != None ):
+        if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
+        and cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower):
 
             rospy.logwarn("Vertically facing " + self.lineColor + " line")
             directiveStatus = 1
@@ -81,19 +90,17 @@ class PIDObjectOrientDirective(AbstractDroneDirective):
 
                 xspeed = 0
                 yspeed = 0
-                zspeed = 0
 
                 if yawspeed < 0:
                     pass
                 else:
                     xspeed = 0
                     yspeed = 0
-                    zspeed = 0
 
             directiveStatus = 0 
             rospy.logwarn("Trying to vertically face " + self.lineColor + " line")
 
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy)
 
 
 

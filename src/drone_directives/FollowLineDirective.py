@@ -49,7 +49,7 @@ class FollowLineDirective(AbstractDroneDirective):
             
         else:
 
-            xspeed = -0.9
+            xspeed = -0.1
             directiveStatus = 0
 
         if yspeed !=0:

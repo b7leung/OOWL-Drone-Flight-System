@@ -231,6 +231,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.0
 
             alg = [
+            ( PIDHoverColorDirective('orange',self.settingsPath), 10),
             ( PIDObjectOrientDirective('green', 'orange' ), 10 ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
@@ -245,7 +246,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( LandDirective(), 1)
             ]
 
-
+            self.MachineSwitch(None, alg, algCycles, end, None, AUTO_CIRCLE_MACHINE)
+    
         elif key == ord('p'):
 
             self.moveTime = 0.0

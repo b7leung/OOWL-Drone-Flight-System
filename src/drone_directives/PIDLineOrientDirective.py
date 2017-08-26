@@ -35,6 +35,15 @@ class PIDLineOrientDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
 
         # color segmented images
+        numRows, numCols, channels = image.shape
+        centerx = numCols/2
+        centery = numRows/2
+        windowSize = 40
+        xLower = centerx-windowSize
+        yLower = centery-windowSize
+        xUpper = centerx+windowSize
+        yUpper = centery+windowSize
+
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
 
@@ -46,15 +55,15 @@ class PIDLineOrientDirective(AbstractDroneDirective):
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(orang_image)
-        self.pid.UpdateError(self.cx,self.cy)
-        self.pid.SetPIDTerm()
+        self.pid.SetPoint(segPlatformImage)
+        self.pid.UpdateError(cx,cy)
+        self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
-        self.pid.DrawArrow(orange_image, xspeed, yspeed)
+        self.pid.DrawArrow(segPlatformImage, xspeed, yspeed)
         yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
 
         if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
-        and cx != None and cy != None ):
+        and cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower):
 
             rospy.logwarn("Perpendicular to " + self.lineColor + " line")
             directiveStatus = 1
@@ -78,7 +87,6 @@ class PIDLineOrientDirective(AbstractDroneDirective):
             elif yawspeed != 0:
                 xspeed = 0
                 yspeed = 0
-                zspeed = 0
                 
             directiveStatus = 0 
             rospy.logwarn("Trying to align perpendicularly to " + self.lineColor + " line")

@@ -336,11 +336,11 @@ class ProcessVideo(object):
 
         # Drone rotates Counter Clock_Wise
         if angle < lowerAngle and angle > 0:
-            yawspeed = .7
+            yawspeed = .4
 
         # Drone rotates Clock_Wise
         elif angle > upperAngle and angle < 180:
-            yawspeed = -.7
+            yawspeed = -.4
 
         # Drone is at the right angle; no need to rotate 
         else:
@@ -365,11 +365,11 @@ class ProcessVideo(object):
         
         # Drone rotates Counter Clock-Wise
         if angle < upperAngle and angle > 90:
-            yawspeed = 0.5
+            yawspeed = 0.4
 
         # Drone rotates Clock_Wise
         elif angle > lowerAngle and angle < 90:
-            yawspeed = -0.5
+            yawspeed = -0.4
 
         else:
             yawspeed = 0
