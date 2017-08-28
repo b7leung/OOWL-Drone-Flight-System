@@ -60,8 +60,6 @@ class PIDObjectOrientDirective(AbstractDroneDirective):
         xspeed, yspeed = self.pid.GetPIDValues()
         self.pid.DrawArrow(segPlatformImage, xspeed, yspeed)
 
-
-
         yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
 
         if ( xspeed == 0 and yspeed == 0 and yawspeed == 0

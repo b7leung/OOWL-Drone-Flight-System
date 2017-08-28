@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.21, Ki=0.028, Kd=0.12, moveTime = 0.0, waitTime = 0.00):
+    def __init__(self,Kp=0.215, Ki=0.028, Kd=0.12, moveTime = 0.0, waitTime = 0.00):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0

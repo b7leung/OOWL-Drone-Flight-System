@@ -50,6 +50,16 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
+        
+        numRows, numCols, channels = image.shape
+        centerx = numCols/2
+        centery = numRows/2
+        windowSize = 40
+        xLower = centerx-windowSize
+        yLower = centery-windowSize
+        xUpper = centerx+windowSize
+        yUpper = centery+windowSize
+        
         orange_image,radius,center = self.processVideo.DetectShape(image,self.platformColor) 
         #if(radius == None):
             #orange_image,radius,center = self.processVideo.DetectCircle(image)
@@ -78,7 +88,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
 
         # if there is orange in the screen, and the drone is in the middle, return true
-        if cx != None and cy != None and xspeed == 0 and yspeed == 0:
+        if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
 
             rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1

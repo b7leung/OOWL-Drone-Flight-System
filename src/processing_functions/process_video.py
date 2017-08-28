@@ -323,7 +323,7 @@ class ProcessVideo(object):
     # returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
     # keep blue line between +/- thresh of 90 degrees (considered perfect at 90 degrees)
     # returns None if no yawspeed could be calculated
-    def LineOrientation(self, image, angle, thresh):
+    def LineOrientation(self, image, angle, thresh, yawspeed = 0.4):
 
         if angle == None:
             return None
@@ -336,17 +336,17 @@ class ProcessVideo(object):
 
         # Drone rotates Counter Clock_Wise
         if angle < lowerAngle and angle > 0:
-            yawspeed = .4
+            yawSpeed = yawspeed
 
         # Drone rotates Clock_Wise
         elif angle > upperAngle and angle < 180:
-            yawspeed = -.4
+            yawSpeed = -1 * yawspeed
 
         # Drone is at the right angle; no need to rotate 
         else:
-            yawspeed = 0
+            yawSpeed = 0
         
-        return yawspeed
+        return yawSpeed
     
 
     # return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle

@@ -12,10 +12,11 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
     # sets up this directive
     # platformColor: color of the platform to return to
-    def __init__(self, platformColor):
+    def __init__(self, platformColor, speedModifier = 1):
 
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
+        self.speedModifier = speedModifier
     
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -61,7 +62,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
         
         rospy.logwarn("Speedx: " + str(xspeed) + " speedy: " + str(yspeed))
         self.processVideo.DrawCircle(platform_image,(cx,cy))
-        return directiveStatus, (xspeed, yspeed, 0, zspeed), platform_image, (cx,cy)
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), platform_image, (cx,cy)
         
 
 

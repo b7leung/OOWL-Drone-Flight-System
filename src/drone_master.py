@@ -27,9 +27,8 @@ FIX_TO_BLUE_LINE_MACHINE = "fix_to_blue"
 FOLLOW_BLUE_LINE_MACHINE = "follow_blue"
 AUTO_CIRCLE_MACHINE= "auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
-RETURN_MACHINE = "return"
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
-TEST_SLOW_MACHINE = "test_slow"
+PID_OBJECT_ORIENT_MACHINE = 'pid_object_orient'
 
 
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
@@ -50,13 +49,13 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             os.makedirs(self.droneRecordPath)
         self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
         self.logger.Start()
+
         #import PID and color constants
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
 
         # initalizing the state machine that will handle which algorithms to run at which time;
         # the results of the algorithms will be used to control the drone
         self.stateMachine = StateMachine()
-        #self.stateMachine = StateMachine((ReturnToColorDirective('orange'),30))
         
         # drone starts without any machine loaded, so that it can be controlled using the keyboard
         self.currMachine = None
@@ -64,11 +63,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # initalizing helper objects
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
-        
-
         self.startTimer = time.clock()
         self.waitTime = 0
         self.moveTime = 0
+
 
     # Each state machine that drone mastercan use is defined here;
     # When key is pressed, define the machine to be used and switch over to it.
@@ -134,37 +132,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
 
-        elif key == ord('r'):
-            
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            ( OrientVLineDirective('green', 'orange', 0 ), 4 )
-            ]
-            error = (ReturnToColorDirective('orange'), 30)
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, error, RETURN_MACHINE)
-
-        elif key == ord('w'):  
-            
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            ( FindPlatformAltitudeDirective('orange', 100), 20 )
-            ]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, RETURN_MACHINE)
-
-        elif key == ord('6'):
-            
-            self.moveTime = 0.0
-            self.waitTime = 0.0
-            alg = [
-                (TestSlowDirective(), 0)
-            ]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, TEST_SLOW_MACHINE)
-
         elif key == ord('s'):
 
             # does the entire circle algorithm, in order.
@@ -209,17 +176,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.0
 
             init = [
-            ( FlatTrimDirective(), 1),
-            ( IdleDirective("pause for flat trim"), 10 ),
-
-            ( ToggleCameraDirective(), 1 ),
-            ( IdleDirective("pause to toggle camera"), 10 ),
-
-            ( TakeoffDirective(), 1),
-            ( IdleDirective("pause for takeoff"), 130 ),
-
+            ( FlatTrimDirective(), 1), ( IdleDirective("pause for flat trim"), 10 ),
+            ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
+            ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
             ( ReturnToOriginDirective(100), 15 )
-
             #( HoverColorDirective('orange', altitude), 10 )
             ]
 
@@ -231,7 +191,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.0
 
             alg = [
-            ( PIDHoverColorDirective('orange',self.settingsPath), 10),
+            ( PIDHoverColorDirective('orange', self.settingsPath), 10),
             ( PIDObjectOrientDirective('green', 'orange' ), 10 ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
@@ -246,7 +206,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( LandDirective(), 1)
             ]
 
-            self.MachineSwitch(None, alg, algCycles, end, None, AUTO_CIRCLE_MACHINE)
+            error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
+
+            self.MachineSwitch(None, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
     
         elif key == ord('p'):
 
@@ -264,6 +226,26 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             error = (ReturnToColorDirective('orange'), 10)
             self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
+
+        """elif key == ord('9'):
+            
+            self.moveTime = 0.0
+            self.waitTime = 0.0
+            
+            pidAlg = PIDObjectOrientDirective('orange',self.settingsPath)
+
+            alg = [
+            (pidAlg, 0)
+            ]
+
+            p,i,d = pidAlg.GetSettings()
+
+            pidAlg.pid.ResetPID(p,i,d)
+
+            algCycles = -1
+            error = (ReturnToColorDirective('orange'), 10)
+            self.MachineSwitch( None, alg, algCycles, None, error, PID_OBJECT_ORIENT_MACHINE )"""
+
 
 
     # Taking in some machine's definition of states and a string name,
