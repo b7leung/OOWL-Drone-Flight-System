@@ -2,10 +2,13 @@
 
 import rospy
 import collections
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
 
 from ardrone_autonomy.msg import Navdata
 from ardrone_autonomy.msg import navdata_altitude
-
+from processing_functions.process_video import ProcessVideo
+from sensor_msgs.msg import Image
 
 class FlightstatsReceiver(object):
     
@@ -18,6 +21,7 @@ class FlightstatsReceiver(object):
         # update navdata messages are recieved
         self.navdataSub = rospy.Subscriber('/ardrone/navdata', Navdata, self.UpdateNavdata)
         self.altitudeSub = rospy.Subscriber('/ardrone/navdata_altitude', navdata_altitude, self.UpdateAltitude)
+        self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.VideoUpdate )
 
         # dictionary will hold a useful subset of available flight info
         # Key is the variable name; value is (description, value, units, (optional) direction string following units)
@@ -25,7 +29,11 @@ class FlightstatsReceiver(object):
         self.flightInfo = collections.OrderedDict()
         self.flightInfo["batteryPercent"]=["Battery Left: ", self.defaultValue, "%", ""]
         self.flightInfo["state"]=["Status: ", self.defaultValue, "", ""]
-        self.flightInfo["altitude"]=["Altitude: ", self.defaultValue, "mm", ""]
+        self.flightInfo["altitude"]=["Drone Altitude: ", self.defaultValue, "mm", ""]
+
+        self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", self.defaultValue, "mm", ""]
+        self.flightInfo["center"] = ["Platform center: ", str(self.defaultValue), "", ""]
+        self.flightInfo["radius"] = ["Platform Radius: ", str(self.defaultValue), "pixels", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
@@ -45,12 +53,32 @@ class FlightstatsReceiver(object):
         self.FBDisplacement = 0.0
         self.UDDisplacement = 0.0
         self.oldTime = rospy.Time.now()
+        self.bridge = CvBridge()
+        self.processVideo = ProcessVideo()
 
         # sometimes the altitude doesn't start at 0; "zero balances" the drone such that where it started is considered 0 altitude
         self.zeroBalanced = False
         self.zeroAltitude = 0
 
-    
+
+    def VideoUpdate(self, image):
+        
+        # converting to hsv
+        image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+        #radius = 5
+        _, radius, center = self.processVideo.DetectShape(image, 'orange')
+
+        if radius == None:
+            distance = -1
+        else:
+            distance = 0
+            distance = self.processVideo.CalcDistanceNew(88, radius* 2)
+
+        (self.flightInfo["SVCLAltitude"])[1] = distance
+        (self.flightInfo["center"])[1] = center 
+        (self.flightInfo["radius"])[1] = radius
+
+
     def UpdateAltitude(self, altitude):
         if self.zeroBalanced:
             (self.flightInfo["altitude"])[1] = altitude.altitude_raw - self.zeroAltitude

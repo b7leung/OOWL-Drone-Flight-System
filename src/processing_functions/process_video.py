@@ -31,9 +31,9 @@ class ProcessVideo(object):
         lower2=upper2=array([0,0,0])
 	#definitions for upper and lower hsv values for each color
         if(color=='orange'): #0,80,190,7,255,255
-            hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
+            hsv_boundaries = [ ([0, 140, 0],[7, 254, 255])]
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 40, 150],[180, 190, 255])]
+            hsv_boundaries2 = [([172, 140, 0],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -462,8 +462,10 @@ class ProcessVideo(object):
         segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
         numrows,numcols,channels=segmentedImage.shape
         imagePerimeter = 2*numrows+2*numcols
+        grayImage = cv2.cvtColor(segmentedImage,cv2.COLOR_BGR2GRAY)
+        grayImage = cv2.GaussianBlur( grayImage, (7,7),0)
 
-        contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(grayImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         #use contours[0] for opencv2 or contours[1] for opencv3
         contours = contours[1]
@@ -485,14 +487,12 @@ class ProcessVideo(object):
                         center = (cx,cy)
                         numPoints = 0
                         averageRadius = 0
-                        outOfBounds = 0
                         #we want to loop through every vertex on circle and measure distance to center
                         for points in vertices:
                             point = points[0]
-                            if(point[0] == 0 or point[0] == numcols or point[1] == 0 or point[1] == numrows):
-                                outOfBounds+=1
-                                if(outOfBounds >10):
-                                    return image,None,None
+                            #this will check if the circle is being cut off by image boundary
+                            if(point[0] < 5 or point[0] >= numcols-5 or point[1] < 5 or point[1] >= numrows-5):
+                                return image,None,None
                             else:
                                 dist = (point - center)
                                 currentRadius = sqrt(inner(dist,dist))

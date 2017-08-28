@@ -60,18 +60,10 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         xUpper = centerx+windowSize
         yUpper = centery+windowSize
         
-        orange_image,radius,center = self.processVideo.DetectShape(image,self.platformColor) 
-        #if(radius == None):
-            #orange_image,radius,center = self.processVideo.DetectCircle(image)
+           #orange_image,radius,center = self.processVideo.DetectCircle(image)
             
-        if(radius == None):
-            orange_image = self.processVideo.DetectColor(image, self.platformColor)
-            cx, cy = self.processVideo.CenterOfMass(orange_image)
-        else:
-            (cx,cy) = center
-            distance = self.processVideo.CalcDistanceNew(88,radius*2)
-            rospy.logwarn(str(distance))
-            
+        orange_image = self.processVideo.DetectColor(image, self.platformColor)
+        cx, cy = self.processVideo.CenterOfMass(orange_image)
 
         self.pid.UpdateDeltaTime()
         self.pid.SetPoint(orange_image)

@@ -282,10 +282,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # (so that the drone may be controlled with the keyboard)
         if self.currMachine == None:
 
-            image,radius,center = self.process.DetectCircle(self.cv_image,"orange")
-            if radius != None:
-                distance = self.process.CalcDistanceNew(88,radius*2)
-                rospy.logwarn("alt:"+str(distance) )
+            pass
                 
         else:
             # retrieving the instructions for whatever state the machine is in 

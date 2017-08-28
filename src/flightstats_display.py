@@ -131,7 +131,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
 
         # rounding all values to make it easier to view
         for num in ["altitude", "rotX", "rotY", "rotZ", "velX", "velY",
-        "velZ", "dispLR", "dispFB", "dispUD", "accelZ"]:
+        "velZ", "dispLR", "dispFB", "dispUD", "accelZ", "SVCLAltitude"]:
             if (dict[num])[1] != self.defaultValue:
                 if curr_view == SIMPLE_VIEW:
                     # rounds to whole numbers
