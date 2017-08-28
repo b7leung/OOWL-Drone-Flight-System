@@ -27,13 +27,13 @@ class ProcessVideo(object):
 
     def DetectColor(self,image,color,returnType = "segmented"):
         
-        numrows,numcols,channels=image.shape
+        numRows,numCols,channels=image.shape
         lower2=upper2=array([0,0,0])
 	#definitions for upper and lower hsv values for each color
         if(color=='orange'): #0,80,190,7,255,255
-            hsv_boundaries = [ ([0, 80, 190],[7, 255, 255])]
+            hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 40, 150],[180, 190, 255])]
+            hsv_boundaries2 = [([172, 50, 180],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -67,6 +67,8 @@ class ProcessVideo(object):
         #we put a circle in the center of the image 
         #cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
         
+        rospy.logwarn(hsv_image[numRows/2][numCols/2])
+        rospy.logwarn("seg: " + str(hsv_output[numRows/2][numCols/2]))
         #segmentedImage is bgr, and mask is a binary image with values within color range
         if(returnType == "segmented"):
             return segmentedImage
