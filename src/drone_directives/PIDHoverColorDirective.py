@@ -80,7 +80,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         # if there is orange in the screen, and the drone is in the middle, return true
         if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
 
-            #rospy.logwarn("PID: Done Hovering on " + self.platformColor)
+            rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1
 
         elif cx == None or cy == None:
@@ -89,7 +89,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         else:
 
-            #rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
+            rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
         
         #rospy.logwarn("Controller instructions -- x: " + str(xspeed) + " y: " + str(yspeed))
