@@ -1,6 +1,7 @@
 #!usr/bin/env python
 
 import rospy
+import cv2
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 from processing_functions.pid_controller import PIDController
@@ -47,7 +48,21 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
+                            
+        cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+        if cx != None and cy != None:
+            cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
+
+
+        self.pid.UpdateDeltaTime()
+        self.pid.SetPoint(image)
+        self.pid.UpdateError(cx,cy)
+        p,i,d= self.GetSettings()
         
+        self.pid.SetPIDTerms()
+        #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
+        xspeed, yspeed = self.pid.GetPIDValues()
+
         numRows, numCols, channels = image.shape
         centerx = numCols/2
         centery = numRows/2
@@ -56,23 +71,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         yLower = centery-windowSize
         xUpper = centerx+windowSize
         yUpper = centery+windowSize
-                    
-        orange_image = self.processVideo.DetectColor(image, self.platformColor)
-        cx, cy = self.processVideo.CenterOfMass(orange_image)
-
-        self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(orange_image)
-        self.pid.UpdateError(cx,cy)
-        p,i,d= self.GetSettings()
-        
-        self.pid.SetPIDTerms()
-        #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
-        xspeed, yspeed = self.pid.GetPIDValues()
-        self.pid.DrawArrow(orange_image,xspeed,yspeed)
-
-
-        #rospy.logwarn(str(xspeed)+"  "+ str(yspeed))
-        #self.MoveFixedTime(xspeed, yspeed, 0 ,0, 0.1, 0.01)
+       
+        self.pid.DrawArrow(image, xspeed, yspeed)
+        cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
 
         # if there is orange in the screen, and the drone is in the middle, return true
         if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
@@ -89,5 +90,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
         
-        #rospy.logwarn("Controller instructions -- x: " + str(xspeed) + " y: " + str(yspeed))
-        return directiveStatus, (xspeed, yspeed, 0, 0), orange_image, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)
+
+
