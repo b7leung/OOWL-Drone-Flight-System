@@ -38,6 +38,14 @@ class ProcessVideo(object):
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
+        if(color=='front orange'):
+            hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
+            #lower  hsv boundary #170 140 150,179 255 255
+            hsv_boundaries2 = [([170, 50, 180],[180, 254, 255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+            lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
+            upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
         if(color=='blue'):
             hsv_boundaries = [ ([102,110,70],[115,255,255])]
