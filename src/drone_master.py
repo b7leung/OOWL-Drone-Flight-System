@@ -192,11 +192,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             alg = [
             ( PIDHoverColorDirective('orange', self.settingsPath), 10),
-            ( PIDObjectOrientDirective('green', 'orange' ), 10 ),
+            ( PIDObjectOrientDirective('green', 'orange', self.settingsPath ), 10 ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( PIDLineOrientDirective('blue', 'orange'), 4 ),
+            ( PIDLineOrientDirective('blue', 'orange', self.settingsPath), 4 ),
             ( FollowLineDirective('blue'), 14 )
             ]
             
@@ -215,37 +215,18 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
             
-            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
+            #pidAlg = PIDLineOrientDirective( 'blue', 'orange', self.settingsPath)
+            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
-
             (pidAlg, 0)
             ]
             p,i,d = pidAlg.GetSettings()
             pidAlg.pid.ResetPID(p,i,d)
 
             algCycles = -1
-            error = (ReturnToColorDirective('orange'), 10)
+            error = None
             self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
-
-        """elif key == ord('9'):
-            
-            self.moveTime = 0.0
-            self.waitTime = 0.0
-            
-            pidAlg = PIDObjectOrientDirective('orange',self.settingsPath)
-
-            alg = [
-            (pidAlg, 0)
-            ]
-
-            p,i,d = pidAlg.GetSettings()
-
-            pidAlg.pid.ResetPID(p,i,d)
-
-            algCycles = -1
-            error = (ReturnToColorDirective('orange'), 10)
-            self.MachineSwitch( None, alg, algCycles, None, error, PID_OBJECT_ORIENT_MACHINE )"""
-
 
 
     # Taking in some machine's definition of states and a string name,

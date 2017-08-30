@@ -14,16 +14,13 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     # platformColor: color to hover over
     def __init__(self, platformColor,settingsPath):
         
-        #only write to calibrater settings file
-        self.writePath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
-
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        self.settingsPath = settingsPath
 
+        self.settingsPath = settingsPath
         P,I,D = self.GetSettings()
         self.pid = PIDController(P, I, D)
-        #self.WriteSettings(P,I,D)
+
 
     def GetSettings(self):
         # read a text file as a list of lines
@@ -80,7 +77,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         # if there is orange in the screen, and the drone is in the middle, return true
         if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
 
-            #rospy.logwarn("PID: Done Hovering on " + self.platformColor)
+            rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1
 
         elif cx == None or cy == None:
@@ -89,7 +86,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         else:
 
-            #rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
+            rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
         
         #rospy.logwarn("Controller instructions -- x: " + str(xspeed) + " y: " + str(yspeed))

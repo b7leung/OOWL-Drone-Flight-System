@@ -1,6 +1,7 @@
 #!usr/bin/env python
 
 import rospy
+import cv2
 from processing_functions.process_video import ProcessVideo
 from processing_functions.pid_controller import PIDController
 from AbstractDroneDirective import *
@@ -14,12 +15,29 @@ class PIDLineOrientDirective(AbstractDroneDirective):
     # lineColor: color of the line to orient perpendicular to
     # platformColor: color of the platform to orient to
     # hoverAltitude: how high to hover over the platform
-    def __init__(self, lineColor, platformColor):
+    def __init__(self, lineColor, platformColor, settingsPath):
 
         self.lineColor = lineColor
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
-        self.pid = PIDController()
+
+        self.settingsPath = settingsPath 
+        P,I,D = self.GetSettings()
+        self.pid = PIDController(P,I,D)
+
+
+    def GetSettings(self):
+        # read a text file as a list of lines
+        # find the last line, change to a file you have
+        fileHandle = open ( self.settingsPath,'r' )
+        last = fileHandle.readlines()
+        fileHandle.close()        
+        
+        last=str(last[len(last)-1]).split()
+        #rospy.logwarn(str(last))
+        p, i, d = [float(x) for x in (last)]
+        
+        return p, i ,d
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -34,35 +52,41 @@ class PIDLineOrientDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        # color segmented images
-        numRows, numCols, channels = image.shape
-        centerx = numCols/2
-        centery = numRows/2
-        windowSize = 40
-        xLower = centerx-windowSize
-        yLower = centery-windowSize
-        xUpper = centerx+windowSize
-        yUpper = centery+windowSize
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
-        segPlatformImage = self.processVideo.DetectColor(image, self.platformColor)
-
+        
         # trying to be perpendicular to the colored line while being over the platform
         angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
-        #angle = self.processVideo.ShowLine(segLineImage, 20, 110, thresh = 45)
-        cx, cy = self.processVideo.CenterOfMass(segPlatformImage)
+        
+        cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+
         #draws center of circle on image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(segPlatformImage)
+        self.pid.SetPoint(image)
         self.pid.UpdateError(cx,cy)
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
-        self.pid.DrawArrow(segPlatformImage, xspeed, yspeed)
+
         yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
 
-        if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
+        # Directive is finished if drone is within a box of the center
+        numRows, numCols, channels = image.shape
+        centerx = numCols/2
+        centery = numRows/2
+        xWindowSize = 180
+        yWindowSize = 70
+
+        xLower = centerx-xWindowSize
+        yLower = centery-yWindowSize
+        xUpper = centerx+xWindowSize
+        yUpper = centery+yWindowSize
+
+        cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
+
+        #if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
+        if ( yawspeed == 0
         and cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower):
 
             rospy.logwarn("Perpendicular to " + self.lineColor + " line")

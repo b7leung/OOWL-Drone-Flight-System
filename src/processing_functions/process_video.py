@@ -67,8 +67,8 @@ class ProcessVideo(object):
         #we put a circle in the center of the image 
         #cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
         
-        rospy.logwarn(hsv_image[numRows/2][numCols/2])
-        rospy.logwarn("seg: " + str(hsv_output[numRows/2][numCols/2]))
+        #rospy.logwarn(hsv_image[numRows/2][numCols/2])
+        #rospy.logwarn("seg: " + str(hsv_output[numRows/2][numCols/2]))
         #segmentedImage is bgr, and mask is a binary image with values within color range
         if(returnType == "segmented"):
             return segmentedImage
@@ -79,6 +79,7 @@ class ProcessVideo(object):
         elif returnType == "all":
             return segmentedImage,hsv_output,mask
 
+
     #this function takes in as arguements, object aproximate pixel length , the original size of an object in
     #mm and, focal length (default is focal length of A.R. drone bottom camera). Then it finds the approximate
     #distance in mm, from the object to the camera. (assumes flat lense)
@@ -87,34 +88,40 @@ class ProcessVideo(object):
         distance = (focalLength*trueObjectSize)/objectPixelSize
         return distance
 
+
     #a non classical more accurate model for calculating distance,object true size expected in mm
     #and returns distance in mm
     def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 781.6, offset = -319.4):
         distance = ( (focalLength*objectTrueSize)/objectPixels)+offset
         return distance
         
+
     #calculates the focal length of a flat lense, given as parameters: an objects apparent size in pixels,
     #an objects true size in mm, and the distance from the object in mm
     def CalcFocal(self,objectPixelSize,objectTrueSize,distance):
         focal = (objectPixelSize*distance)/trueObjectSize
         return focal
         
+
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
     def ShowLine(self,image, lowerAngleBound = 0, upperAngleBound = 180, secondBounds = (None,None), thresh=65):
         
         #change bgr to gray for edge detection
+
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        #now we have binary image with edges of tape
+
         gray = cv2.GaussianBlur( gray, (7,7),0)
+
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
-        #lines contains rho and theta values
-        
-        lines = cv2.HoughLines(edges,1,pi/180,thresh)
-        """while(type(lines)==type(None) and thresh > 30):
+
+        lines = cv2.HoughLines(edges,1, pi/180, thresh)
+
+        """
+        while(type(lines)==type(None) and thresh > 30):
             lines = cv2.HoughLines(edges,1,pi/180,thresh)
             thresh-=1
-       """
+        """
         #average rho and theta values
         if(lines!= None):
         
@@ -139,30 +146,20 @@ class ProcessVideo(object):
             #rospy.logwarn("combined:" + str(extract))
 
             #if most lines are within this range of theta
-
+            
             if( sum(large | small) > (size(thetas)/2) and (lowerAngleBound <= 0)):
                 if(sum(large) > sum(small)):
                     #sums up all angles greater than 170 and averages them
                     radians = sum(thetas*large)/(sum(large))
                     rho = sum(rhos*large)/(sum(large))
 
-                    """rospy.logwarn((radians*180)/pi)
-                    rospy.logwarn(rho)
-                    rospy.logwarn("size")
-
-                    rospy.logwarn(thetas)"""
 
 
                 else:
                     #adds up all angles less than 10 and averages them
                     radians = sum(thetas*small)/(sum(small))
                     rho = sum(rhos*small)/(sum(small))
-                    """rospy.logwarn((radians*180)/pi)
-                    rospy.logwarn(rho)
-                    rospy.logwarn("size")
-
-                    rospy.logwarn(thetas)"""
-
+  
             else:
                 #takes average of all angles
                 temp=(thetas*extract)*180/pi
@@ -426,6 +423,7 @@ class ProcessVideo(object):
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
             cv2.circle(image, (cx,cy), 40, 255)
 
+
     #given an image and a color of a circle, this function will segment the image according to the
     #desired color and return the first circular object that it sees, along with its 
     #calculated radius and center, if no circle is detected, these two values will be == None
@@ -461,14 +459,17 @@ class ProcessVideo(object):
     def DetectShape(self,image, circleColor):
         #bottom camera f = 408.0038
         #first segment the image by color of circle
+        
         segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
-        numrows,numcols,channels=segmentedImage.shape
+        
+        numrows,numcols,channels=image.shape
         imagePerimeter = 2*numrows+2*numcols
-        grayImage = cv2.cvtColor(segmentedImage,cv2.COLOR_BGR2GRAY)
-        grayImage = cv2.GaussianBlur( grayImage, (7,7),0)
+        
+        #grayImage = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        #grayImage = cv2.GaussianBlur( grayImage, (7,7),0)
 
-        contours = cv2.findContours(grayImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+        contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
         #use contours[0] for opencv2 or contours[1] for opencv3
         contours = contours[1]
         for shape in contours:
@@ -494,7 +495,7 @@ class ProcessVideo(object):
                             point = points[0]
                             #this will check if the circle is being cut off by image boundary
                             if(point[0] < 5 or point[0] >= numcols-5 or point[1] < 5 or point[1] >= numrows-5):
-                                return image,None,None
+                                return image,None,center
                             else:
                                 dist = (point - center)
                                 currentRadius = sqrt(inner(dist,dist))
@@ -510,7 +511,9 @@ class ProcessVideo(object):
                         #this will return after the first circle is detected
                         return segmentedImage, averageRadius, center
         #if we have looped through every object and dont see a circle, return None
-        return image, None, None
+        
+        return image, None, (None,None)
+
 
     # Given an image, a point (x,y), and a width/height,
     # Will return a "cropped image" of the same dimensions
