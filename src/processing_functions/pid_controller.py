@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.21, Ki=0.045, Kd=0.12, moveTime = 0.0, waitTime = 0.00):
+    def __init__(self,Kp=0.21, Ki=0.025, Kd=0.12, moveTime = 0.0, waitTime = 0.00):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -104,14 +104,18 @@ class PIDController(object):
     def GetPIDValues(self):
 
         if self.xError != None and self.yError != None:
+      
             if self.cx < self.xLower or self.cx > self.xUpper:
                # rospy.logwarn( "p:" + str(self.x_pTerm)+ " i:"+ str(self.x_iTerm)+" d:"+str(self.x_dTerm))
+            
                 xPID = (self.x_pTerm + self.x_iTerm + self.x_dTerm)/self.centerx
             else:
                 xPID = 0.0
 
             if self.cy < self.yLower or self.cy > self.yUpper:
+            
                 yPID = (self.y_pTerm + self.y_iTerm + self.y_dTerm)/self.centery
+            
             else:
                 yPID = 0.0
 
@@ -131,7 +135,7 @@ class PIDController(object):
         
     #Compute the desired SetPoint for the Drone - the center of the image
     #Set the desired window size for drone to hover in
-    def SetPoint(self, image, windowSize=40):
+    def SetPoint(self, image, windowSize=20):
         
         self.numRows, self.numCols, self.channels = image.shape
         self.centerx = self.numCols/2.0
@@ -142,7 +146,7 @@ class PIDController(object):
         self.xUpper = self.centerx+windowSize
         self.yUpper = self.centery+windowSize
 
-        cv2.rectangle(image, (int(self.xLower), int(self.yLower)), (int(self.xUpper), int(self.yUpper)), (255,0,0), 2)
+        #cv2.rectangle(image, (int(self.xLower), int(self.yLower)), (int(self.xUpper), int(self.yUpper)), (255,0,0), 2)
 
 
     #Calculate Error as a function of object's distance from desired setpoint (the center)

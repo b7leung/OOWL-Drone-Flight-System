@@ -71,6 +71,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         yLower = centery-windowSize
         xUpper = centerx+windowSize
         yUpper = centery+windowSize
+       
+        self.pid.DrawArrow(image, xspeed, yspeed)
+        cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
 
         # if there is orange in the screen, and the drone is in the middle, return true
         #if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
@@ -90,8 +93,4 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)
 
-
-
-
-        
 
