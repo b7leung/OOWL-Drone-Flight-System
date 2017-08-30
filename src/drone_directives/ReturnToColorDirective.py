@@ -38,11 +38,11 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         platform_image = self.processVideo.DetectColor(image, self.platformColor)
 
-        cropped = self.processVideo.CropVisible(platform_image, 50,50, 500, 220)
-        hasPlatform = self.processVideo.IsHueDominant(cropped, 0, 360, 0.1)   
+        #cropped = self.processVideo.CropVisible(platform_image, 50,50, 500, 220)
+        hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.1)   
 
         if hasPlatform:
-            cx, cy = self.processVideo.CenterOfMass(cropped)
+            cx, cy = self.processVideo.CenterOfMass(platform_image)
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
             zspeed = 0

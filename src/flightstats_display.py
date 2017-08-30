@@ -108,16 +108,17 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
             (dict["state"])[1]= StatusMessages[(dict["state"])[1]]
 
         # Converting altitude from mm
-        if (dict["altitude"])[1] != self.defaultValue:
-            if curr_units_system == METRIC_UNITS:
-                # already in mm
-                pass
-            elif curr_units_system == IMPERIAL_UNITS:
-                #converting from mm to m
-                (dict["altitude"])[1] = (dict["altitude"])[1] / 1000.0
-                #converting from M to ft
-                (dict["altitude"])[1] = (dict["altitude"])[1] / 0.3048
-                (dict["altitude"])[2] = "ft"
+        for alt in ["SVCLAltitude", "altitude" ]:
+            if (dict[alt])[1] != self.defaultValue:
+                if curr_units_system == METRIC_UNITS:
+                    # already in mm
+                    pass
+                elif curr_units_system == IMPERIAL_UNITS:
+                    #converting from mm to m
+                    (dict[alt])[1] = (dict[alt])[1] / 1000.0
+                    #converting from M to in
+                    (dict[alt])[1] = 12*((dict[alt])[1] / 0.3048)
+                    (dict[alt])[2] = "in"
         
         # Convert velocity from mm/s to in/s
         for vel in ["velX", "velY", "velZ"]:

@@ -32,8 +32,7 @@ class FlightstatsReceiver(object):
         self.flightInfo["altitude"]=["Drone Altitude: ", self.defaultValue, "mm", ""]
 
         self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", self.defaultValue, "mm", ""]
-        self.flightInfo["center"] = ["Platform center: ", self.defaultValue, "", ""]
-        self.flightInfo["radius"] = ["Platform Radius: ", str(self.defaultValue), "pixels", ""]
+        self.flightInfo["center"] = ["Platform Center: ", self.defaultValue, "", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
@@ -65,18 +64,15 @@ class FlightstatsReceiver(object):
         
         # converting to hsv
         image = self.bridge.imgmsg_to_cv2(image, "bgr8")
-        #radius = 5
         _, radius, center = self.processVideo.DetectShape(image, 'orange')
 
         if radius == None:
             distance = -1
         else:
-            distance = 0
             distance = self.processVideo.CalcDistanceNew(88, radius* 2)
 
         (self.flightInfo["SVCLAltitude"])[1] = distance
         (self.flightInfo["center"])[1] = center 
-        (self.flightInfo["radius"])[1] = radius
 
 
     def UpdateAltitude(self, altitude):

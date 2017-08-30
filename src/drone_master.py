@@ -25,6 +25,7 @@ CAPTURE_PHOTO_MACHINE = 'capture_photo'
 FIX_TO_BLUE_LINE_MACHINE = "fix_to_blue"
 FOLLOW_BLUE_LINE_MACHINE = "follow_blue"
 AUTO_CIRCLE_MACHINE= "auto_circle"
+PID_AUTO_CIRCLE_MACHINE= "pid_auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
 PID_OBJECT_ORIENT_MACHINE = 'pid_object_orient'
@@ -205,7 +206,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
 
-            self.MachineSwitch(None, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch(None, alg, algCycles, end, error, PID_AUTO_CIRCLE_MACHINE)
     
         elif key == ord('p'):
 
@@ -222,7 +223,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             pidAlg.pid.ResetPID(p,i,d)
 
             algCycles = -1
-            error = None
+            error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
             self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
 
 
