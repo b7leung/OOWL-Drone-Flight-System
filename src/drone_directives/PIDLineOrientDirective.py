@@ -85,7 +85,6 @@ class PIDLineOrientDirective(AbstractDroneDirective):
 
         cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
 
-        #if ( xspeed == 0 and yspeed == 0 and yawspeed == 0
         if ( yawspeed == 0
         and cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower):
 
