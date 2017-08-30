@@ -20,8 +20,9 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.settingsPath = settingsPath
         P,I,D = self.GetSettings()
-        self.pid = PIDController(P, I, D)
-
+        self.pid = PIDController()
+        self.resetCounter = 0
+        
 
     def GetSettings(self):
         # read a text file as a list of lines
@@ -81,15 +82,21 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
             rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1
+            self.resetCounter += 1
+            if self.resetCounter > 10 :
+                self.pid.ResetPID()
+
 
         elif cx == None or cy == None:
             
             directiveStatus = -1
+            self.resetCounter = 0
 
         else:
 
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
+            self.resetCounter = 0
         
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)
 
