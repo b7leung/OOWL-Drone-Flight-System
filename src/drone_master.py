@@ -17,7 +17,6 @@ from state_machine import StateMachine
 from processing_functions import *
 from drone_directives import *
 
-
 # list of possible state machines that can be used to control drone
 IDLE_MACHINE = "idle"
 HOVER_ORANGE_MACHINE = "hover_orange"
@@ -94,7 +93,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('3'):
 
-
             # toggles cameras back and forth to take a photo once every 200 frames
             # The 7 frame idles in between are to give the drone time to switch the camera
             self.moveTime = 0.15
@@ -107,7 +105,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             (IdleDirective(), 200)
             ]
             algCycles = -1
-
 
             self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
 
@@ -215,9 +212,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
             
-            pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
+            #pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
             #pidAlg = PIDLineOrientDirective( 'blue', 'orange', self.settingsPath)
-            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 0)
             ]

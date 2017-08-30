@@ -6,20 +6,18 @@ import rospy
 # indicating what the current state should be
 class StateMachine(object):
     
-
     def __init__(self):
 
         self.states = None
-
         
     # Defines the state machine. it will go through 3 "phases": 
     #
     # 1. an initalize phase, for one cycle
     # 2. an algorithm phase, for a specified # of cycles
+    # if the # = -1, then it represents an alg cycle of infinite length
     # 3. an ending phase, for one cycle
     #
     # Then, the machine is considered "finished".
-    # -1 = infinite alg cycle
     #
     # "Instructions" are an array of tuples. Each tuple represents a phase's instruction set and duration
     # in the format (directive, stateduration). directive must subclass AbstractDroneDirective
@@ -92,7 +90,7 @@ class StateMachine(object):
                 self.lastLocation = coordinate
 
                 # if the state has hit the specified duration to be considered "finished"
-                # move on to the next state
+                # move on to the next state in the phase
                 if self.stateFinishedCounter >= currStateDuration:
 
                     self.stateFinishedCounter = 0
@@ -106,7 +104,7 @@ class StateMachine(object):
 
                         self.currPhaseIndex = (self.currPhaseIndex + 1)
 
-                        # triggered if phase is finished
+                        # triggered if phase itself is finished
                         if self.currPhaseIndex >= len( self.stateMachineDef[self.currPhase][0] ):
                             self.phaseCycles += 1
                             self.currPhaseIndex = 0
