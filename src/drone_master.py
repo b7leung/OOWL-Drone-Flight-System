@@ -215,9 +215,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
             
-            pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
+            #pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
             #pidAlg = PIDLineOrientDirective( 'blue', 'orange', self.settingsPath)
-            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 0)
             ]
