@@ -16,6 +16,7 @@ from flightstats_receiver import FlightstatsReceiver
 from state_machine import StateMachine
 from processing_functions import *
 from drone_directives import *
+from processing_functions.picture_manager import PictureManager
 
 # list of possible state machines that can be used to control drone
 IDLE_MACHINE = "idle"
@@ -62,6 +63,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.currMachine = None
 
         # initalizing helper objects
+        self.pictureManager = PictureManager(self.droneRecordPath)
         self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
@@ -95,20 +97,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('3'):
 
-            # toggles cameras back and forth to take a photo once every 200 frames
-            # The 7 frame idles in between are to give the drone time to switch the camera
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [
-            #(ToggleCameraDirective(), 1),
-            #(IdleDirective(), 18),
-            (CapturePhotoDirective(self.droneRecordPath), 1),
-            #(ToggleCameraDirective(), 18),
-            (IdleDirective(), 200)
-            ]
-            algCycles = -1
+            pictureName = self.pictureManager.Capture(self.cv_image)
+            rospy.logwarn("Saved picture as " + pictureName)
 
-            self.MachineSwitch( None, alg, algCycles, None, None, CAPTURE_PHOTO_MACHINE)
 
         elif key == ord('4'):
 

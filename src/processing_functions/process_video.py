@@ -30,18 +30,20 @@ class ProcessVideo(object):
         numRows,numCols,channels=image.shape
         lower2=upper2=array([0,0,0])
 	#definitions for upper and lower hsv values for each color
-        if(color=='orange'): #0,80,190,7,255,255
+        if(color=='orange'): #0,50,170,10,254,255
             hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
-            #lower  hsv boundary #170 140 150,179 255 255
+            #lower  hsv boundary #172 50 180,180 254 255
             hsv_boundaries2 = [([172, 50, 180],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
         if(color=='front orange'):
-            hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
+            #0 50 0 25, 254 255
+            hsv_boundaries = [( [0, 70, 10],[15, 254, 255] )]
+            #168 50 0,180 254 255
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 50, 180],[180, 254, 255])]
+            hsv_boundaries2 = [([170, 70, 10],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -480,7 +482,7 @@ class ProcessVideo(object):
         for shape in contours:
             perimeter = cv2.arcLength(shape,True)
             #if the shape is too small, it is most likely noise, and we wish to disregard it
-            if perimeter > (0.05)*imagePerimeter:
+            if perimeter > (0.10)*imagePerimeter:
             #finds shapes that are within a certain percentage of original shape perimeter
                 vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
                 numVertices = len(vertices)
