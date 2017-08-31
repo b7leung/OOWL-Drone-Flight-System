@@ -20,7 +20,8 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         self.settingsPath = settingsPath
         P,I,D = self.GetSettings()
-        self.pid = PIDController()
+        self.pid = PIDController(P,I,D)
+        rospy.logwarn("Loading PID with values " + str(P) + " " + str(I) + " " + str(D))
         
 
     def GetSettings(self):
@@ -31,7 +32,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         fileHandle.close()        
         
         last=str(last[len(last)-1]).split()
-        #rospy.logwarn(str(last))
         p, i, d = [float(x) for x in (last)]
         
         return p, i ,d

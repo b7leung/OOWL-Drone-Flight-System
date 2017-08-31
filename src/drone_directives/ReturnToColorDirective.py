@@ -46,7 +46,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
         #hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.1)   
 
         if hasPlatform:
-            #cx, cy = navdata[0]["center"][1][0], navdata[0]["center"][1][1]
+            cx, cy = navdata[0]["center"][1][0], navdata[0]["center"][1][1]
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
             zspeed = 0

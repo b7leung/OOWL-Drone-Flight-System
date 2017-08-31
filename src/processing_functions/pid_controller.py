@@ -45,10 +45,10 @@ class PIDController(object):
             self.xIntegral += self.xIntegrator
             self.yIntegral += self.yIntegrator
 
-            if self.cx > self.xLower and self.cx < self.xUpper:
+            '''if self.cx > self.xLower and self.cx < self.xUpper:
                 self.xIntegral = 0.0
             if self.cy > self.yLower and self.cy < self.yUpper:
-                self.yIntegral = 0.0
+                self.yIntegral = 0.0'''
 
             self.x_iTerm = self.Ki * self.xIntegral
             self.y_iTerm = self.Ki * self.yIntegral
@@ -119,23 +119,23 @@ class PIDController(object):
             else:
                 yPID = 0.0
 
+            rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
+            rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
+            rospy.logwarn("dt: "+ str(self.dt.to_sec()))
+            rospy.logwarn("mag: "+ str(np.sqrt(xPID**2+yPID**2)))
+
         else:
             xPID = 0.0
             yPID = 0.0
             self.xIntegral = 0.0
             self.yIntegral = 0.0
 
-        #rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
-        
-        #rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
-
-        
         return xPID,yPID
 
         
     #Compute the desired SetPoint for the Drone - the center of the image
     #Set the desired window size for drone to hover in
-    def SetPoint(self, image, windowSize=20):
+    def SetPoint(self, image, windowSize=1):
         
         self.numRows, self.numCols, self.channels = image.shape
         self.centerx = self.numCols/2.0
