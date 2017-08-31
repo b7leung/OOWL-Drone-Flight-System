@@ -6,7 +6,7 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.21, Ki=0.025, Kd=0.12, moveTime = 0.0, waitTime = 0.00):
+    def __init__(self,Kp=0.138, Ki=0.018, Kd=0.048, moveTime = 0.0, waitTime = 0.00):
         
         self.xDerivator = 0.0
         self.yDerivator = 0.0
@@ -72,7 +72,7 @@ class PIDController(object):
             self.yDerivator = self.yD
 
             # if the P and D term are the same sign, it means the drone is drifting in the opposite direction as directed, therefore increase the proportional term to push it in the right direction.
-            if self.x_pTerm > 0.0 and self.x_dTerm > 0.0:
+            '''if self.x_pTerm > 0.0 and self.x_dTerm > 0.0:
                 #self.x_pTerm = self.x_pTerm * 1.2
                 self.x_pTerm = 0.0
                 self.x_iTerm = 0.0
@@ -91,7 +91,7 @@ class PIDController(object):
                 #self.y_pTerm = self.y_pTerm * 1.2
                 self.y_pTerm = 0.0
                 self.y_iTerm = 0.0
-                self.y_dTerm = 0.0
+                self.y_dTerm = 0.0'''
         else:
             self.xIntegral = 0.0
             self.yIntegral = 0.0
@@ -221,6 +221,8 @@ class PIDController(object):
         
         self.InitializeFilter()
         self.oldTime = rospy.Time.now()
+        self.x_integral = 0.0
+        self.y_integral = 0.0
 
     def DrawArrow(self,image,xspeed,yspeed):
         dx=int((-100*xspeed)+self.centerx)
