@@ -33,7 +33,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
 
         self.processVideo = ProcessVideo()
         P,I,D = self.GetSettings()
-        self.pid = PIDController(P,I,D)
+        self.pid = PIDController()
 
     
     # reads PID settings 
@@ -150,4 +150,9 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             
         return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy)
 
+
+    # This method is called by the state machine when it considers this directive finished
+    def Finished(self):
+        rospy.logwarn("***** finishing PID Orient Line Directive *****")
+        self.pid.ResetPID()
 

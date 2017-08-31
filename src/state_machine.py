@@ -92,6 +92,10 @@ class StateMachine(object):
                 # if the state has hit the specified duration to be considered "finished"
                 # move on to the next state in the phase
                 if self.stateFinishedCounter >= currStateDuration:
+                    
+                    # if the current directive has a Finished() method, call it to perform any clean-up work
+                    if hasattr( currState, 'Finished' ) and callable (currState.Finished ):
+                        currState.Finished()
 
                     self.stateFinishedCounter = 0
                     droneInstructions = (0,0,0,0)

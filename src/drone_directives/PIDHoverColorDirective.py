@@ -21,7 +21,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.settingsPath = settingsPath
         P,I,D = self.GetSettings()
         self.pid = PIDController()
-        self.resetCounter = 0
         
 
     def GetSettings(self):
@@ -82,22 +81,24 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
             rospy.logwarn("PID: Done Hovering on " + self.platformColor)
             directiveStatus = 1
-            self.resetCounter += 1
-            if self.resetCounter > 10 :
-                self.pid.ResetPID()
 
 
         elif cx == None or cy == None:
             
             directiveStatus = -1
-            self.resetCounter = 0
 
         else:
 
             rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
             directiveStatus = 0
-            self.resetCounter = 0
         
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)
+
+
+    # This method is called by the state machine when it considers this directive finished
+    def Finished(self):
+        rospy.logwarn("***** finishing PID Hover Color Directive *****")
+        self.pid.ResetPID()
+        
 
 
