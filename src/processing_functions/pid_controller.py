@@ -26,6 +26,7 @@ class PIDController(object):
         self.oldTime = rospy.Time.now()
 
         self.InitializeFilter()
+        self.InitializeMedianFilter()
 
     def SetPIDTerms(self):
 
@@ -65,8 +66,10 @@ class PIDController(object):
                 self.xDerivative = 0.0
                 self.yDerivative = 0.0
 
-            self.x_dTerm = self.Kd * self.xDerivative
-            self.y_dTerm = self.Kd * self.yDerivative
+            self.x_dTemp = self.Kd * self.xDerivative
+            self.y_dTemp = self.Kd * self.yDerivative
+
+            self.x_dTerm, self.y_dTerm = self.MedianFilter(self.x_dTemp,self.y_dTemp)
 
             self.xDerivator = self.xD
             self.yDerivator = self.yD
@@ -209,7 +212,28 @@ class PIDController(object):
             self.yBuffer[i] = self.yBuffer[i-1]
 
         return xFiltered, yFiltered
-    
+   
+    def InitializeMedianFilter(self):
+
+        self.bufferSize = 3
+        self.xMedBuffer = np.zeros(self.bufferSize)
+        self.yMedBuffer = np.zeros(self.bufferSize)
+
+    def MedianFilter(self,xTerm,yTerm):
+
+        self.xMedBuffer[0] = xTerm
+        self.yMedBuffer[0] = yTerm
+
+        xMedian = np.median(self.xMedBuffer)
+        yMedian = np.median(self.yMedBuffer)
+
+        for i in np.arange(self.bufferSize-1, 0, -1):
+            self.xMedBuffer[i] = self.xMedBuffer[i-1]
+            self.yMedBuffer[i] = self.yMedBuffer[i-1]
+
+        return xMedian, yMedian
+
+
     def ResetPID(self, P=None, I=None, D=None):
         
         if P != None:
