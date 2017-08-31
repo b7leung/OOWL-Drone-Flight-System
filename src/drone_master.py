@@ -190,11 +190,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             alg = [
             ( PIDHoverColorDirective('orange', self.settingsPath), 10),
-            ( PIDObjectOrientDirective('green', 'orange', self.settingsPath ), 10 ),
+            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 10),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( PIDLineOrientDirective('blue', 'orange', self.settingsPath), 4 ),
+            ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4),
             ( FollowLineDirective('blue'), 14 )
             ]
             
@@ -204,7 +204,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( LandDirective(), 1)
             ]
 
-            error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
+            error = (ReturnToColorDirective('orange', speedModifier = 0.4), 10)
 
             self.MachineSwitch(None, alg, algCycles, end, error, PID_AUTO_CIRCLE_MACHINE)
     
@@ -213,9 +213,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
             
-            #pidAlg = PIDObjectOrientDirective( 'green', 'orange', self.settingsPath)
-            #pidAlg = PIDLineOrientDirective( 'blue', 'orange', self.settingsPath)
-            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+
+            #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
+            pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
+            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 0)
             ]

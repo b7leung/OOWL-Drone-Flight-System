@@ -70,7 +70,7 @@ class StateMachine(object):
                 currState = self.errorInstructions[0]
                 currStateDuration = self.errorInstructions[1]
                 self.errorDuration += 1
-                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,self.lastLocation)
+                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
                 # if it's been over the specified limit without success, abort
                 if self.errorDuration > self.errorMaxDuration or status == -1:
                     rospy.logwarn("********** ABORTING -- MACHINE FAILED **********") 

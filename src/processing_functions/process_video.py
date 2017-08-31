@@ -469,12 +469,9 @@ class ProcessVideo(object):
         #first segment the image by color of circle
         
         segmentedImage,_,binaryImage = self.DetectColor(image, circleColor,"all")
-        
+
         numrows,numcols,channels=image.shape
         imagePerimeter = 2*numrows+2*numcols
-        
-        #grayImage = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        #grayImage = cv2.GaussianBlur( grayImage, (7,7),0)
 
         contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
