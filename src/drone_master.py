@@ -29,6 +29,7 @@ PID_AUTO_CIRCLE_MACHINE= "pid_auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
 PID_OBJECT_ORIENT_MACHINE = 'pid_object_orient'
+TEST_MACHINE = 'test_machine'
 
 
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
@@ -215,8 +216,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
 
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
-            pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
-            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
+            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 0)
             ]
@@ -226,6 +227,18 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
             self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
+
+        elif key == ord('b'):
+            
+            self.moveTime = 0.0
+            self.waitTime = 0.0
+
+            alg = [
+            (BinaryTestDirective(), 4)
+            ]
+            algCycles = -1
+
+            self.MachineSwitch( None, alg, algCycles, None, None, TEST_MACHINE)
 
 
     # Taking in some machine's definition of states and a string name,
