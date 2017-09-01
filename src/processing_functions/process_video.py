@@ -482,7 +482,7 @@ class ProcessVideo(object):
         for shape in contours:
             perimeter = cv2.arcLength(shape,True)
             #if the shape is too small, it is most likely noise, and we wish to disregard it
-            if perimeter > (0.10)*imagePerimeter:
+            if perimeter > (0.05)*imagePerimeter:
             #finds shapes that are within a certain percentage of original shape perimeter
                 vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
                 numVertices = len(vertices)

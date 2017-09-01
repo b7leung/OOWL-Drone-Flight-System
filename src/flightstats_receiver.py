@@ -63,7 +63,7 @@ class FlightstatsReceiver(object):
 
         # counter is designed to throttle the lag that comes with executing videoupdate too often
         # a higher videoUpdateMax will make everything run faster, but getting height/center updates will be slower
-        self.VideoUpdateMax = 1
+        self.VideoUpdateMax = 0
         self.VideoUpdateCounter = 0
 
 
