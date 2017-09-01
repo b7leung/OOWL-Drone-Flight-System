@@ -48,6 +48,8 @@ class FlightstatsReceiver(object):
         self.flightInfo["dispFB"]=["Forwards/Backwards Displacement: ", self.defaultValue, "mm", ""]
         self.flightInfo["dispUD"]=["Up/Down Displacement: ", self.defaultValue, "mm", ""]
 
+        self.flightInfo["segImage"] = [None]
+
         self.LRDisplacement = 0.0
         self.FBDisplacement = 0.0
         self.UDDisplacement = 0.0
@@ -59,20 +61,31 @@ class FlightstatsReceiver(object):
         self.zeroBalanced = False
         self.zeroAltitude = 0
 
+        # counter is designed to throttle the lag that comes with executing videoupdate too often
+        # a higher videoUpdateMax will make everything run faster, but getting height/center updates will be slower
+        self.VideoUpdateMax = 1
+        self.VideoUpdateCounter = 0
+
 
     def VideoUpdate(self, image):
         
-        # converting to hsv
-        image = self.bridge.imgmsg_to_cv2(image, "bgr8")
-        _, radius, center = self.processVideo.DetectShape(image, 'orange')
+        if self.VideoUpdateCounter < self.VideoUpdateMax:
+            self.VideoUpdateCounter+=1
 
-        if radius == None:
-            distance = -1
         else:
-            distance = self.processVideo.CalcDistanceNew(88, radius* 2)
+            self.VideoUpdateCounter=0
+            # converting to hsv
+            image = self.bridge.imgmsg_to_cv2(image, "bgr8")
+            segImage, radius, center = self.processVideo.DetectShape(image, 'orange')
 
-        (self.flightInfo["SVCLAltitude"])[1] = distance
-        (self.flightInfo["center"])[1] = center 
+            if radius == None:
+                distance = -1
+            else:
+                distance = self.processVideo.CalcDistanceNew(88, radius* 2)
+
+            (self.flightInfo["SVCLAltitude"])[1] = distance
+            (self.flightInfo["center"])[1] = center 
+            (self.flightInfo["segImage"]) = segImage
 
 
     def UpdateAltitude(self, altitude):

@@ -48,6 +48,8 @@ class PIDHoverColorDirective(AbstractDroneDirective):
     #
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
+        
+        image = navdata["segImage"]
                             
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
         if cx != None and cy != None:

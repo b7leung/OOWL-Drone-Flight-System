@@ -502,7 +502,7 @@ class ProcessVideo(object):
                             point = points[0]
                             #this will check if the circle is being cut off by image boundary
                             if(point[0] < 5 or point[0] >= numcols-5 or point[1] < 5 or point[1] >= numrows-5):
-                                return image,None,center
+                                return segmentedImage,None,center
                             else:
                                 dist = (point - center)
                                 currentRadius = sqrt(inner(dist,dist))
@@ -519,7 +519,7 @@ class ProcessVideo(object):
                         return segmentedImage, averageRadius, center
         #if we have looped through every object and dont see a circle, return None
         
-        return image, None, (None,None)
+        return segmentedImage, None, (None,None)
 
 
     # Given an image, a point (x,y), and a width/height,

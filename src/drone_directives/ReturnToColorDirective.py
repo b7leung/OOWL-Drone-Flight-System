@@ -31,6 +31,8 @@ class ReturnToColorDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
+        image = navdata[0]["segImage"]
+        
         #navdata stores the last location in the case of an error
         cx = navdata[1][0]
         cy = navdata[1][1]     

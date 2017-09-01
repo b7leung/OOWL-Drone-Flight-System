@@ -66,19 +66,21 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
         # update grid with processed values
         row = 0
         for key, value in processedDict.iteritems():
-            newText = str(value[1])+ " " + value[2] + " " +  value[3]
-            # addingcurrent data
-            if initial is True:
-                self.grid.addWidget(QtGui.QLabel(value[0]), row,0, QtCore.Qt.AlignCenter)
-                self.grid.addWidget(QtGui.QLabel(newText),row, 1, QtCore.Qt.AlignCenter)
-            else:
-                self.grid.itemAtPosition(row,1).widget().setText(newText)
-            row +=1
-            if initial is True:
-                line = QtGui.QFrame()
-                line.setFrameShape(QtGui.QFrame.Shape.HLine)
-                self.grid.addWidget(line, row, 0, 1, 2)
-            row +=1
+            # entries are that aren't meant to be displayed are typed below
+            if key != "segImage":
+                newText = str(value[1])+ " " + value[2] + " " +  value[3]
+                # addingcurrent data
+                if initial is True:
+                    self.grid.addWidget(QtGui.QLabel(value[0]), row,0, QtCore.Qt.AlignCenter)
+                    self.grid.addWidget(QtGui.QLabel(newText),row, 1, QtCore.Qt.AlignCenter)
+                else:
+                    self.grid.itemAtPosition(row,1).widget().setText(newText)
+                row +=1
+                if initial is True:
+                    line = QtGui.QFrame()
+                    line.setFrameShape(QtGui.QFrame.Shape.HLine)
+                    self.grid.addWidget(line, row, 0, 1, 2)
+                row +=1
         
 
     # Performs unit conversions, rounding, etc so that raw data will be easy to read
