@@ -208,12 +208,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
 
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
-            pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
-            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
+            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
-            (pidAlg, 0)
+            (pidAlg, 10)
             ]
-            p,i,d = pidAlg.GetSettings()
+            p,i,d = pidAlg.GetSettings(self.settingsPath)
             pidAlg.pid.ResetPID(p,i,d)
 
             algCycles = -1

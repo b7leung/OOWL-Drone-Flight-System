@@ -6,45 +6,86 @@ import cv2
 
 class PIDController(object):
 
-    def __init__(self,Kp=0.138, Ki=0.018, Kd=0.048, moveTime = 0.0, waitTime = 0.00):
-        
-        self.xDerivator = 0.0
-        self.yDerivator = 0.0
-        self.xIntegrator = 0.0
-        self.yIntegrator = 0.0
-        self.xIntegral = 0.0
-        self.yIntegral = 0.0
+    def __init__(self, imageHeight, imageWidth, Kp=0.138, Ki=0.018, Kd=0.048, moveTime = 0.0, waitTime = 0.00):
 
-        self.xError = 0.0
-        self.yError = 0.0
+        # Setting the desired window size for drone to hover in, relative to the center of the image
+        self.centery = imageHeight/2.0
+        self.centerx = imageWidth/2.0
+        windowSize = 1
+        self.xLower = self.centerx-windowSize
+        self.yLower = self.centery-windowSize
+        self.xUpper = self.centerx+windowSize
+        self.yUpper = self.centery+windowSize
 
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
 
+        self.xDerivator = 0.0
+        self.yDerivator = 0.0
+        self.xIntegral = 0.0
+        self.yIntegral = 0.0
+
+        self.xP_error = 0.0
+        self.yP_error = 0.0
+        self.xI_error = 0.0
+        self.yI_error = 0.0
+        self.xD_error = 0.0
+        self.yD_error = 0.0
+
         self.dt = moveTime + waitTime
         self.oldTime = rospy.Time.now()
 
-        self.InitializeFilter()
+        self.InitializeGaussianFilter()
         self.InitializeMedianFilter()
+
+
+    def UpdateDeltaTime(self):
+        
+        timeNow = rospy.Time.now()
+        self.dt = timeNow - self.oldTime
+        self.oldTime = timeNow
+    
+
+    # Calculate Error as a function of object's distance from desired setpoint (the center)
+    # Perform a Gaussian Filter on the Error Values for the Integral and Derivative Terms
+    def UpdateError(self,cx,cy):
+        
+        self.cx = cx
+        self.cy = cy
+
+        if cx != None and cy != None:
+
+            # for P
+            self.xP_error = self.centerx - self.cx
+            self.yP_error = self.centery - self.cy
+
+            # for I
+            self.xI_error, self.yI_error = self.GaussianFilter(self.xP_error, self.yP_error)
+
+            # for D
+            self.xD_error, self.yD_error= self.GaussianFilter(-self.cx, -self.cy)
+        
+        else:
+            self.xP_error = None
+            self.yP_error = None
+
 
     def SetPIDTerms(self):
 
-        if self.xError != None and self.yError != None:
-            #Calculation for the P_term
-            #Linear relationship between Error and output
+        if self.xP_error != None and self.yP_error != None:
+
+            # Calculation for the P term:
+            # Linear relationship between Error and output
             
-            self.x_pTerm = self.Kp * self.xError
-            self.y_pTerm = self.Kp * self.yError
+            self.x_pTerm = self.Kp * self.xP_error
+            self.y_pTerm = self.Kp * self.yP_error
 
-            #Calculation for the I_term
-            #Gets the accumulation of error over time to assist the P_term in pushing the drone
+            # Calculation for the I_term;
+            # Gets the accumulation of error over time to assist the P_term in pushing the drone
 
-            self.xIntegrator = self.xFiltered * self.dt.to_sec()
-            self.yIntegrator = self.yFiltered * self.dt.to_sec()
-
-            self.xIntegral += self.xIntegrator
-            self.yIntegral += self.yIntegrator
+            self.xIntegral += self.xI_error * self.dt.to_sec()
+            self.yIntegral += self.yI_error * self.dt.to_sec()
 
             '''if self.cx > self.xLower and self.cx < self.xUpper:
                 self.xIntegral = 0.0
@@ -54,27 +95,28 @@ class PIDController(object):
             self.x_iTerm = self.Ki * self.xIntegral
             self.y_iTerm = self.Ki * self.yIntegral
 
-            #Calculation for the D_term
-            #Computes the rate of change of our Error to compensate for overshooting the command
-            self.xTemp = self.xD - self.xDerivator
-            self.yTemp = self.yD - self.yDerivator
+            # Calculation for the D term;
+            # Computes the rate of change of our Error to compensate for overshooting the command
             
             if self.dt.to_sec() > 0.0:
-                self.xDerivative = self.xTemp/self.dt.to_sec()
-                self.yDerivative = self.yTemp/self.dt.to_sec()
+
+                self.xDerivative = (self.xD_error - self.xDerivator) / self.dt.to_sec()
+                self.yDerivative = (self.yD_error - self.yDerivator) / self.dt.to_sec()
+
             else:
                 self.xDerivative = 0.0
                 self.yDerivative = 0.0
 
-            self.x_dTemp = self.Kd * self.xDerivative
-            self.y_dTemp = self.Kd * self.yDerivative
+            x_dTemp = self.Kd * self.xDerivative
+            y_dTemp = self.Kd * self.yDerivative
 
-            self.x_dTerm, self.y_dTerm = self.MedianFilter(self.x_dTemp,self.y_dTemp)
+            self.x_dTerm, self.y_dTerm = self.MedianFilter(x_dTemp, y_dTemp)
 
-            self.xDerivator = self.xD
-            self.yDerivator = self.yD
+            self.xDerivator = self.xD_error
+            self.yDerivator = self.yD_error
 
-            # if the P and D term are the same sign, it means the drone is drifting in the opposite direction as directed, therefore increase the proportional term to push it in the right direction.
+            # if the P and D term are the same sign, it means the drone is drifting in the opposite
+            # direction as directed, therefore increase the proportional term to push it in the right direction.
             '''if self.x_pTerm > 0.0 and self.x_dTerm > 0.0:
                 #self.x_pTerm = self.x_pTerm * 1.2
                 self.x_pTerm = 0.0
@@ -102,23 +144,20 @@ class PIDController(object):
         #return self.x_pTerm, self.y_pTerm, self.x_iTerm, self.y_iTerm, self.x_dTerm, self.y_dTerm
 
 
-    #Sum up the three P,I,D terms to get the output Command
-    #Return xspeed for roll and yspeed for pitch
+    # Sum up the three P,I,D terms to get the output Command
+    # Return xspeed for roll and yspeed for pitch
     def GetPIDValues(self):
 
-        if self.xError != None and self.yError != None:
+        if self.xP_error != None and self.yP_error != None:
       
             if self.cx < self.xLower or self.cx > self.xUpper:
                # rospy.logwarn( "p:" + str(self.x_pTerm)+ " i:"+ str(self.x_iTerm)+" d:"+str(self.x_dTerm))
-            
                 xPID = (self.x_pTerm + self.x_iTerm + self.x_dTerm)/self.centerx
             else:
                 xPID = 0.0
 
             if self.cy < self.yLower or self.cy > self.yUpper:
-            
                 yPID = (self.y_pTerm + self.y_iTerm + self.y_dTerm)/self.centery
-            
             else:
                 yPID = 0.0
 
@@ -137,51 +176,10 @@ class PIDController(object):
 
         return xPID,yPID
 
-        
-    #Compute the desired SetPoint for the Drone - the center of the image
-    #Set the desired window size for drone to hover in
-    def SetPoint(self, image, windowSize=1):
-        
-        self.numRows, self.numCols, self.channels = image.shape
-        self.centerx = self.numCols/2.0
-        self.centery = self.numRows/2.0
 
-        self.xLower = self.centerx-windowSize
-        self.yLower = self.centery-windowSize
-        self.xUpper = self.centerx+windowSize
-        self.yUpper = self.centery+windowSize
-
-        #cv2.rectangle(image, (int(self.xLower), int(self.yLower)), (int(self.xUpper), int(self.yUpper)), (255,0,0), 2)
-
-
-    #Calculate Error as a function of object's distance from desired setpoint (the center)
-    #Perform a LowPass Filter on the Error Values for the Integral and Derivative Terms
-    def UpdateError(self,cx,cy):
-        
-        self.cx = cx
-        self.cy = cy
-
-        if cx != None and cy != None:
-            self.xError = self.centerx - self.cx
-            self.yError = self.centery - self.cy
-            self.xFiltered, self.yFiltered = self.LowPassFilter(self.xError, self.yError)
-            self.xD, self.yD = self.LowPassFilter(-self.cx, -self.cy)
-        
-        else:
-            self.xError = None
-            self.yError = None
-        
-    def UpdateDeltaTime(self):
-        
-        self.timeNow = rospy.Time.now()
-        self.dt = self.timeNow - self.oldTime
-        self.oldTime = self.timeNow
-    
-    #Filter coefficients copied from github.com/raultrom/ardrone_velocity
-    #https://github.com/raultron/ardrone_velocity/blob/master/filtervelocity.cpp
-    #August 3rd 2017
-    #LowPassFilter
-    def InitializeFilter(self):
+    # Filter coefficients copied from github.com/raultrom/ardrone_velocity
+    # https://github.com/raultron/ardrone_velocity/blob/master/filtervelocity.cpp
+    def InitializeGaussianFilter(self):
 
         self.coef = np.array([0.00498902, 0.00567655, 0.00768429, 0.01092849, 0.01526534,
                 0.02049766, 0.02638413, 0.03265082, 0.03900430, 0.04514569,
@@ -195,9 +193,10 @@ class PIDController(object):
         self.xBuffer = np.zeros(self.filterSize)
         self.yBuffer = np.zeros(self.filterSize)
 
-    #Perform a LowPassFilter on Error values to remove noise and high-freq values
-    #return filtered error values
-    def LowPassFilter(self,xError,yError):
+
+    # Perform a Gaussian filter on Error values to remove noise and high-freq values
+    # return filtered error values
+    def GaussianFilter(self,xError,yError):
     
         xFiltered = 0.0
         yFiltered = 0.0
@@ -215,11 +214,13 @@ class PIDController(object):
 
         return xFiltered, yFiltered
    
+
     def InitializeMedianFilter(self):
 
         self.bufferSize = 3
         self.xMedBuffer = np.zeros(self.bufferSize)
         self.yMedBuffer = np.zeros(self.bufferSize)
+
 
     def MedianFilter(self,xTerm,yTerm):
 
@@ -245,10 +246,11 @@ class PIDController(object):
         if D != None:
             self.Kd = D
         
-        self.InitializeFilter()
+        self.InitializeGaussianFilter()
         self.oldTime = rospy.Time.now()
-        self.x_integral = 0.0
-        self.y_integral = 0.0
+        self.xIntegral = 0.0
+        self.yIntegral = 0.0
+
 
     def DrawArrow(self,image,xspeed,yspeed):
         dx=int((-100*xspeed)+self.centerx)
@@ -259,6 +261,3 @@ class PIDController(object):
     def ReturnPIDvalues(self):
         return self.Kp, self.Ki, self.Kd
 
-    def AdjustPID(self, direction):
-        if direction==UP:
-            self.Kp+= 0.01

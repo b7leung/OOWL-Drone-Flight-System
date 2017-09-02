@@ -101,8 +101,7 @@ class ProcessVideo(object):
 
     #a non classical more accurate model for calculating distance,object true size expected in mm
     #and returns distance in mm
-    #old val = 781.6, =-319.4
-    def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 715.6186, offset = 5.1371):
+    def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 781.6, offset = -319.4):
         distance = ( (focalLength*objectTrueSize)/objectPixels)+offset
         return distance
         
@@ -466,7 +465,6 @@ class ProcessVideo(object):
                 return segmentedImage, radius, center
         #if we have looped through every object and dont see a circle, return None
         return image, None, None
-
 
     #This function will take in an image, and shape color as input, and return the center and radius
     #of the first circle that is detected. Will return None for center if no circle is detected, and 

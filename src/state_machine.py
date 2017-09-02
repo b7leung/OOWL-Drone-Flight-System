@@ -94,7 +94,8 @@ class StateMachine(object):
                 if self.stateFinishedCounter >= currStateDuration:
                     
                     # if the current directive has a Finished() method, call it to perform any clean-up work
-                    if hasattr( currState, 'Finished' ) and callable (currState.Finished ):
+                    if ( hasattr( currState, 'Finished' ) and callable (currState.Finished ) and 
+                    self.stateMachineDef[self.currPhase][1] != -1 ):
                         currState.Finished()
 
                     self.stateFinishedCounter = 0

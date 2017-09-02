@@ -1,22 +1,21 @@
 #!/usr/bin/env python
-#-*- coding utf-8 -*-
+
 import pygame
 import rospy
 from drone_controller import BasicDroneController
 from os.path import expanduser
-#from processing_functions/pid_controller import PIDController
 
-#from os import *
-# global pygame color constants, in form (r,g,b) where 0 <= r/g/b <= 255
 GREY = (192,192,192)
+CALIBRATE_P = "p"
+CALIBRATE_I = "i"
+CALIBRATE_D = "d"
 
 class Calibrater(object):
 
 
-
     def __init__(self):
         
-        # initalize gui window (pygame)
+        # initalizing gui window (pygame)
         pygame.init()
         self.screen = pygame.display.set_mode((353, 576))
         pygame.display.set_caption("Calibrater Controller")
@@ -24,26 +23,19 @@ class Calibrater(object):
 	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/PID_Calibrater.png")
 	self.screen.blit(background,[0,0])
         pygame.display.update()
-        # setup controller + its variables
+
         self.controller = BasicDroneController("Keyboard")
         self.editValue = None
+
         # config file path
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
         
-        #self.pid = PIDController()
-       # tempP=P
-        #if press up:
-        #tempP+1
-        
-        self.CALIBRATE_P = "p"
-        self.CALIBRATE_I = "i"
-        self.CALIBRATE_D = "d"
-        P,I,D = self.GetSettings()
-        self.Kp = P
-        self.Ki = I
-        self.Kd = D
+        self.Kp, self.Ki, self.Kd = self.GetSettings()
+
         self.increment = 0.001
         
+
+    # reads the PID values from the last line of the file
     def GetSettings(self):
     
         # read a text file as a list of lines
@@ -53,29 +45,38 @@ class Calibrater(object):
         fileHandle.close()        
         
         last=str(last[len(last)-1]).split()
-        rospy.logwarn(str(last))
         p, i, d = [float(x) for x in last]
 
         return p, i ,d
-        
+    
+
+    # writes the current PID values to the file
     def WriteAll(self):
+
         calibraterFile  = open(self.settingsPath, 'a') 
         calibraterFile.write(str(self.Kp)+" ")
         calibraterFile.write(str(self.Ki)+" ")
         calibraterFile.write(str(self.Kd)+"\n")
         calibraterFile.close()
+        rospy.logwarn( "P = " + str(self.Kp) + "  I = " + str(self.Ki) + "  D = " + str(self.Kd) )
+
 
     def setPID(self, Kp,Ki,Kd):
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
         
+
     def isZero(self, alpha):
+
         if(alpha < 0.0000000000000001):
             return 0.0
-        else: return alpha
+        else:
+            return alpha
         
+
     def startController(self):
+
         # while gui is still running, continusly polls for keypresses
         gameExit = False
         while not gameExit:
@@ -83,76 +84,100 @@ class Calibrater(object):
                 # checking when keys are pressing down
                 if event.type == pygame.KEYDOWN and self.controller is not None:
 
-                    P,I,D = self.GetSettings()
-                    self.setPID(P,I,D)
+                    #P,I,D = self.GetSettings()
+                    #self.setPID(P,I,D)
                     
                     if event.key == pygame.K_SPACE:
                         self.controller.SendLand()
                         print "Land"
+
                     elif event.key == pygame.K_ESCAPE:
                         self.controller.SendEmergency()
                         print "Emergency Land"
+
                     elif event.key == pygame.K_c:
                         self.controller.ToggleCamera()
                         print "toggle camera"
                     
-                    else:
-                    
-                        if event.key == pygame.K_p:
-                            if(self.editValue != self.CALIBRATE_P):
-                                self.editValue = self.CALIBRATE_P
-                            else: self.editValue = None
-                        elif event.key == pygame.K_i:
-                            if(self.editValue != self.CALIBRATE_I):
-                                self.editValue = self.CALIBRATE_I
-                            else: self.editValue = None
-                        elif event.key == pygame.K_d:
-                            if(self.editValue != self.CALIBRATE_D):
-                                self.editValue = self.CALIBRATE_D
-                            else: self.editValue = None
-                        elif event.key == pygame.K_UP:
-                            if(self.editValue ==self.CALIBRATE_P):
-                                self.Kp += self.increment
-                                self.Kp = self.isZero(self.Kp)
-                                rospy.logwarn("P: " + str(self.Kp))
-                                self.WriteAll()
-                            elif(self.editValue == self.CALIBRATE_I):
-                                self.Ki += self.increment
-                                self.Ki = self.isZero(self.Ki)
+                    elif event.key == pygame.K_p:
+                        if(self.editValue != CALIBRATE_P):
+                            self.editValue = CALIBRATE_P
+                        else: self.editValue = None
 
-                                rospy.logwarn("I: " + str(self.Ki))
-                                self.WriteAll()
-                            elif(self.editValue == self.CALIBRATE_D):
-                                self.Kd += self.increment
-                                self.Kd = self.isZero(self.Kd)
+                    elif event.key == pygame.K_i:
+                        if(self.editValue != CALIBRATE_I):
+                            self.editValue = CALIBRATE_I
+                        else: self.editValue = None
 
-                                rospy.logwarn("D: " + str(self.Kd))
-                                self.WriteAll()
+                    elif event.key == pygame.K_d:
+                        if(self.editValue != CALIBRATE_D):
+                            self.editValue = CALIBRATE_D
+                        else: self.editValue = None
 
-                        elif event.key == pygame.K_DOWN:
-                            if(self.editValue == self.CALIBRATE_P):
-                                self.Kp = self.Kp - self.increment
-                                self.Kp = self.isZero(self.Kp)
+                    elif event.key == pygame.K_UP:
 
-                                rospy.logwarn("P: " + str(self.Kp))
-                                self.WriteAll()
+                        if(self.editValue == CALIBRATE_P):
+                            self.Kp += self.increment
+                            self.Kp = self.isZero(self.Kp)
+                            #rospy.logwarn("P: " + str(self.Kp))
+                            self.WriteAll()
+                        elif(self.editValue == CALIBRATE_I):
+                            self.Ki += self.increment
+                            self.Ki = self.isZero(self.Ki)
 
-                            elif(self.editValue == self.CALIBRATE_I):
-                                self.Ki = self.Ki - self.increment
-                                self.Ki = self.isZero(self.Ki)
+                            #rospy.logwarn("I: " + str(self.Ki))
+                            self.WriteAll()
+                        elif(self.editValue == CALIBRATE_D):
+                            self.Kd += self.increment
+                            self.Kd = self.isZero(self.Kd)
 
-                                rospy.logwarn("I: " + str(self.Ki))
-                                self.WriteAll()
+                            #rospy.logwarn("D: " + str(self.Kd))
+                            self.WriteAll()
 
-                            elif(self.editValue == self.CALIBRATE_D):
-                                self.Kd = self.Kd - self.increment
-                                self.Kd = self.isZero(self.Kd)
+                    elif event.key == pygame.K_DOWN:
 
-                                rospy.logwarn("D: " + str(self.Kd))
-                                self.WriteAll()
+                        if(self.editValue == CALIBRATE_P):
+                            self.Kp = self.Kp - self.increment
+                            self.Kp = self.isZero(self.Kp)
 
+                            #rospy.logwarn("P: " + str(self.Kp))
+                            self.WriteAll()
 
-                        
+                        elif(self.editValue == CALIBRATE_I):
+                            self.Ki = self.Ki - self.increment
+                            self.Ki = self.isZero(self.Ki)
+
+                            #rospy.logwarn("I: " + str(self.Ki))
+                            self.WriteAll()
+
+                        elif(self.editValue == CALIBRATE_D):
+                            self.Kd = self.Kd - self.increment
+                            self.Kd = self.isZero(self.Kd)
+
+                            #rospy.logwarn("D: " + str(self.Kd))
+                            self.WriteAll()
+
+                    elif event.key == pygame.K_KP4:
+                        self.Kp = self.isZero( self.Kp + self.increment )
+                        self.WriteAll()
+                    elif event.key == pygame.K_KP1:
+                        self.Kp = self.isZero( self.Kp - self.increment )
+                        self.WriteAll()
+
+                    elif event.key == pygame.K_KP5:
+                        self.Ki = self.isZero( self.Ki + self.increment )
+                        self.WriteAll()
+                    elif event.key == pygame.K_KP2:
+                        self.Ki = self.isZero( self.Ki - self.increment )
+                        self.WriteAll()
+
+                    elif event.key == pygame.K_KP6:
+                        self.Kd = self.isZero( self.Kd + self.increment )
+                        self.WriteAll()
+                    elif event.key == pygame.K_KP3:
+                        self.Kd = self.isZero( self.Kd- self.increment )
+                        self.WriteAll()
+
 
                 if event.type == pygame.KEYUP:
                     if (event.key == pygame.K_w or event.key == pygame.K_s or event.key == pygame.K_a or event.key == pygame.K_d
@@ -165,6 +190,7 @@ class Calibrater(object):
         pygame.quit()
 
 if __name__=="__main__":
+
     rospy.init_node('KeyboardController')
     myController = Calibrater()
     myController.startController()

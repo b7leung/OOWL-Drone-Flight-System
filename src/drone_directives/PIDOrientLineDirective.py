@@ -29,19 +29,16 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             self.orientation = orientation
         self.lineColor = lineColor
         self.platformColor = platformColor
-        self.settingsPath = settingsPath 
 
         self.processVideo = ProcessVideo()
-        P,I,D = self.GetSettings()
-        self.pid = PIDController(P,I,D)
-        rospy.logwarn("Loading PID with values " + str(P) + " " + str(I) + " " + str(D))
+        P,I,D = self.GetSettings(settingsPath)
+        self.pid = PIDController(360, 640, P,I,D)
 
     
-    # reads PID settings 
-    def GetSettings(self):
+    def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have
-        fileHandle = open ( self.settingsPath,'r' )
+        fileHandle = open ( settingsPath,'r' )
         last = fileHandle.readlines()
         fileHandle.close()        
         
@@ -71,7 +68,6 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(image)
         self.pid.UpdateError(cx,cy)
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
@@ -153,6 +149,6 @@ class PIDOrientLineDirective(AbstractDroneDirective):
 
     # This method is called by the state machine when it considers this directive finished
     def Finished(self):
-        rospy.logwarn("***** finishing PID Orient Line Directive *****")
+        rospy.logwarn("***** Resetting PID Values *****")
         self.pid.ResetPID()
 

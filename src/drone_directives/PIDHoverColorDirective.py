@@ -11,23 +11,22 @@ from os.path import expanduser
 # a specified color underneath it
 class PIDHoverColorDirective(AbstractDroneDirective):
     
-    # sets up this directivep
+    # sets up this directive
     # platformColor: color to hover over
+    # settingsPath: path of file to read PID settings from
     def __init__(self, platformColor,settingsPath):
         
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
 
-        self.settingsPath = settingsPath
-        P,I,D = self.GetSettings()
-        self.pid = PIDController(P,I,D)
-        rospy.logwarn("Loading PID with values " + str(P) + " " + str(I) + " " + str(D))
+        P,I,D = self.GetSettings(settingsPath)
+        self.pid = PIDController(360, 640, Kp = P, Ki = I, Kd = D)
         
 
-    def GetSettings(self):
+    def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have
-        fileHandle = open ( self.settingsPath,'r' )
+        fileHandle = open ( settingsPath,'r' )
         last = fileHandle.readlines()
         fileHandle.close()        
         
@@ -55,17 +54,12 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         if cx != None and cy != None:
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
 
-
         self.pid.UpdateDeltaTime()
-        self.pid.SetPoint(image)
         self.pid.UpdateError(cx,cy)
-        p,i,d= self.GetSettings()
-        
         self.pid.SetPIDTerms()
-        #rospy.logwarn("cx:"+str(cx)+"cy:"+str(cy))
         xspeed, yspeed = self.pid.GetPIDValues()
 
-        numRows, numCols, channels = image.shape
+        numRows, numCols, _ = image.shape
         centerx = numCols/2
         centery = numRows/2
         windowSize = 40
@@ -78,7 +72,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
 
         # if there is orange in the screen, and the drone is in the middle, return true
-        #if cx != None and cy != None and xspeed == 0 and yspeed == 0 and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
         if cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower:
 
             rospy.logwarn("PID: Done Hovering on " + self.platformColor)
@@ -87,6 +80,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         elif cx == None or cy == None:
             
+            rospy.logwarn("PID: ERROR -- couldn't find " + self.platformColor + " platform")
             directiveStatus = -1
 
         else:
@@ -99,7 +93,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
     # This method is called by the state machine when it considers this directive finished
     def Finished(self):
-        rospy.logwarn("***** finishing PID Hover Color Directive *****")
+        rospy.logwarn("***** Resetting PID Values *****")
         self.pid.ResetPID()
         
 
