@@ -79,11 +79,13 @@ class FlightstatsReceiver(object):
             segImage, radius, center = self.processVideo.DetectShape(image, 'orange')
 
             if radius == None:
-                distance = -1
+                if center == (None,None):
+                    distance = -1
+                    (self.flightInfo["SVCLAltitude"])[1] = distance
             else:
                 distance = self.processVideo.CalcDistanceNew(88, radius* 2)
+                (self.flightInfo["SVCLAltitude"])[1] = distance
 
-            (self.flightInfo["SVCLAltitude"])[1] = distance
             (self.flightInfo["center"])[1] = center 
             (self.flightInfo["segImage"]) = segImage
 

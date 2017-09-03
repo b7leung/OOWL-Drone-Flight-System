@@ -30,7 +30,7 @@ class FindPlatformAltitudeDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        currAltitude = navdata["altitude"][1]
+        currAltitude = navdata["SVCLAltitude"][1]
         climbspeed = 1
 
         if currAltitude < self.maxAltitude: 
@@ -41,8 +41,15 @@ class FindPlatformAltitudeDirective(AbstractDroneDirective):
             zVel = 0
         
         # Check if the platform is visible
-        platform_image = self.processVideo.DetectColor(image, self.platformColor)
-        hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.1)  
+        #platform_image = self.processVideo.DetectColor(image, self.platformColor)
+        #hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.1)  
+
+        cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+
+        if cx != None and cy != None:
+            hasPlatform = True
+        else:
+            hasPlatform = False
 
         if hasPlatform:
             rospy.logwarn("Drone has found platform; stopped height increase")
@@ -53,5 +60,7 @@ class FindPlatformAltitudeDirective(AbstractDroneDirective):
             if zVel == 0:
                 rospy.logwarn("Reached maxiumum altitude, still no platform")
 
-        return directiveStatus, (0, 0, 0, zVel), platform_image, (None,None)
+        image = navdata["segImage"]
+
+        return directiveStatus, (0, 0, 0, zVel), image, (None,None)
 

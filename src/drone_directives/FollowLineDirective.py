@@ -11,9 +11,10 @@ class FollowLineDirective(AbstractDroneDirective):
     
     # sets up this directive
     # lineColor: color of the line to follow
-    def __init__(self, lineColor):
+    def __init__(self, lineColor, speed = 0.1):
 
         self.lineColor = lineColor
+        self.speed = speed
         self.processVideo = ProcessVideo()
 
 
@@ -31,35 +32,42 @@ class FollowLineDirective(AbstractDroneDirective):
 
         height, _, _ = image.shape
         
-        segImage = self.processVideo.DetectColor(image, self.lineColor)
-        angle = self.processVideo.ShowLine(segImage, 60, 130,thresh = 40)
+        segLineImage = self.processVideo.DetectColor(image, self.lineColor)
+        angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 80, upperAngleBound = 100, thresh = 30)
+        #angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
+        yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
 
-        cx, cy = self.processVideo.CenterOfMass(segImage)
+        cx, cy = self.processVideo.CenterOfMass(segLineImage)
 
-        _, yspeed, _ = self.processVideo.ApproximateSpeed(segImage, cx, cy, 
-        navdata["altitude"][1], 0, xtolerance = 50, ytolerance = 50)
-        #navdata["altitude"][1], 0, tolerance = int((height*0.8)/2))
+        _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+        navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
 
         if angle == None:
 
             xspeed = 0
             yspeed = 0
+            yawspeed = 0
             directiveStatus = 1
             rospy.logwarn("Finished following line")
             
         else:
 
-            xspeed = -0.1
+            xspeed = -self.speed
             directiveStatus = 0
 
-        if yspeed !=0:
-            rospy.logwarn("Moving blue line back to center")
-            xspeed = 0
-        elif xspeed != 0:
-            rospy.logwarn("Drone just going forward")
+            if yawspeed != 0:
+                rospy.logwarn("Aligning the line horizontal")
+                xspeed = 0
 
+            if yspeed != 0:
+                rospy.logwarn("Moving blue line back to center")
+                xspeed = 0
+                yawspeed = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, 0), segImage, (None, None)
+            if xspeed != 0:
+                rospy.logwarn("Drone just going forward")
+
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (None, None)
 
 
 
