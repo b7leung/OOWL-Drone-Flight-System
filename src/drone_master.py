@@ -128,7 +128,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            altitude = 750
+            altitude = 1000
             
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -140,17 +140,17 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ]
 
             alg = [
-            ( OrientVLineDirective('green', 'orange', altitude ), 10 ),
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10 ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( OrientPLineDirective('blue', 'orange', altitude), 4 ),
-            ( FollowLineDirective('blue'), 14 )
+            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8 ),
+            ( FollowLineDirective('blue', speed = 0.8), 14 )
             ]
             algCycles = 6
             
             end = [
-            ( OrientVLineDirective('green', 'orange', altitude ), 4 ),
+            ( OrientLineDirective('PARALLEL', 'green', 'orange', altitude ), 4 ),
             ( LandDirective(), 1)
             ]
 
@@ -208,8 +208,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
 
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
-            #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
-            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
+            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 10)
             ]
@@ -219,14 +219,20 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
             self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
-
+        
+        # just contains a machine to test any particular directive
         elif key == ord('b'):
             
             self.moveTime = 0.0
             self.waitTime = 0.0
 
+            testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
+            #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4)
+            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
+            #testalg = (BinaryTestDirective(), 4)
+
             alg = [
-            (BinaryTestDirective(), 4)
+            testalg
             ]
             algCycles = -1
 

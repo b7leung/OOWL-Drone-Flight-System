@@ -253,8 +253,8 @@ class ProcessVideo(object):
         centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width = xtolerance * 2
-        height = ytolerance * 2
+        width = xtolerance 
+        height = ytolerance
         xlower = centerx-width #left xvalue
         ylower = centery-height #"top" yvalue
         xupper = centerx+width #right xvalue
@@ -486,6 +486,8 @@ class ProcessVideo(object):
         imagePerimeter = 2*numrows+2*numcols
 
         contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        center = (None,None)
         
         #use contours[0] for opencv2 or contours[1] for opencv3
         contours = contours[1]
@@ -543,7 +545,7 @@ class ProcessVideo(object):
 
         #if we have looped through every object and dont see a circle, return None
         
-        return segmentedImage, None, (None,None)
+        return segmentedImage, None, center
 
 
     # Given an image, a point (x,y), and a width/height,

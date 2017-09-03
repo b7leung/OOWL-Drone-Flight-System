@@ -3,12 +3,11 @@
 import rospy
 import cv2
 from processing_functions.process_video import ProcessVideo
-from processing_functions.pid_controller import PIDController
 from AbstractDroneDirective import *
 
-# describes instruction on what the drone should do in order
-# to orient itself to a line underneath it
-class PIDOrientLineDirective(AbstractDroneDirective):
+# describes instruction on what the drone should do in order to orient itself
+# to a line underneath it
+class OrientLineDirective(AbstractDroneDirective):
 
     # orientation:
     #   > either "VERTICAL" or "PERPENDICULAR";
@@ -17,35 +16,19 @@ class PIDOrientLineDirective(AbstractDroneDirective):
     #   > color of the line to orient to
     # platformColor:
     #   > color of the platform to orient to
-    # settingsPath: 
-    #   > Path for getting PID settings
     # hoverAltitude: 
     #   > how high to hover over the platform
-    def __init__(self, orientation, lineColor, platformColor, settingsPath):
+    def __init__(self, orientation, lineColor, platformColor, hoverAltitude):
 
         if orientation != "PARALLEL" and orientation != "PERPENDICULAR":
             raise Exception("Orientation not recognized.")
         else:
             self.orientation = orientation
+
         self.lineColor = lineColor
         self.platformColor = platformColor
-
+        self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-        P,I,D = self.GetSettings(settingsPath)
-        self.pid = PIDController(360, 640, P,I,D)
-
-    
-    def GetSettings(self, settingsPath):
-        # read a text file as a list of lines
-        # find the last line, change to a file you have
-        fileHandle = open ( settingsPath,'r' )
-        last = fileHandle.readlines()
-        fileHandle.close()        
-        
-        last=str(last[len(last)-1]).split()
-        p, i, d = [float(x) for x in (last)]
-        
-        return p, i ,d
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -63,15 +46,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
-
-        #draws center of circle on image
-        self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
-        self.pid.UpdateDeltaTime()
-        self.pid.UpdateError(cx,cy)
-        self.pid.SetPIDTerms()
-        xspeed, yspeed = self.pid.GetPIDValues()
-
         if self.orientation == "PARALLEL":
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
@@ -79,26 +54,36 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             xWindowSize = 50
             yWindowSize = 50
 
-
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
             yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
             xWindowSize = 180
             yWindowSize = 70
+        
+        # defines window to make the drone focus on moving away from the edges and back into
+        # the center; yaw will be turned off
+        xReturnSize = 180
+        yReturnSize = 70
 
+        xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+        navdata["SVCLAltitude"][1], self.hoverAltitude, xtolerance = xWindowSize, ytolerance = yWindowSize)
+
+        #draws center of circle on image
+        self.processVideo.DrawCircle(segLineImage,(cx,cy))
+        
         numRows, numCols, _ = image.shape
         centerx = numCols/2
         centery = numRows/2
 
         # box defines when the directive is finished
-        xLower = centerx-xWindowSize
-        yLower = centery-yWindowSize
-        xUpper = centerx+xWindowSize
-        yUpper = centery+yWindowSize
-        cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
-        
-        if ( yawspeed == 0 and cx != None and cy != None and cx < xUpper and cx > xLower and cy < yUpper and cy > yLower):
+        xLower = centerx-xReturnSize
+        yLower = centery-yReturnSize
+        xUpper = centerx+xReturnSize
+        yUpper = centery+yReturnSize
+
+
+        if ( yawspeed == 0 and xspeed == 0 and zspeed == 0 and cx != None and cy != None ):
 
             rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
             directiveStatus = 1
@@ -120,8 +105,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
 
             # if drone is not "near" the center defined by a box, just focus on moving drone back;
             # no turning
-            elif self.orientation == "PERPENDICULAR" and (cx > xUpper or cx < xLower or cy > yUpper or cy < yLower):
-                cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 3)
+            elif (cx > xUpper or cx < xLower or cy > yUpper or cy < yLower):
+                cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 2)
                 #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
                 rospy.logwarn("Only MOVING drone")
                 yawspeed = 0
@@ -130,8 +115,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             # if drone isn't perpendicular yet and is "near" the center (defined by a box),
             # just turn the drone; no need move drone
             elif yawspeed != 0:
-                #rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
-                rospy.logwarn("Only TURNING drone")
+                rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
                 xspeed = 0
                 yspeed = 0
 
@@ -141,12 +125,9 @@ class PIDOrientLineDirective(AbstractDroneDirective):
                 #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
                 
             directiveStatus = 0 
-            
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy)
+
+           
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
 
 
-    # This method is called by the state machine when it considers this directive finished
-    def Finished(self):
-        rospy.logwarn("***** Resetting PID Values *****")
-        self.pid.ResetPID()
 
