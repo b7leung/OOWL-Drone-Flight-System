@@ -59,6 +59,8 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
 
+
+
         numRows, numCols, _ = image.shape
         centerx = numCols/2
         centery = numRows/2
@@ -80,12 +82,15 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         elif cx == None or cy == None:
             
+            rospy.logwarn("")
             rospy.logwarn("PID: ERROR -- couldn't find " + self.platformColor + " platform")
             directiveStatus = -1
 
         else:
-
-            rospy.logwarn("PID: Trying to Hover on " + self.platformColor)
+            p,i,d = self.pid.ReturnPIDvalues()
+            rospy.logwarn( str(p)+ " / " + str(i) + " / " + str(d) + " PID: Trying to Hover on " + self.platformColor)
+            rospy.logwarn(" ")
+            rospy.logwarn(" ")
             directiveStatus = 0
         
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)

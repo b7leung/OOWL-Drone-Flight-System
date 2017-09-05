@@ -267,12 +267,11 @@ class ProcessVideo(object):
         zoneBottom = centery + centery/2
         
          # calculating if the drone should go up or down to match the desired altitude
-        tolerance = ztolerance
         climbSpeed = 0.8
         if currAltitude != None and desiredAltitude != None:
-            if (currAltitude < (desiredAltitude - tolerance)):
+            if (currAltitude < (desiredAltitude - ztolerance)):
                 zVelocity = climbSpeed
-            elif (currAltitude > (desiredAltitude + tolerance)):
+            elif (currAltitude > (desiredAltitude + ztolerance)):
                 zVelocity = climbSpeed * -1
             else:
                 zVelocity = 0

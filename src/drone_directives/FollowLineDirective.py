@@ -42,6 +42,9 @@ class FollowLineDirective(AbstractDroneDirective):
         _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
 
+        if abs(yspeed) < 1:
+            yspeed = yspeed *1.45
+
         if angle == None:
 
             xspeed = 0
@@ -55,19 +58,26 @@ class FollowLineDirective(AbstractDroneDirective):
             xspeed = -self.speed
             directiveStatus = 0
 
-            if yawspeed != 0:
-                rospy.logwarn("Aligning the line horizontal")
-                xspeed = 0
+            # If drone is still trying follow the line, it adapts to one of three algorithms:
 
+            # Drone will just go back near the center if the drone is not "near" the
+            # center as defined by a bounding box.
+            # No turning or horizontal movement is applied.
             if yspeed != 0:
                 rospy.logwarn("Moving blue line back to center")
                 xspeed = 0
                 yawspeed = 0
 
-            if xspeed != 0:
+            # If drone is near the center but angle is off, it fixes the angle.
+            # Drone does not move forward.
+            elif yawspeed != 0:
+                rospy.logwarn("Turning the drone horizontal")
+                xspeed = 0
+
+            else:
                 rospy.logwarn("Drone just going forward")
 
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (None, None)
+        return directiveStatus, (xspeed, yspeed*1.1, yawspeed, 0), segLineImage, (None, None)
 
 
 

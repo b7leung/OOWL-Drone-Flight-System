@@ -91,7 +91,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            alg = [(OrientVLineDirective('green', 'orange', 700), 0)]
+            alg = [( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700), 0 )]
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
 
@@ -105,9 +105,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
-            alg = [
-            (OrientPLineDirective('blue', 'orange', 700), 4)
-            ]
+            alg = [ ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 0 ) ]
             algCycles = -1
 
             self.MachineSwitch( None, alg, algCycles, None, None, FIX_TO_BLUE_LINE_MACHINE)
@@ -208,8 +206,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
 
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
-            pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
-            #pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+            #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
+            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
             (pidAlg, 10)
             ]
@@ -226,9 +224,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
 
-            testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
+            #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4)
-            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
+            testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
             #testalg = (BinaryTestDirective(), 4)
 
             alg = [

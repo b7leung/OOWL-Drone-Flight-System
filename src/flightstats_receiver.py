@@ -63,17 +63,18 @@ class FlightstatsReceiver(object):
 
         # counter is designed to throttle the lag that comes with executing videoupdate too often
         # a higher videoUpdateMax will make everything run faster, but getting height/center updates will be slower
-        self.VideoUpdateMax = 0
-        self.VideoUpdateCounter = 0
+        # describes a ratio: compute/rest 
+        self.computeMax = 1
+        self.restMax = 1
+        self.counter = 0
 
 
     def VideoUpdate(self, image):
         
-        if self.VideoUpdateCounter < self.VideoUpdateMax:
-            self.VideoUpdateCounter+=1
+        if (self.counter < self.computeMax) or self.restMax == 0:
+            
+            self.counter +=1
 
-        else:
-            self.VideoUpdateCounter=0
             # converting to hsv
             image = self.bridge.imgmsg_to_cv2(image, "bgr8")
             segImage, radius, center = self.processVideo.DetectShape(image, 'orange')
@@ -89,6 +90,14 @@ class FlightstatsReceiver(object):
             (self.flightInfo["center"])[1] = center 
             (self.flightInfo["segImage"]) = segImage
 
+        else:
+
+            if self.counter < self.computeMax + self.restMax:
+                self.counter +=1
+
+            if self.counter >= self.computeMax + self.restMax :
+                self.counter = 0
+            
 
     def UpdateAltitude(self, altitude):
         if self.zeroBalanced:

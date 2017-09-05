@@ -161,20 +161,23 @@ class PIDController(object):
             else:
                 yPID = 0.0
 
+            rospy.logwarn("PID xspeed = " + str(xPID) + " = " + str(self.x_pTerm/self.centerx) +
+            " + " + str(self.x_iTerm/self.centerx) + " + " + str(self.x_dTerm/self.centerx))
+
+            rospy.logwarn("PID yspeed = " + str(yPID) + " = " + str(self.y_pTerm/self.centery) +
+            " + " + str(self.y_iTerm/self.centery) + " + " + str(self.y_dTerm/self.centery))
+
             """
-            rospy.logwarn("x: "+ str(self.x_pTerm/self.centerx) + " " + str(self.x_iTerm/self.centerx) + " " + str(self.x_dTerm/self.centerx))
-            rospy.logwarn("y: "+ str(self.y_pTerm/self.centery) + " " + str(self.y_iTerm/self.centery) + " " + str(self.y_dTerm/self.centery))
             rospy.logwarn("dt: "+ str(self.dt.to_sec()))
             rospy.logwarn("mag: "+ str(np.sqrt(xPID**2+yPID**2)))
             """
-
         else:
             xPID = 0.0
             yPID = 0.0
             self.xIntegral = 0.0
             self.yIntegral = 0.0
 
-        return xPID,yPID
+        return xPID,yPID, 
 
 
     # Filter coefficients copied from github.com/raultrom/ardrone_velocity
@@ -253,11 +256,13 @@ class PIDController(object):
 
 
     def DrawArrow(self,image,xspeed,yspeed):
+
         dx=int((-100*xspeed)+self.centerx)
         dy=int((-100*yspeed)+self.centery)
         cv2.arrowedLine(image,(dx,dy),(int(self.centerx),int(self.centery)),(255,0,0),3)
 
 
     def ReturnPIDvalues(self):
+
         return self.Kp, self.Ki, self.Kd
 

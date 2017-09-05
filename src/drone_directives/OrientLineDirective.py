@@ -67,7 +67,8 @@ class OrientLineDirective(AbstractDroneDirective):
         yReturnSize = 70
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
-        navdata["SVCLAltitude"][1], self.hoverAltitude, xtolerance = xWindowSize, ytolerance = yWindowSize)
+        navdata["SVCLAltitude"][1], self.hoverAltitude, 
+        xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = 85)
 
         #draws center of circle on image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
@@ -81,7 +82,6 @@ class OrientLineDirective(AbstractDroneDirective):
         yLower = centery-yReturnSize
         xUpper = centerx+xReturnSize
         yUpper = centery+yReturnSize
-
 
         if ( yawspeed == 0 and xspeed == 0 and zspeed == 0 and cx != None and cy != None ):
 
@@ -97,37 +97,29 @@ class OrientLineDirective(AbstractDroneDirective):
 
             # If drone is still trying to align, it adapts to one of three algorithms:
             
-            # if this frame failed to detect a line, go towards platform
-            # without turning in hopes that the next frames will detect one again
-            if yawspeed == None:
-                #rospy.logwarn("No line detected")
-                yawspeed = 0
-
-            # if drone is not "near" the center defined by a box, just focus on moving drone back;
-            # no turning
-            elif (cx > xUpper or cx < xLower or cy > yUpper or cy < yLower):
+            # Drone will just go back near the center if: 1) no line is detcted, or 2)
+            # the drone is not "near" the center as defined by a bounding box
+            # No turning or altitude change applied
+            if yawspeed == None or ( cx > xUpper or cx < xLower or cy > yUpper or cy < yLower ):
                 cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 2)
-                #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
-                rospy.logwarn("Only MOVING drone")
+                rospy.logwarn("Too far out; only MOVING drone back to center")
                 yawspeed = 0
-                
-            
+                zspeed = 0
+
             # if drone isn't perpendicular yet and is "near" the center (defined by a box),
             # just turn the drone; no need move drone
             elif yawspeed != 0:
-                rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
+                rospy.logwarn("Only TURNING drone. Yaw speed = " + str(yawspeed))
                 xspeed = 0
                 yspeed = 0
-
+                zspeed = 0
+            
+            # if the drone is aligned to the line and is near the center, 
+            # keep moving it to the center and adjusting the height until the 
+            # directive is finished
             else:
-
-                rospy.logwarn("Only MOVING drone")
-                #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
+                rospy.logwarn("Finishing directive: MOVING drone to center / Fixing Altitude")
                 
             directiveStatus = 0 
 
-           
         return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
-
-
-
