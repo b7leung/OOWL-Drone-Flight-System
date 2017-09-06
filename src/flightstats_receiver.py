@@ -31,7 +31,7 @@ class FlightstatsReceiver(object):
         self.flightInfo["state"]=["Status: ", self.defaultValue, "", ""]
         self.flightInfo["altitude"]=["Drone Altitude: ", self.defaultValue, "mm", ""]
 
-        self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", self.defaultValue, "mm", ""]
+        self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", -1, "mm", ""]
         self.flightInfo["center"] = ["Platform Center: ", self.defaultValue, "", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]

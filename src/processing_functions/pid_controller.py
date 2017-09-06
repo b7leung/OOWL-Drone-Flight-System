@@ -9,6 +9,9 @@ class PIDController(object):
     def __init__(self, imageHeight, imageWidth, Kp=0.138, Ki=0.018, Kd=0.048, moveTime = 0.0, waitTime = 0.00):
 
         # Setting the desired window size for drone to hover in, relative to the center of the image
+        self.f = 715.6186
+        self.b = 5.1371
+        
         self.centery = imageHeight/2.0
         self.centerx = imageWidth/2.0
         windowSize = 1
@@ -49,7 +52,7 @@ class PIDController(object):
 
     # Calculate Error as a function of object's distance from desired setpoint (the center)
     # Perform a Gaussian Filter on the Error Values for the Integral and Derivative Terms
-    def UpdateError(self,cx,cy):
+    def UpdateError(self,cx,cy,altitude):
         
         self.cx = cx
         self.cy = cy
@@ -57,14 +60,19 @@ class PIDController(object):
         if cx != None and cy != None:
 
             # for P
-            self.xP_error = self.centerx - self.cx
-            self.yP_error = self.centery - self.cy
+            '''rospy.logwarn(altitude)'''
+            self.xP_error = (self.centerx - self.cx)# * (altitude - self.b) / self.f
+            self.yP_error = (self.centery - self.cy)# * (altitude - self.b) / self.f
 
             # for I
             self.xI_error, self.yI_error = self.GaussianFilter(self.xP_error, self.yP_error)
 
             # for D
-            self.xD_error, self.yD_error= self.GaussianFilter(-self.cx, -self.cy)
+            xTemp = -self.cx * (altitude - self.b) / self.f
+            yTemp = -self.cy * (altitude - self.b) / self.f
+
+
+            self.xD_error, self.yD_error= self.GaussianFilter(xTemp, yTemp)
         
         else:
             self.xP_error = None
@@ -161,11 +169,11 @@ class PIDController(object):
             else:
                 yPID = 0.0
 
-            rospy.logwarn("PID xspeed = " + str(xPID) + " = " + str(self.x_pTerm/self.centerx) +
+            ''' rospy.logwarn("PID xspeed = " + str(xPID) + " = " + str(self.x_pTerm/self.centerx) +
             " + " + str(self.x_iTerm/self.centerx) + " + " + str(self.x_dTerm/self.centerx))
 
             rospy.logwarn("PID yspeed = " + str(yPID) + " = " + str(self.y_pTerm/self.centery) +
-            " + " + str(self.y_iTerm/self.centery) + " + " + str(self.y_dTerm/self.centery))
+            " + " + str(self.y_iTerm/self.centery) + " + " + str(self.y_dTerm/self.centery))'''
 
             """
             rospy.logwarn("dt: "+ str(self.dt.to_sec()))
@@ -177,7 +185,7 @@ class PIDController(object):
             self.xIntegral = 0.0
             self.yIntegral = 0.0
 
-        return xPID,yPID, 
+        return xPID,yPID 
 
 
     # Filter coefficients copied from github.com/raultrom/ardrone_velocity
