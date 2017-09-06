@@ -83,7 +83,7 @@ class OrientLineDirective(AbstractDroneDirective):
         xUpper = centerx+xReturnSize
         yUpper = centery+yReturnSize
 
-        if ( yawspeed == 0 and xspeed == 0 and zspeed == 0 and cx != None and cy != None ):
+        if ( yawspeed == 0 and xspeed == 0 and yspeed == 0 and zspeed == 0 and cx != None and cy != None ):
 
             rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
             directiveStatus = 1

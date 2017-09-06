@@ -79,7 +79,24 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         
         key=cv2.waitKey(1) & 0xFF
 
-        if key == ord('1'):
+        if key == ord('t'):
+            
+            # self correcting takeoff
+            
+            self.moveTime = 0.0
+            self.waitTime = 0.0
+
+            init = [
+            ( FlatTrimDirective(), 1), ( IdleDirective("pause for flat trim"), 10 ),
+            ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
+            ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
+            ( ReturnToOriginDirective(100), 15 )
+            #( HoverColorDirective('orange', altitude), 10 )
+            ]
+
+            self.MachineSwitch( init, None, 0, None, None, SELF_CORRECTING_TAKEOFF_MACHINE)
+
+        elif key == ord('1'):
 
             self.moveTime = 0.15
             self.waitTime = 0.08
@@ -99,7 +116,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             pictureName = self.pictureManager.Capture(self.cv_image)
             rospy.logwarn("Saved picture as " + pictureName)
-
 
         elif key == ord('4'):
 
@@ -156,22 +172,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             self.MachineSwitch( init, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
 
-        elif key == ord('t'):
-            
-            # self correcting takeoff
-            
-            self.moveTime = 0.0
-            self.waitTime = 0.0
-
-            init = [
-            ( FlatTrimDirective(), 1), ( IdleDirective("pause for flat trim"), 10 ),
-            ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
-            ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
-            ( ReturnToOriginDirective(100), 15 )
-            #( HoverColorDirective('orange', altitude), 10 )
-            ]
-
-            self.MachineSwitch( init, None, 0, None, None, SELF_CORRECTING_TAKEOFF_MACHINE)
 
         elif key == ord('a'):
 
@@ -192,6 +192,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = 6
 
             end = [
+            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 4),
             ( LandDirective(), 1)
             ]
 
@@ -319,6 +320,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     # this is called by ROS when the node shuts down
     def ShutdownTasks(self):
         self.logger.Stop()
+
 
 
 if __name__=='__main__':

@@ -189,8 +189,22 @@ class Calibrater(object):
         pygame.display.quit()
         pygame.quit()
 
+
+    # this is called by ROS when the node shuts down
+    def ShutdownTasks(self):
+        
+        # at maximum, only keeps 20 pid values in the file
+        lines = open(self.settingsPath).readlines()
+        numLines=20
+        if len(lines) < 20:
+            numLines = len(lines)
+        
+        open(self.settingsPath, 'w').writelines(lines[-numLines:len(lines)])
+        
+
 if __name__=="__main__":
 
     rospy.init_node('KeyboardController')
     myController = Calibrater()
+    rospy.on_shutdown(myController.ShutdownTasks)
     myController.startController()
