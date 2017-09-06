@@ -25,7 +25,7 @@ class CapturePhotoDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        pictureName = self.pictureManager.Capture(image, navdata["altitude"])
+        pictureName = self.pictureManager.Capture(image)
         rospy.logwarn("Saved picture as " + pictureName)
 
         return 1, (0, 0, 0, 0), image, (None, None)

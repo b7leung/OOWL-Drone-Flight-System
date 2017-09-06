@@ -51,8 +51,8 @@ class OrientLineDirective(AbstractDroneDirective):
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
             yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
-            xWindowSize = 50
-            yWindowSize = 50
+            xWindowSize = 40
+            yWindowSize = 40
 
         elif self.orientation == "PERPENDICULAR":
 

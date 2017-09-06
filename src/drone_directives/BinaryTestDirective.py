@@ -32,9 +32,6 @@ class BinaryTestDirective(AbstractDroneDirective):
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
         if cx != None and cy != None:
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
-        else:
-            rospy.logwarn("none")
-
 
         return 1, (0, 0, 0, 0), image, (None,None)
 

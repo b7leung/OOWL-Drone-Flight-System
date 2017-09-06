@@ -106,8 +106,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
         elif key == ord('2'):
 
-            self.moveTime = 0.15
-            self.waitTime = 0.08
+            self.moveTime = 0.22
+            self.waitTime = 0.12
             alg = [( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700), 0 )]
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
@@ -140,8 +140,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             # does the entire circle algorithm, in order.
 
-            self.moveTime = 0.15
-            self.waitTime = 0.08
+            self.moveTime = 0.20
+            self.waitTime = 0.10
             altitude = 1000
             
             init = [
@@ -159,7 +159,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8 ),
-            ( FollowLineDirective('blue', speed = 0.8), 14 )
+            ( FollowLineDirective('blue', speed = 0.8), 8 )
             ]
             algCycles = 6
             
@@ -222,13 +222,13 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # just contains a machine to test any particular directive
         elif key == ord('b'):
             
-            self.moveTime = 0.0
-            self.waitTime = 0.0
+            self.moveTime = 0.04
+            self.waitTime = 0.14
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4)
-            testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
-            #testalg = (BinaryTestDirective(), 4)
+            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
+            testalg = (BinaryTestDirective(), 4)
 
             alg = [
             testalg
@@ -286,35 +286,30 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     # this function will go a certain speed for a set amount of time
     def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):
        
-        xSetSpeed = None
-        ySetSpeed = None
-        yawSetSpeed = None
-        zSetSpeed = None
-
-        if time.clock() > (self.startTimer+move_time+wait_time):
+        if time.clock() < (self.startTimer+move_time) or wait_time == 0:
             xSetSpeed = xSpeed
             ySetSpeed = ySpeed
             yawSetSpeed = yawSpeed
             zSetSpeed = zSpeed
-            self.startTimer=time.clock()
+            rospy.logwarn("moving **********")
 
-        elif time.clock() > (self.startTimer+move_time):
-        #if there is no wait time then don't reset speed to 0
-            if(wait_time != 0):
-                xSetSpeed = 0
-                ySetSpeed = 0
-                yawSetSpeed = 0
-                zSetSpeed = 0
+        else:
+            xSetSpeed = 0
+            ySetSpeed = 0
+            yawSetSpeed = 0
+            zSetSpeed = 0
+            rospy.logwarn("waiting")
+            if time.clock() > (self.startTimer + move_time + wait_time):
+                rospy.logwarn("reset")
+                self.startTimer=time.clock()
+       
+        self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)
 
-        if (xSetSpeed != None and ySetSpeed != None and
-        yawSetSpeed != None and zSetSpeed != None):
-            self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)
-
-            # log info
-            #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
-            self.logger.Log(
-            " altitude: " + str(self.flightInfo["altitude"]) +
-            " yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
+        # log info
+        #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
+        self.logger.Log(
+        " altitude: " + str(self.flightInfo["altitude"]) +
+        " yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
 
 
     # this is called by ROS when the node shuts down

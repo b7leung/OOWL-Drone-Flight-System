@@ -203,11 +203,12 @@ class ProcessVideo(object):
             else: 
                 angle = None
         else:
-            x0=None
-            y0=None
-            angle=None
-            rho=None
-            radians=None
+
+            x0 = None
+            y0 = None
+            angle = None
+            rho = None
+            radians = None
 
         return angle
 
@@ -290,15 +291,15 @@ class ProcessVideo(object):
 
             # if it's out of horizontal close zone
             if cx < zoneLeft or cx > zoneRight:
-                alphax = 0.2
+                alphax = 0.15
             else:
-                alphax = 0.2
+                alphax = 0.15
         
             # if it's out of vertical close zone
             if cy < zoneTop or cy > zoneBottom:
-                alphay = 0.2
+                alphay = 0.15
             else:
-                alphay = 0.2
+                alphay = 0.15
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
