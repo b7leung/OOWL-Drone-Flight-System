@@ -51,11 +51,12 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         image = navdata["segImage"]
                             
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+        altitude = navdata["SVCLAltitude"][1]
         if cx != None and cy != None:
             cv2.circle(image, (cx, cy), 7, (255, 255, 255), -1) 
 
         self.pid.UpdateDeltaTime()
-        self.pid.UpdateError(cx,cy)
+        self.pid.UpdateError(cx,cy,altitude)
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
 
@@ -88,9 +89,6 @@ class PIDHoverColorDirective(AbstractDroneDirective):
 
         else:
             p,i,d = self.pid.ReturnPIDvalues()
-            rospy.logwarn( str(p)+ " / " + str(i) + " / " + str(d) + " PID: Trying to Hover on " + self.platformColor)
-            rospy.logwarn(" ")
-            rospy.logwarn(" ")
             directiveStatus = 0
         
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)

@@ -90,14 +90,6 @@ class ProcessVideo(object):
             return segmentedImage,hsv_output,mask
 
 
-    #this function takes in as arguements, object aproximate pixel length , the original size of an object in
-    #mm and, focal length (default is focal length of A.R. drone bottom camera). Then it finds the approximate
-    #distance in mm, from the object to the camera. (assumes flat lense)
-    def CalcDistance(self,trueObjectSize,objectPixelSize,focalLength = 459.2622):
-        #z = foc*x/x'
-        distance = (focalLength*trueObjectSize)/objectPixelSize
-        return distance
-
 
     #a non classical more accurate model for calculating distance,object true size expected in mm
     #and returns distance in mm
