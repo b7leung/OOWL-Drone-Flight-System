@@ -51,15 +51,15 @@ class OrientLineDirective(AbstractDroneDirective):
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
             yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
-            xWindowSize = 40
-            yWindowSize = 40
+            xWindowSize = 50
+            yWindowSize = 50
 
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
             yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
-            xWindowSize = 180
-            yWindowSize = 70
+            xWindowSize = 150
+            yWindowSize = 60
         
         # defines window to make the drone focus on moving away from the edges and back into
         # the center; yaw will be turned off
@@ -84,9 +84,18 @@ class OrientLineDirective(AbstractDroneDirective):
         yUpper = centery+yReturnSize
 
         if ( yawspeed == 0 and xspeed == 0 and yspeed == 0 and zspeed == 0 and cx != None and cy != None ):
-
-            rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
-            directiveStatus = 1
+            
+            # Double check
+            xLowerC = centerx-xWindowSize
+            yLowerC = centery-yWindowSize
+            xUpperC = centerx+xWindowSize
+            yUpperC = centery+yWindowSize
+            if ( cx >= xUpperC or cx <= xLowerC or cy >= yUpperC or cy <= yLowerC ):
+                rospy.logwarn("FALSE POSITIVE")
+                directiveStatus = 0
+            else:
+                rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
+                directiveStatus = 1
 
         elif cx == None or cy == None:
 

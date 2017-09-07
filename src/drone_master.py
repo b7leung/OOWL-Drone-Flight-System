@@ -159,7 +159,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8 ),
-            ( FollowLineDirective('blue', speed = 0.8), 8 )
+            ( FollowLineDirective('blue', speed = 0.25), 8 )
             ]
             algCycles = 6
             
@@ -227,8 +227,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4)
-            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
-            testalg = (BinaryTestDirective(), 4)
+            testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
+            #testalg = (BinaryTestDirective(), 4)
+            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8 )
 
             alg = [
             testalg
@@ -291,16 +292,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ySetSpeed = ySpeed
             yawSetSpeed = yawSpeed
             zSetSpeed = zSpeed
-            rospy.logwarn("moving **********")
+            #rospy.logwarn("moving **********")
 
         else:
             xSetSpeed = 0
             ySetSpeed = 0
             yawSetSpeed = 0
             zSetSpeed = 0
-            rospy.logwarn("waiting")
+            #rospy.logwarn("waiting")
             if time.clock() > (self.startTimer + move_time + wait_time):
-                rospy.logwarn("reset")
+                #rospy.logwarn("reset")
                 self.startTimer=time.clock()
        
         self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)

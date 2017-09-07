@@ -33,8 +33,11 @@ class FollowLineDirective(AbstractDroneDirective):
         height, _, _ = image.shape
         
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
-        angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 80, upperAngleBound = 100, thresh = 30)
-        #angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
+        lines = self.processVideo.GetLines(segLineImage, thresh = 30)
+
+        angle = self.processVideo.ProcessLines(lines, segLineImage, lowerAngleBound = 80, upperAngleBound = 100, lineColor = (0, 0, 255))
+        #correctingAngle = self.processVideo.ProcessLines(lines, segLineImage, lowerAngleBound = 30, upperAngleBound = 150, lineWidth = 1 )
+        
         yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
 
         cx, cy = self.processVideo.CenterOfMass(segLineImage)
@@ -45,7 +48,11 @@ class FollowLineDirective(AbstractDroneDirective):
         if abs(yspeed) < 1:
             yspeed = yspeed *1.45
 
-        if angle == None:
+        numRows, numCols, _ = image.shape
+        centerx = numCols/2
+        centery = numRows/2
+
+        if angle == None and (cx != None or cx < centerx):
 
             xspeed = 0
             yspeed = 0
