@@ -9,6 +9,8 @@ from numpy import *
 import time
 from cv_bridge import CvBridge, CvBridgeError
 from os.path import expanduser
+from random import randint
+from math import isinf
 
 # This class contains helper functions that each process
 # video frames in some way
@@ -106,97 +108,120 @@ class ProcessVideo(object):
         return focal
         
 
-    def GetLines(self, image, thresh = 65):
-        #change bgr to gray for edge detection
-
+    def ShowTwoLines(self, image):
+        
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
 
         gray = cv2.GaussianBlur( gray, (7,7),0)
 
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
 
-        lines = cv2.HoughLines(edges,1, pi/180, thresh)
-
-        return lines
-
-
-    def ProcessLines(self, lines, image, lowerAngleBound = 0, upperAngleBound = 180, secondBounds = (None,None), lineColor = (0,0,255), lineWidth = 2):
-
-        if(lines!= None):
+        lines = cv2.HoughLinesP(edges,1, pi/180, 40, minLineLength = 20, maxLineGap = 380)
         
-            Lines=array(lines)
-            thetas=Lines[:,:,1]
-            rhos=Lines[:,:,0]
-            thetasDegrees = (thetas*180)/pi
+        line1List = []
+        line2List = []
+        line1= None
+        line2 = None
+        line1Angle= None
+        line1Center = None
+        line2Angle= None
+        line2Center = None
 
-            #rospy.logwarn(thetasDegrees)
-
-            #boolean arrays for angles greater than 170 and less than 10
-            large = (thetasDegrees>170)
-            small = (thetasDegrees<10)
-            extract = logical_and((thetasDegrees > lowerAngleBound),(thetasDegrees < upperAngleBound))
-            #rospy.logwarn("first bound:" + str(extract))
-
-            if(secondBounds != (None,None)):
-                extractSecond = logical_and((thetasDegrees > secondBounds[0]),(thetasDegrees < secondBounds[1]))
-                extract = logical_or(extract,extractSecond)
-
-            #if most lines are within this range of theta
+        if lines != None:
             
-            if( sum(large | small) > (size(thetas)/2) and (lowerAngleBound <= 0)):
+            # trimming
+            temp = []
+            for line in lines:
+                temp.append(line[0])
+            lines = temp
+            
+            #for line in lineList:
+                #cv2.line(image,(line[0],line[1]),(line[2],line[3]), (0,randint(0,255),randint(2,255)),1)
+            
+            # tuple in format (line, slope)
+            line1List.append(lines[0])
+            compAngle = self.GetAngle(line1List[0])
 
-                if(sum(large) > sum(small)):
-                    #sums up all angles greater than 170 and averages them
-                    radians = sum(thetas*large)/(sum(large))
-                    rho = sum(rhos*large)/(sum(large))
+            degThresh = 45
 
+            # Finding the best two distinct lines from the array
+            for i in range( 1, len(lines) ):
+                
+                angle = self.GetAngle(lines[i])
+                
+                if (abs(angle - compAngle) < degThresh) or (compAngle == 180 and angle == 0) or (compAngle == 0 and angle == 180): 
+                    line1List.append(lines[i])
                 else:
-                    #adds up all angles less than 10 and averages them
-                    radians = sum(thetas*small)/(sum(small))
-                    rho = sum(rhos*small)/(sum(small))
-  
+                    line2List.append(lines[i])
+
+            line1 = self.FindAvgLine(line1List)
+            line1Angle = self.GetAngle(line1)
+            line1Center = ( ((line1[0]+line1[2])/2), ((line1[1] + line1[3])/2) )
+            line2 = self.FindAvgLine(line2List)
+            line2Angle = self.GetAngle(line2)
+
+            if line2!= None:
+
+                # line 1 is always the line closer to horizontal
+                if abs(line2Angle-90) > abs(line1Angle-90):
+                    temp1, temp2 = line1, line1Angle
+                    line1, line1Angle = line2, line2Angle
+                    line2, line2Angle = temp1, temp2
+                cv2.line(image,(line2[0],line2[1]),(line2[2],line2[3]), (0,0,255),3)
+                line2Center = ( ((line2[0]+line2[2])/2), ((line2[1] + line2[3])/2) )
+
+            cv2.line(image,(line1[0],line1[1]),(line1[2],line1[3]), (0,255,0),3)
+            rospy.logwarn(str(line1Angle))
+
+        return line1Angle, line1Center, line2Angle, line2Center
+
+    
+    def GetAngle(self, line):
+
+        if line != None:
+            # checking for a vertical line
+            if ( line[2] - float(line[0]) ) != 0:
+                slope = ( line[3] - float(line[1]) ) / ( line[2] - float(line[0]) ) 
+                angle = rad2deg(arctan(slope))
+                #angle = 180 - arctan(slope)
             else:
-                #takes average of all angles
-                temp=(thetas*extract)*180/pi
-                #rospy.logwarn(temp)
-                radians = sum(thetas*extract)/(sum(extract))
-                rho = sum(rhos*extract)/(sum(extract))
-                
-
-                #LINES = matrix(lines).mean(0)
-                #rho=LINES[0,0]
-                #radians=LINES[0,1]
-            # all data needed to plot lines on original image
+                angle = 90
             
-            if( not math.isnan(radians)):
-                a = cos(radians)
-                b = sin(radians)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0 + 1000*(-b))
-                y1 = int(y0 + 1000*(a))
-                x2 = int(x0 - 1000*(-b))
-                y2 = int(y0 - 1000*(a))
-                
-                cv2.line(image,(x1,y1),(x2,y2),lineColor,lineWidth)
-            #this is the correct angle relative to standard cordinate system for average line
-                angle=((radians*180)/pi)
-                radians=radians/pi
-                #rospy.logwarn(angle)
+            angle = -angle
+            if angle < 0:
+                angle = angle + 180
 
-            else: 
-                angle = None
+            return angle
         else:
 
-            x0 = None
-            y0 = None
-            angle = None
-            rho = None
-            radians = None
-
-        return angle
+            return None
 
 
+    # Helper method
+    def FindAvgLine(self, linesList):
+        
+        if len(linesList) != 0:
+
+            P1xSum = 0
+            P1ySum = 0
+            P2xSum = 0
+            P2ySum = 0
+            
+            for line in linesList:
+                P1xSum += line[0]
+                P1ySum += line[1]
+                P2xSum += line[2]
+                P2ySum += line[3]
+
+            line = ( int(P1xSum/len(linesList)), int(P1ySum/len(linesList)),
+            int(P2xSum/len(linesList)), int(P2ySum/len(linesList)) )
+
+            return line
+
+        else:
+
+            return None
+        
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
@@ -247,7 +272,6 @@ class ProcessVideo(object):
                     #sums up all angles greater than 170 and averages them
                     radians = sum(thetas*large)/(sum(large))
                     rho = sum(rhos*large)/(sum(large))
-
 
 
                 else:
@@ -569,7 +593,7 @@ class ProcessVideo(object):
         numrows,numcols,channels=image.shape
         imagePerimeter = 2*numrows+2*numcols
 
-        contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(binaryImage.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         center = (None,None)
         
