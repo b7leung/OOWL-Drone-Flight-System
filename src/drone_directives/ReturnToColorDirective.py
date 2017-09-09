@@ -31,7 +31,10 @@ class ReturnToColorDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        image = navdata[0]["segImage"]
+        if( self.platformColor == 'orange' ):
+            image = navdata[0]["segImage"]
+        else:
+            image = self.processVideo.DetectColor(image, self.platformColor)
         
         #navdata stores the last location in the case of an error
         cx = navdata[1][0]
@@ -59,7 +62,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
             zspeed = 0.5
 
         if cx == None or cy == None:
-            rospy.logwarn("Returning -- no orange detected @ this altitude, increasing altitude")
+            rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
             return 0, (0,0,0,0.5),image, (cx,cy)
 
         

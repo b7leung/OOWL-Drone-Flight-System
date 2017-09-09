@@ -74,7 +74,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     # Each state machine that drone mastercan use is defined here;
     # When key is pressed, define the machine to be used and switch over to it.
     # Machines are defined as array of tuples. Each tuple represents a state's directive and duration
-    # in the format (stateobject, stateduration). stateobject must subclass AbstractDroneDirective
+    # in the format (directive, stateduration, errorDirective). 
+    # ErrorDirectives are optional, so it can be just in the format
+    # (directive, stateduration);
+    # directive & errorDirective must subclass AbstractDroneDirective.
     def KeyListener(self):
         
         key=cv2.waitKey(1) & 0xFF
@@ -91,10 +94,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
             ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
             ( ReturnToOriginDirective(100), 15 )
-            #( HoverColorDirective('orange', altitude), 10 )
             ]
 
-            self.MachineSwitch( init, None, 0, None, None, SELF_CORRECTING_TAKEOFF_MACHINE)
+            self.MachineSwitch( init, None, 0, None, SELF_CORRECTING_TAKEOFF_MACHINE)
 
         elif key == ord('1'):
 
@@ -102,7 +104,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.08
             alg = [(HoverColorDirective('orange', 700), 0)]
             algCycles = -1
-            self.MachineSwitch( None , alg, algCycles, None, None, HOVER_ORANGE_MACHINE )
+            self.MachineSwitch( None , alg, algCycles, None, HOVER_ORANGE_MACHINE )
             
         elif key == ord('2'):
 
@@ -110,7 +112,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.12
             alg = [( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700), 0 )]
             algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FACE_OBJECT_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, FACE_OBJECT_MACHINE)
 
         elif key == ord('3'):
 
@@ -124,7 +126,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             alg = [ ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 0 ) ]
             algCycles = -1
 
-            self.MachineSwitch( None, alg, algCycles, None, None, FIX_TO_BLUE_LINE_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, FIX_TO_BLUE_LINE_MACHINE)
 
         elif key == ord('5'):
             
@@ -134,7 +136,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             (FollowLineDirective('blue'), 0)
             ]
             algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, None, FOLLOW_BLUE_LINE_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, None, FOLLOW_BLUE_LINE_MACHINE)
 
         elif key == ord('s'):
 
@@ -150,27 +152,29 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
             ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
             ( ReturnToOriginDirective('orange',50), 7 ),
-            ( FindPlatformAltitudeDirective('orange', altitude + 200), 5),
+            ( FindPlatformAltitudeDirective('orange', altitude + 200), 5)
             ]
 
+            orangePlatformErr = (ReturnToColorDirective('orange'), 10)
+            blueLineErr = (ReturnToColorDirective('blue'), 10)
+
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10 ),
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8 ),
-            ( FollowLineDirective('blue', speed = 0.25), 8 )
+            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8, orangePlatformErr ),
+            ( FollowLineDirective('blue', speed = 0.8), 4, blueLineErr )
             ]
             algCycles = 6
             
             end = [
-            ( OrientLineDirective('PARALLEL', 'green', 'orange', altitude ), 4 ),
+            ( OrientLineDirective('PARALLEL', 'green', 'orange', altitude ), 4, orangePlatformErr ),
             ( LandDirective(), 1)
             ]
 
-            error = (ReturnToColorDirective('orange'), 10)
             
-            self.MachineSwitch( init, alg, algCycles, end, error, AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch( init, alg, algCycles, end, AUTO_CIRCLE_MACHINE)
 
 
         elif key == ord('a'):
@@ -178,46 +182,47 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
 
+            orangePlatformErr= (ReturnToColorDirective('orange', speedModifier = 0.4), 10)
+
             alg = [
-            ( PIDHoverColorDirective('orange', self.settingsPath), 10),
-            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 10),
+            ( PIDHoverColorDirective('orange', self.settingsPath), 10, orangePlatformErr),
+            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 10, orangePlatformErr),
             ( SetCameraDirective("FRONT"), 1 ), 
             ( IdleDirective("Pause for setting camera"), 25 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4),
-            ( FollowLineDirective('blue'), 14 )
+            ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, orangePlatformErr),
+            ( OldFollowLineDirective('blue'), 14 )
             ]
             
             algCycles = 6
 
             end = [
-            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 4),
+            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 4, orangePlatformErr),
             ( LandDirective(), 1)
             ]
 
-            error = (ReturnToColorDirective('orange', speedModifier = 0.4), 10)
 
-            self.MachineSwitch(None, alg, algCycles, None , error, PID_AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch(None, alg, algCycles, None , PID_AUTO_CIRCLE_MACHINE)
     
         elif key == ord('p'):
 
             self.moveTime = 0.0
             self.waitTime = 0.0
             
+            orangePlatformError = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
 
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
             #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
             pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
             alg = [
-            (pidAlg, 10)
+            (pidAlg, 10, orangePlatformError)
             ]
             p,i,d = pidAlg.GetSettings(self.settingsPath)
             pidAlg.pid.ResetPID(p,i,d)
 
             algCycles = -1
-            error = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
-            self.MachineSwitch( None, alg, algCycles, None, error, PID_HOVER_ORANGE_MACHINE )
+            self.MachineSwitch( None, alg, algCycles, None, PID_HOVER_ORANGE_MACHINE )
         
         # just contains a machine to test any particular directive
         elif key == ord('b'):
@@ -225,25 +230,29 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.04
             self.waitTime = 0.14
 
-            #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10 )
-            #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4)
-            testalg = ( FollowLineDirective('blue', speed = 0.8), 14 )
-            #testalg = (BinaryTestDirective(), 4)
-            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8 )
+            #error = None
+            error = (ReturnToColorDirective('blue', speedModifier = 0.4), 10)
+
+            #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
+            #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
+            testalg = ( FollowLineDirective('blue', speed = 0.8), 14, error)
+            #testalg = (BinaryTestDirective(), 4, error)
+            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
 
             alg = [
             testalg
             ]
             algCycles = -1
 
-            self.MachineSwitch( None, alg, algCycles, None, None, TEST_MACHINE)
+
+            self.MachineSwitch( None, alg, algCycles, None, TEST_MACHINE)
 
 
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
     # drone master uses to control the drone
     def MachineSwitch(self, newMachineInit, newMachineAlg,
-    newMachineEnd, newMachineErr, newMachineAlgCycles, newMachineName):
+     newMachineAlgCycles, newMachineEnd, newMachineName):
         
         # pause the current state
         self.controller.SetCommand(0,0,0,0)
@@ -257,7 +266,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # Otherwise, just switch to the machine
         else:
             self.stateMachine.DefineMachine(newMachineInit, newMachineAlg,
-            newMachineEnd, newMachineErr, newMachineAlgCycles)
+            newMachineAlgCycles, newMachineEnd )
             self.currMachine = newMachineName
         
         rospy.logwarn('======= Drone Master: Changing from the "' + str(oldMachine) +
