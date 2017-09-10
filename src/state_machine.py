@@ -20,10 +20,11 @@ class StateMachine(object):
     # Then, the machine is considered "finished".
     #
     # "Instructions" are an array of tuples. Each tuple represents a phase's instruction set and duration
-    # in the format (directive, stateduration). directive must subclass AbstractDroneDirective
+    # in the format (directive, stateduration, errordirective). directive must subclass AbstractDroneDirective
+    # errordirectives are optional, and can specify a directive to switch to when the main directive has "errored".
+    # It must also subclass AbstractDroneDirective
 
-    def DefineMachine(self, initalizeInstructions, algorithmInstructions, algCycles, endingInstructions,
-    errorInstructions):
+    def DefineMachine(self, initalizeInstructions, algorithmInstructions, algCycles, endingInstructions):
         
         # combine phases into a large array. First elem in the tuple is the instruction set for the phase;
         # second elem is the number of cycles the phase should have.
@@ -40,7 +41,7 @@ class StateMachine(object):
         self.stateFinishedCounter = 0
         
         # setting up error function
-        self.errorInstructions = errorInstructions
+        #self.errorInstructions = errorInstructions
         self.errorFlag = False
         self.errorDuration = 0
         self.errorMaxDuration = 400
@@ -67,8 +68,9 @@ class StateMachine(object):
 
             # if the error flag was set, use it as the current state instead of the normal one
             if self.errorFlag:
-                currState = self.errorInstructions[0]
-                currStateDuration = self.errorInstructions[1]
+                # to do: none edge case
+                currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][0]
+                currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][1]
                 self.errorDuration += 1
                 status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
                 # if it's been over the specified limit without success, abort
@@ -131,7 +133,9 @@ class StateMachine(object):
             # if status = -1; error occured.
             else:
                 self.errorCount +=1 
-                if self.errorInstructions != None and self.errorCount >=17:
+                currStateError = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]
+
+                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=17:
                     self.errorFlag = True
 
             return droneInstructions, image

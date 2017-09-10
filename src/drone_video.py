@@ -29,28 +29,18 @@ class DroneVideo(object):
         self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage )
 
         self.moved = False
-        self.sleepAmt = 0
 
-        #initialization for recording video
-        #fourcc=cv2.VideoWriter_fourcc(*'XVID')
-        #self.out=cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))      
 
     def ROStoCVImage(self,data):
         
         #convert ROS Image to OpenCV Image
         self.cv_image=self.bridge.imgmsg_to_cv2(data, "bgr8")
-        #get size of image
-        height, width, channels = self.cv_image.shape
-        size = self.cv_image.size
         self.ShowVideo()
 
 
     def ShowVideo(self):
         
-        if self.sleepAmt == 0:
-            self.ReceivedVideo()
-        else:
-            self.sleepAmt = self.sleepAmt - 1
+        self.ReceivedVideo()
 
         self.KeyListener()
     
@@ -61,12 +51,6 @@ class DroneVideo(object):
         if self.moved == False :
             cv2.moveWindow(self.windowName, 750, 500)
             self.moved = True
-
-    
-    # causes the video feed to "sleep" for a specified number of frames;
-    # that is, it will run but not execute any algorithms in edit video
-    def Sleep(self, frames):
-        self.sleepAmt = frames
         
 
     # processes the video before it is shown

@@ -30,40 +30,57 @@ class FollowLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        height, _, _ = image.shape
-        
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
-        lines = self.processVideo.GetLines(segLineImage, thresh = 30)
 
-        angle = self.processVideo.ProcessLines(lines, segLineImage, lowerAngleBound = 80, upperAngleBound = 100, lineColor = (0, 0, 255))
-        #correctingAngle = self.processVideo.ProcessLines(lines, segLineImage, lowerAngleBound = 30, upperAngleBound = 150, lineWidth = 1 )
+        line1Angle, line1Center, line2Angle, line2Center = self.processVideo.ShowTwoLines(segLineImage)
+
+        linesVisible = (line1Angle != None) + (line2Angle != None) 
         
-        yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
+        tolerance = 15
 
-        cx, cy = self.processVideo.CenterOfMass(segLineImage)
+        cx = None
+        cy = None
 
-        _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
-        navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
+        
+        if linesVisible == 0:
+            rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
+            return -1, (0, 0, 0, 0), segLineImage, (None, None)
 
-        if abs(yspeed) < 1:
-            yspeed = yspeed *1.45
-
-        numRows, numCols, _ = image.shape
-        centerx = numCols/2
-        centery = numRows/2
-
-        if angle == None and (cx != None or cx < centerx):
+        elif ( ( (linesVisible == 1) and line1Angle < 90 and line1Angle > tolerance + 10 )
+        or
+        ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (180 -line1Angle) < tolerance ) and
+        line2Angle + line1Angle < 90 + line1Angle and
+        line1Center != None and line2Center != None and line1Center[0] < line2Center[0] ) ):
 
             xspeed = 0
             yspeed = 0
             yawspeed = 0
             directiveStatus = 1
             rospy.logwarn("Finished following line")
-            
+        
         else:
+            
+            directiveStatus = 0
 
             xspeed = -self.speed
-            directiveStatus = 0
+            cx = line1Center[0]
+            cy = line1Center[1]
+            _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+            navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
+
+            if abs(yspeed) < 1:
+                yspeed = yspeed *1.45
+            
+            # converting
+            if line1Angle == 90:
+                line1Angle = 0
+            elif line1Angle < 90:
+                line1Angle = line1Angle + 90
+            else:
+                line1Angle = line1Angle - 90
+
+            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 7)
+
 
             # If drone is still trying follow the line, it adapts to one of three algorithms:
 
@@ -78,13 +95,24 @@ class FollowLineDirective(AbstractDroneDirective):
             # If drone is near the center but angle is off, it fixes the angle.
             # Drone does not move forward.
             elif yawspeed != 0:
-                rospy.logwarn("Turning the drone horizontal")
+                
+                yawspeed = -yawspeed
+
+                direction = "LEFT" 
+                if yawspeed < 0:
+                    direction = "RIGHT"
+                    
+                rospy.logwarn("Turning the drone horizontal " + direction + ",  yaw = " + str(yawspeed) )
                 xspeed = 0
 
             else:
                 rospy.logwarn("Drone just going forward")
 
-        return directiveStatus, (xspeed, yspeed*1.1, yawspeed, 0), segLineImage, (None, None)
+        if line1Center != None:
+            self.processVideo.DrawCircle(segLineImage,(line1Center[0],line1Center[1]))
 
-
+        if line2Center != None:
+            self.processVideo.DrawCircle(segLineImage,(line2Center[0],line2Center[1]))
+                
+        return directiveStatus, (xspeed, yspeed*1.1, yawspeed, 0), segLineImage, (cx, cy)
 
