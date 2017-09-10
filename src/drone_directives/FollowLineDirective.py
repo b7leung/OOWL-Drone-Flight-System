@@ -30,21 +30,27 @@ class FollowLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        segLineImage, _, binaryLineImage= self.processVideo.DetectColor(image, self.lineColor, "all")
+        segLineImage = self.processVideo.DetectColor(image, self.lineColor)
 
         line1Angle, line1Center, line2Angle, line2Center = self.processVideo.ShowTwoLines(segLineImage)
 
-
         linesVisible = (line1Angle != None) + (line2Angle != None) 
         
-        tolerance = 10
+        tolerance = 15
 
+        cx = None
+        cy = None
+
+        
         if linesVisible == 0:
             rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
             return -1, (0, 0, 0, 0), segLineImage, (None, None)
 
-        elif ( linesVisible == 2 and (line1Angle < (0 + tolerance)) and (line1Angle > (0 - tolerance)) and line2Angle < 90
-        and line1Center != None and line2Center != None and line1Center[0] < line2Center[0]):
+        elif ( ( (linesVisible == 1) and line1Angle < 90 and line1Angle > tolerance + 10 )
+        or
+        ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (180 -line1Angle) < tolerance ) and
+        line2Angle + line1Angle < 90 + line1Angle and
+        line1Center != None and line2Center != None and line1Center[0] < line2Center[0] ) ):
 
             xspeed = 0
             yspeed = 0
@@ -57,7 +63,8 @@ class FollowLineDirective(AbstractDroneDirective):
             directiveStatus = 0
 
             xspeed = -self.speed
-            cx, cy = self.processVideo.CenterOfMass(segLineImage)
+            cx = line1Center[0]
+            cy = line1Center[1]
             _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
             navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
 
@@ -101,15 +108,11 @@ class FollowLineDirective(AbstractDroneDirective):
             else:
                 rospy.logwarn("Drone just going forward")
 
-        cx = None
-        cy = None
-
         if line1Center != None:
             self.processVideo.DrawCircle(segLineImage,(line1Center[0],line1Center[1]))
-            cx = line1Center[0]
-            cy = line1Center[1]
+
         if line2Center != None:
             self.processVideo.DrawCircle(segLineImage,(line2Center[0],line2Center[1]))
-        
-        return directiveStatus, (xspeed, yspeed*1.1, yawspeed, 0), segLineImage, (None, None)
+                
+        return directiveStatus, (xspeed, yspeed*1.1, yawspeed, 0), segLineImage, (cx, cy)
 

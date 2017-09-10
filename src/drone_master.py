@@ -8,6 +8,7 @@ import os
 import cv2
 import numpy
 from os.path import expanduser
+from random import randint
 
 # importing drone specific modules
 from drone_video import DroneVideo
@@ -144,7 +145,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            altitude = 1000
+            altitude = 1200
             
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -154,17 +155,19 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( ReturnToOriginDirective('orange',50), 7 ),
             ( FindPlatformAltitudeDirective('orange', altitude + 200), 5)
             ]
-
+            
+            #orangePlatformErr = None
+            #blueLineErr = None
             orangePlatformErr = (ReturnToColorDirective('orange'), 10)
-            blueLineErr = (ReturnToColorDirective('blue'), 10)
+            blueLineErr = (ReturnToLineDirective('blue'), 10)
 
             alg = [
             ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10, orangePlatformErr ),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 18 ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.8), 4, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.25), 4, blueLineErr )
             ]
             algCycles = 6
             
@@ -174,7 +177,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ]
 
             
-            self.MachineSwitch( init, alg, algCycles, end, AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch( None, alg, algCycles, end, AUTO_CIRCLE_MACHINE)
 
 
         elif key == ord('a'):
@@ -192,7 +195,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, orangePlatformErr),
-            ( OldFollowLineDirective('blue'), 14 )
+            ( FollowLineDirective('blue'), 14 )
             ]
             
             algCycles = 6
@@ -231,7 +234,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.14
 
             #error = None
-            error = (ReturnToColorDirective('blue', speedModifier = 0.4), 10)
+            error = (ReturnToLineDirective('blue', speedModifier = 0.4), 10)
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
@@ -291,7 +294,23 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.cv_image = segImage
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
             droneInstructions[2], droneInstructions[3], self.moveTime, self.waitTime)
+        
+        # draws battery display
+        color = (255,255,255)
+        if self.flightInfo["batteryPercent"][1] != "?":
+            batteryPercent = int(self.flightInfo["batteryPercent"][1])
+            if batteryPercent > 35:
+                color = (0, 255,0)
+            elif batteryPercent > 21:
+                color = (0,255,255)
+            else:
+                color = (255,0,0)
+            batteryPercent = str(batteryPercent) + "%"
+        else:
+            batteryPercent = str((self.flightInfo["batteryPercent"][1]))+"%"
 
+        cv2.putText(self.cv_image, batteryPercent,
+        (570,345), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
 
     # this function will go a certain speed for a set amount of time
     def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):

@@ -50,25 +50,29 @@ class OrientLineDirective(AbstractDroneDirective):
         if self.orientation == "PARALLEL":
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
-            xWindowSize = 50
-            yWindowSize = 50
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 7, yawspeed = 0.55)
+            xWindowSize = 60
+            yWindowSize = 60
+            altLowerTolerance = 120
+            altUpperTolerance = 120
 
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 45, upperAngleBound = 110, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
-            xWindowSize = 150
-            yWindowSize = 60
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.7)
+            xWindowSize = 185
+            yWindowSize = 65
+            altLowerTolerance = 500
+            altUpperTolerance = 150
         
         # defines window to make the drone focus on moving away from the edges and back into
         # the center; yaw will be turned off
         xReturnSize = 180
         yReturnSize = 70
-
+        
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], self.hoverAltitude, 
-        xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = 85)
+        xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = (altLowerTolerance, altUpperTolerance))
 
         #draws center of circle on image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
@@ -82,6 +86,10 @@ class OrientLineDirective(AbstractDroneDirective):
         yLower = centery-yReturnSize
         xUpper = centerx+xReturnSize
         yUpper = centery+yReturnSize
+
+        # perpendicular can disregard height
+        if self.orientation == "PERPENDICULAR":
+            zspeed = 0
 
         if ( yawspeed == 0 and xspeed == 0 and yspeed == 0 and zspeed == 0 and cx != None and cy != None ):
             
@@ -127,7 +135,9 @@ class OrientLineDirective(AbstractDroneDirective):
             # keep moving it to the center and adjusting the height until the 
             # directive is finished
             else:
-                rospy.logwarn("Finishing directive: MOVING drone to center / Fixing Altitude")
+                rospy.logwarn("Curr Altitude = " + str( int(navdata["SVCLAltitude"][1])) +
+                " mm; Goal = [ " + str(self.hoverAltitude - altLowerTolerance) + " mm, " + 
+                str(self.hoverAltitude + altUpperTolerance) + " mm ].")
                 
             directiveStatus = 0 
 

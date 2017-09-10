@@ -116,8 +116,9 @@ class ProcessVideo(object):
 
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
 
-        lines = cv2.HoughLinesP(edges,1, pi/180, 40, minLineLength = 20, maxLineGap = 380)
-        
+        lines = cv2.HoughLinesP(edges,1, pi/180, 25, minLineLength = 10, maxLineGap = 380)
+        #lines = cv2.HoughLinesP(edges,1, pi/180, 55, minLineLength = 10, maxLineGap = 380)
+                
         line1List = []
         line2List = []
         line1= None
@@ -137,10 +138,12 @@ class ProcessVideo(object):
             
             #for line in lineList:
                 #cv2.line(image,(line[0],line[1]),(line[2],line[3]), (0,randint(0,255),randint(2,255)),1)
-            
+
             # tuple in format (line, slope)
             line1List.append(lines[0])
+            # sometimes the angle comes out at -0.0; adding 0 fixes that to regular 0.0
             compAngle = self.GetAngle(line1List[0])
+            compAngle = compAngle + 0
 
             degThresh = 45
 
@@ -148,8 +151,12 @@ class ProcessVideo(object):
             for i in range( 1, len(lines) ):
                 
                 angle = self.GetAngle(lines[i])
+                angle = angle + 0
                 
-                if (abs(angle - compAngle) < degThresh) or (compAngle == 180 and angle == 0) or (compAngle == 0 and angle == 180): 
+                if ( (abs(angle - compAngle) < degThresh) or
+                (  (180 - (degThresh/2)) < compAngle and angle < (degThresh/2) ) or
+                ( compAngle < (degThresh/2) and (180-compAngle) < (degThresh/2) ) ): 
+
                     line1List.append(lines[i])
                 else:
                     line2List.append(lines[i])
@@ -162,13 +169,15 @@ class ProcessVideo(object):
 
             if line2!= None:
 
+                line2Center = ( ((line2[0]+line2[2])/2), ((line2[1] + line2[3])/2) )
                 # line 1 is always the line closer to horizontal
                 if abs(line2Angle-90) > abs(line1Angle-90):
-                    temp1, temp2 = line1, line1Angle
-                    line1, line1Angle = line2, line2Angle
-                    line2, line2Angle = temp1, temp2
+                    temp1, temp2, temp3 = line1, line1Angle, line1Center
+                    line1, line1Angle, line1Center = line2, line2Angle, line2Center
+                    line2, line2Angle , line2Center = temp1, temp2, temp3
+
                 cv2.line(image,(line2[0],line2[1]),(line2[2],line2[3]), (0,0,255),3)
-                line2Center = ( ((line2[0]+line2[2])/2), ((line2[1] + line2[3])/2) )
+                #rospy.logwarn("line 1 = " + str(line1Angle) + ", line 2 = " + str(line2Angle))
 
             cv2.line(image,(line1[0],line1[1]),(line1[2],line1[3]), (0,255,0),3)
 
@@ -221,97 +230,6 @@ class ProcessVideo(object):
 
             return None
         
-
-    def GetLines(self, image, thresh = 65):
-        #change bgr to gray for edge detection
-
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-
-        gray = cv2.GaussianBlur( gray, (7,7),0)
-
-        edges = cv2.Canny(gray,50,150,apertureSize = 3)
-
-        lines = cv2.HoughLines(edges,1, pi/180, thresh)
-
-        return lines
-
-
-    def ProcessLines(self, lines, image, lowerAngleBound = 0, upperAngleBound = 180, secondBounds = (None,None), lineColor = (0,0,255), lineWidth = 2):
-
-        if(lines!= None):
-        
-            Lines=array(lines)
-            thetas=Lines[:,:,1]
-            rhos=Lines[:,:,0]
-            thetasDegrees = (thetas*180)/pi
-
-            #rospy.logwarn(thetasDegrees)
-
-            #boolean arrays for angles greater than 170 and less than 10
-            large = (thetasDegrees>170)
-            small = (thetasDegrees<10)
-            extract = logical_and((thetasDegrees > lowerAngleBound),(thetasDegrees < upperAngleBound))
-            #rospy.logwarn("first bound:" + str(extract))
-
-            if(secondBounds != (None,None)):
-                extractSecond = logical_and((thetasDegrees > secondBounds[0]),(thetasDegrees < secondBounds[1]))
-                extract = logical_or(extract,extractSecond)
-
-            #if most lines are within this range of theta
-            
-            if( sum(large | small) > (size(thetas)/2) and (lowerAngleBound <= 0)):
-
-                if(sum(large) > sum(small)):
-                    #sums up all angles greater than 170 and averages them
-                    radians = sum(thetas*large)/(sum(large))
-                    rho = sum(rhos*large)/(sum(large))
-
-                else:
-                    #adds up all angles less than 10 and averages them
-                    radians = sum(thetas*small)/(sum(small))
-                    rho = sum(rhos*small)/(sum(small))
-  
-            else:
-                #takes average of all angles
-                temp=(thetas*extract)*180/pi
-                #rospy.logwarn(temp)
-                radians = sum(thetas*extract)/(sum(extract))
-                rho = sum(rhos*extract)/(sum(extract))
-                
-
-                #LINES = matrix(lines).mean(0)
-                #rho=LINES[0,0]
-                #radians=LINES[0,1]
-            # all data needed to plot lines on original image
-            
-            if( not math.isnan(radians)):
-                a = cos(radians)
-                b = sin(radians)
-                x0 = a*rho
-                y0 = b*rho
-                x1 = int(x0 + 1000*(-b))
-                y1 = int(y0 + 1000*(a))
-                x2 = int(x0 - 1000*(-b))
-                y2 = int(y0 - 1000*(a))
-                
-                cv2.line(image,(x1,y1),(x2,y2),lineColor,lineWidth)
-            #this is the correct angle relative to standard cordinate system for average line
-                angle=((radians*180)/pi)
-                radians=radians/pi
-                #rospy.logwarn(angle)
-
-            else: 
-                angle = None
-        else:
-
-            x0 = None
-            y0 = None
-            angle = None
-            rho = None
-            radians = None
-
-        return angle
-
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
     # the angle of the line and the point perpendicular to the origin
@@ -442,9 +360,10 @@ class ProcessVideo(object):
     # takes in an image and the center of masses for its segmented version, 
     # returns how much the drone should move in the (x,y) direction such that
     # object stays in middle, within +/- tolerance pixels of the center
+    # ztolerance is a tuple of (lower bound tolerance, upper bound tolerance)
     
     def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None,
-    xtolerance = 20, ytolerance = 20, ztolerance = 75 ):
+    xtolerance = 20, ytolerance = 20, ztolerance = (75,75) ):
 
         numrows,numcols,channels = image.shape
 
@@ -468,9 +387,9 @@ class ProcessVideo(object):
          # calculating if the drone should go up or down to match the desired altitude
         climbSpeed = 0.8
         if currAltitude != None and desiredAltitude != None:
-            if (currAltitude < (desiredAltitude - ztolerance)):
+            if (currAltitude < (desiredAltitude - ztolerance[0])):
                 zVelocity = climbSpeed
-            elif (currAltitude > (desiredAltitude + ztolerance)):
+            elif (currAltitude > (desiredAltitude + ztolerance[1])):
                 zVelocity = climbSpeed * -1
             else:
                 zVelocity = 0
@@ -489,15 +408,15 @@ class ProcessVideo(object):
 
             # if it's out of horizontal close zone
             if cx < zoneLeft or cx > zoneRight:
-                alphax = 0.15
+                alphax = 0.185
             else:
-                alphax = 0.15
+                alphax = 0.185
         
             # if it's out of vertical close zone
             if cy < zoneTop or cy > zoneBottom:
-                alphay = 0.15
+                alphay = 0.185
             else:
-                alphay = 0.15
+                alphay = 0.185
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -560,7 +479,7 @@ class ProcessVideo(object):
     # return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
     # keeps line between +/- thresh from 0 degrees (perfect at 0 degrees)
     # returns None if no yawspeed could be calculated
-    def ObjectOrientation(self, image, angle, thresh):
+    def ObjectOrientation(self, image, angle, thresh, yawspeed = 0.4):
         
         if angle == None:
             return None
@@ -573,16 +492,16 @@ class ProcessVideo(object):
         
         # Drone rotates Counter Clock-Wise
         if angle < upperAngle and angle > 90:
-            yawspeed = 0.4
+            yawSpeed = yawspeed
 
         # Drone rotates Clock_Wise
         elif angle > lowerAngle and angle < 90:
-            yawspeed = -0.4
+            yawSpeed = -1 * yawspeed
 
         else:
-            yawspeed = 0
+            yawSpeed = 0
 
-        return yawspeed
+        return yawSpeed
         
 
     # given a segmented image hsvImage and a percentThreshold of 
