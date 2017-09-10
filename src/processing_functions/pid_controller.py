@@ -61,9 +61,9 @@ class PIDController(object):
 
             # for P
             '''rospy.logwarn(altitude)'''
-            self.xP_error = (self.centerx - self.cx)# * (altitude - self.b) / self.f
-            self.yP_error = (self.centery - self.cy)# * (altitude - self.b) / self.f
-
+            self.xP_error = (self.centerx - self.cx) * (altitude - self.b) / self.f
+            self.yP_error = (self.centery - self.cy) * (altitude - self.b) / self.f
+            
             # for I
             self.xI_error, self.yI_error = self.GaussianFilter(self.xP_error, self.yP_error)
 
@@ -169,11 +169,9 @@ class PIDController(object):
             else:
                 yPID = 0.0
 
-            ''' rospy.logwarn("PID xspeed = " + str(xPID) + " = " + str(self.x_pTerm/self.centerx) +
-            " + " + str(self.x_iTerm/self.centerx) + " + " + str(self.x_dTerm/self.centerx))
+            '''rospy.logwarn(str(self.x_pTerm/self.centerx) + " + " + str(self.x_iTerm/self.centerx) + " + " + str(self.x_dTerm/self.centerx))
 
-            rospy.logwarn("PID yspeed = " + str(yPID) + " = " + str(self.y_pTerm/self.centery) +
-            " + " + str(self.y_iTerm/self.centery) + " + " + str(self.y_dTerm/self.centery))'''
+            rospy.logwarn(str(self.y_pTerm/self.centery) + " + " + str(self.y_iTerm/self.centery) + " + " + str(self.y_dTerm/self.centery))'''
 
             """
             rospy.logwarn("dt: "+ str(self.dt.to_sec()))
