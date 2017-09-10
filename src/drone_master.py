@@ -30,7 +30,7 @@ PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
 TEST_MACHINE = 'test_machine'
 
-
+# Drone Video Dimensions: Height = 360; Width = 640
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
 # any one of its defined state machines, which will tell this class how to control the drone.
 # The particular state machine to use can be changed at run time.
@@ -152,12 +152,13 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             alg = [
             ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective(self.droneRecordPath), 1 ),
+            ( CapturePhotoDirective(self.droneRecordPath, 10, 0.25), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8, orangePlatformErr ),
             ( FollowLineDirective('blue', speed = 0.25), 4, blueLineErr )
             ]
             algCycles = 6
+            testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
             end = [
             ( OrientLineDirective('PARALLEL', 'green', 'orange', altitude ), 4, orangePlatformErr ),
@@ -221,9 +222,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            testalg = ( FollowLineDirective('blue', speed = 0.8), 14, error)
+            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14, error)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
-            algCycles = -1
+            testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
+            algCycles = 1
 
             alg = [testalg]
 
