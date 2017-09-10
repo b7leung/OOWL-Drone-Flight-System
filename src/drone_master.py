@@ -8,7 +8,6 @@ import os
 import cv2
 import numpy
 from os.path import expanduser
-from random import randint
 
 # importing drone specific modules
 from drone_video import DroneVideo
@@ -20,7 +19,6 @@ from drone_directives import *
 from processing_functions.picture_manager import PictureManager
 
 # list of possible state machines that can be used to control drone
-IDLE_MACHINE = "idle"
 HOVER_ORANGE_MACHINE = "hover_orange"
 FACE_OBJECT_MACHINE = 'face_object'
 CAPTURE_PHOTO_MACHINE = 'capture_photo'
@@ -30,7 +28,6 @@ AUTO_CIRCLE_MACHINE= "auto_circle"
 PID_AUTO_CIRCLE_MACHINE= "pid_auto_circle"
 PID_HOVER_ORANGE_MACHINE = 'pid_hover_orange'
 SELF_CORRECTING_TAKEOFF_MACHINE = "self_correcting_takeoff"
-PID_OBJECT_ORIENT_MACHINE = 'pid_object_orient'
 TEST_MACHINE = 'test_machine'
 
 
@@ -65,7 +62,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         # initalizing helper objects
         self.pictureManager = PictureManager(self.droneRecordPath)
-        self.process = ProcessVideo()
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
         self.waitTime = 0
@@ -86,17 +82,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         if key == ord('t'):
             
             # self correcting takeoff
-            
             self.moveTime = 0.0
             self.waitTime = 0.0
-
             init = [
             ( FlatTrimDirective(), 1), ( IdleDirective("pause for flat trim"), 10 ),
             ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
             ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
             ( ReturnToOriginDirective(100), 15 )
             ]
-
             self.MachineSwitch( init, None, 0, None, SELF_CORRECTING_TAKEOFF_MACHINE)
 
         elif key == ord('1'):
@@ -126,16 +119,13 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.08
             alg = [ ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 0 ) ]
             algCycles = -1
-
             self.MachineSwitch( None, alg, algCycles, None, FIX_TO_BLUE_LINE_MACHINE)
 
         elif key == ord('5'):
             
             self.moveTime = 0.15
             self.waitTime = 0.08
-            alg = [
-            (FollowLineDirective('blue'), 0)
-            ]
+            alg = [(FollowLineDirective('blue'), 0)]
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, FOLLOW_BLUE_LINE_MACHINE)
 
@@ -156,8 +146,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( FindPlatformAltitudeDirective('orange', altitude + 200), 5)
             ]
             
-            #orangePlatformErr = None
-            #blueLineErr = None
             orangePlatformErr = (ReturnToColorDirective('orange'), 10)
             blueLineErr = (ReturnToLineDirective('blue'), 10)
 
@@ -176,9 +164,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( LandDirective(), 1)
             ]
 
-            
             self.MachineSwitch( None, alg, algCycles, end, AUTO_CIRCLE_MACHINE)
-
 
         elif key == ord('a'):
 
@@ -197,14 +183,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, orangePlatformErr),
             ( FollowLineDirective('blue'), 14 )
             ]
-            
             algCycles = 6
 
             end = [
             ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 4, orangePlatformErr),
             ( LandDirective(), 1)
             ]
-
 
             self.MachineSwitch(None, alg, algCycles, None , PID_AUTO_CIRCLE_MACHINE)
     
@@ -213,14 +197,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.0
             self.waitTime = 0.0
             
-            orangePlatformError = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
-
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
             #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
             pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
-            alg = [
-            (pidAlg, 10, orangePlatformError)
-            ]
+
+            orangePlatformError = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
+
+            alg = [(pidAlg, 10, orangePlatformError)]
+
             p,i,d = pidAlg.GetSettings(self.settingsPath)
             pidAlg.pid.ResetPID(p,i,d)
 
@@ -233,20 +217,15 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.04
             self.waitTime = 0.14
 
-            #error = None
             error = (ReturnToLineDirective('blue', speedModifier = 0.4), 10)
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
             testalg = ( FollowLineDirective('blue', speed = 0.8), 14, error)
-            #testalg = (BinaryTestDirective(), 4, error)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
-
-            alg = [
-            testalg
-            ]
             algCycles = -1
 
+            alg = [testalg]
 
             self.MachineSwitch( None, alg, algCycles, None, TEST_MACHINE)
 
@@ -312,30 +291,30 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         cv2.putText(self.cv_image, batteryPercent,
         (570,345), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
 
-    # this function will go a certain speed for a set amount of time
+
+    # this function will go a certain speed for a set amount of time, then rest for wait_time # of cycles
     def MoveFixedTime(self, xSpeed, ySpeed, yawSpeed, zSpeed, move_time, wait_time):
        
+        # Moving
         if time.clock() < (self.startTimer+move_time) or wait_time == 0:
             xSetSpeed = xSpeed
             ySetSpeed = ySpeed
             yawSetSpeed = yawSpeed
             zSetSpeed = zSpeed
-            #rospy.logwarn("moving **********")
 
+        # Waiting
         else:
             xSetSpeed = 0
             ySetSpeed = 0
             yawSetSpeed = 0
             zSetSpeed = 0
-            #rospy.logwarn("waiting")
+            # Resetting timer, so that drone moves again
             if time.clock() > (self.startTimer + move_time + wait_time):
-                #rospy.logwarn("reset")
                 self.startTimer=time.clock()
        
         self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)
 
-        # log info
-        #self.logger.Log("cx: " + str(self.cx) + " cy: " + str(self.cy) +
+        # logs info
         self.logger.Log(
         " altitude: " + str(self.flightInfo["altitude"]) +
         " yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
@@ -346,13 +325,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.logger.Stop()
 
 
-
 if __name__=='__main__':
     
     rospy.init_node('DroneMaster')
     master = DroneMaster()
     rospy.on_shutdown(master.ShutdownTasks)
     rospy.spin()
-
-    
 
