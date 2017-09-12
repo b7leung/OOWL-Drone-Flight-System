@@ -17,7 +17,7 @@ process = ProcessVideo()
 
 imagePath = sys.argv[1]
 image = cv2.imread(imagePath)
-orangeImage,radius,center = process.DetectShape(image,"front orange",.4)
+orangeImage,radius,center = process.DetectShape(image,"front orange",.3)
 cv2.imshow("image",orangeImage)
 print(str([center[1]])+" "+str([center[0]]))
 print(str(radius) )

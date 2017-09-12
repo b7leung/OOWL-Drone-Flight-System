@@ -42,10 +42,10 @@ class ProcessVideo(object):
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
         if(color=='front orange'):
             #0 50 0 25, 254 255
-            hsv_boundaries = [( [0, 70, 10],[15, 254, 255] )]
+            hsv_boundaries = [( [0, 55, 10],[60, 254, 255] )]
             #168 50 0,180 254 255
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 70, 10],[180, 254, 255])]
+            hsv_boundaries2 = [([168, 70, 10],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -97,7 +97,7 @@ class ProcessVideo(object):
     #and returns distance in mm
     #old val = 781.6, =-319.4
     def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 715.6186, offset = 5.1371):
-        distance = ( (focalLength*objectTrueSize)/objectPixels)+offset
+        distance = ( (focalLength*objectTrueSize)/(objectPixels))+offset
         return distance
         
 
@@ -680,7 +680,7 @@ class ProcessVideo(object):
         return rect_image 
 
 
-    def DetectFaces(self,image):
+    def DetectFaces(self,image,faceLength = 190):
         cascPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/haarcascade_frontalface_default.xml"
 
         # Create the haar cascade
@@ -700,7 +700,8 @@ class ProcessVideo(object):
         # Draw a rectangle around the faces
         for (x, y, w, h) in faces:
             cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            distance = ( (685.2387*faceLength)/h)-223.3983
             cx = (2*x + w)/2
             cy = (2*y + w)/2
-            return cx,cy
+            return distance,(cx,cy)
 
