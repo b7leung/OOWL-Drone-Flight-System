@@ -9,6 +9,8 @@ from numpy import *
 import time
 from cv_bridge import CvBridge, CvBridgeError
 from os.path import expanduser
+from random import randint
+from math import isinf
 
 # This class contains helper functions that each process
 # video frames in some way
@@ -40,10 +42,10 @@ class ProcessVideo(object):
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
         if(color=='front orange'):
             #0 50 0 25, 254 255
-            hsv_boundaries = [( [0, 70, 10],[15, 254, 255] )]
+            hsv_boundaries = [( [0, 55, 10],[60, 254, 255] )]
             #168 50 0,180 254 255
             #lower  hsv boundary #170 140 150,179 255 255
-            hsv_boundaries2 = [([170, 70, 10],[180, 254, 255])]
+            hsv_boundaries2 = [([168, 70, 10],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -90,19 +92,12 @@ class ProcessVideo(object):
             return segmentedImage,hsv_output,mask
 
 
-    #this function takes in as arguements, object aproximate pixel length , the original size of an object in
-    #mm and, focal length (default is focal length of A.R. drone bottom camera). Then it finds the approximate
-    #distance in mm, from the object to the camera. (assumes flat lense)
-    def CalcDistance(self,trueObjectSize,objectPixelSize,focalLength = 459.2622):
-        #z = foc*x/x'
-        distance = (focalLength*trueObjectSize)/objectPixelSize
-        return distance
-
 
     #a non classical more accurate model for calculating distance,object true size expected in mm
     #and returns distance in mm
-    def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 781.6, offset = -319.4):
-        distance = ( (focalLength*objectTrueSize)/objectPixels)+offset
+    #old val = 781.6, =-319.4
+    def CalcDistanceNew(self,objectTrueSize,objectPixels,focalLength = 715.6186, offset = 5.1371):
+        distance = ( (focalLength*objectTrueSize)/(objectPixels))+offset
         return distance
         
 
@@ -111,6 +106,129 @@ class ProcessVideo(object):
     def CalcFocal(self,objectPixelSize,objectTrueSize,distance):
         focal = (objectPixelSize*distance)/trueObjectSize
         return focal
+        
+
+    def ShowTwoLines(self, image):
+        
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+
+        gray = cv2.GaussianBlur( gray, (7,7),0)
+
+        edges = cv2.Canny(gray,50,150,apertureSize = 3)
+
+        lines = cv2.HoughLinesP(edges,1, pi/180, 25, minLineLength = 10, maxLineGap = 380)
+        #lines = cv2.HoughLinesP(edges,1, pi/180, 55, minLineLength = 10, maxLineGap = 380)
+                
+        line1List = []
+        line2List = []
+        line1= None
+        line2 = None
+        line1Angle= None
+        line1Center = None
+        line2Angle= None
+        line2Center = None
+
+        if lines != None:
+            
+            # trimming
+            temp = []
+            for line in lines:
+                temp.append(line[0])
+            lines = temp
+            
+            #for line in lineList:
+                #cv2.line(image,(line[0],line[1]),(line[2],line[3]), (0,randint(0,255),randint(2,255)),1)
+
+            # tuple in format (line, slope)
+            line1List.append(lines[0])
+            # sometimes the angle comes out at -0.0; adding 0 fixes that to regular 0.0
+            compAngle = self.GetAngle(line1List[0])
+            compAngle = compAngle + 0
+
+            degThresh = 45
+
+            # Finding the best two distinct lines from the array
+            for i in range( 1, len(lines) ):
+                
+                angle = self.GetAngle(lines[i])
+                angle = angle + 0
+                
+                if ( (abs(angle - compAngle) < degThresh) or
+                (  (180 - (degThresh/2)) < compAngle and angle < (degThresh/2) ) or
+                ( compAngle < (degThresh/2) and (180-compAngle) < (degThresh/2) ) ): 
+
+                    line1List.append(lines[i])
+                else:
+                    line2List.append(lines[i])
+
+            line1 = self.FindAvgLine(line1List)
+            line1Angle = self.GetAngle(line1)
+            line1Center = ( ((line1[0]+line1[2])/2), ((line1[1] + line1[3])/2) )
+            line2 = self.FindAvgLine(line2List)
+            line2Angle = self.GetAngle(line2)
+
+            if line2!= None:
+
+                line2Center = ( ((line2[0]+line2[2])/2), ((line2[1] + line2[3])/2) )
+                # line 1 is always the line closer to horizontal
+                if abs(line2Angle-90) > abs(line1Angle-90):
+                    temp1, temp2, temp3 = line1, line1Angle, line1Center
+                    line1, line1Angle, line1Center = line2, line2Angle, line2Center
+                    line2, line2Angle , line2Center = temp1, temp2, temp3
+
+                cv2.line(image,(line2[0],line2[1]),(line2[2],line2[3]), (0,0,255),3)
+                #rospy.logwarn("line 1 = " + str(line1Angle) + ", line 2 = " + str(line2Angle))
+
+            cv2.line(image,(line1[0],line1[1]),(line1[2],line1[3]), (0,255,0),3)
+
+        return line1Angle, line1Center, line2Angle, line2Center
+
+    
+    def GetAngle(self, line):
+
+        if line != None:
+            # checking for a vertical line
+            if ( line[2] - float(line[0]) ) != 0:
+                slope = ( line[3] - float(line[1]) ) / ( line[2] - float(line[0]) ) 
+                angle = rad2deg(arctan(slope))
+                #angle = 180 - arctan(slope)
+            else:
+                angle = 90
+            
+            angle = -angle
+            if angle < 0:
+                angle = angle + 180
+
+            return angle
+        else:
+
+            return None
+
+
+    # Helper method
+    def FindAvgLine(self, linesList):
+        
+        if len(linesList) != 0:
+
+            P1xSum = 0
+            P1ySum = 0
+            P2xSum = 0
+            P2ySum = 0
+            
+            for line in linesList:
+                P1xSum += line[0]
+                P1ySum += line[1]
+                P2xSum += line[2]
+                P2ySum += line[3]
+
+            line = ( int(P1xSum/len(linesList)), int(P1ySum/len(linesList)),
+            int(P2xSum/len(linesList)), int(P2ySum/len(linesList)) )
+
+            return line
+
+        else:
+
+            return None
         
 
     # Performs houghline transform to detect lines by inputing a BGR image and returning
@@ -164,7 +282,6 @@ class ProcessVideo(object):
                     rho = sum(rhos*large)/(sum(large))
 
 
-
                 else:
                     #adds up all angles less than 10 and averages them
                     radians = sum(thetas*small)/(sum(small))
@@ -202,11 +319,12 @@ class ProcessVideo(object):
             else: 
                 angle = None
         else:
-            x0=None
-            y0=None
-            angle=None
-            rho=None
-            radians=None
+
+            x0 = None
+            y0 = None
+            angle = None
+            rho = None
+            radians = None
 
         return angle
 
@@ -242,9 +360,10 @@ class ProcessVideo(object):
     # takes in an image and the center of masses for its segmented version, 
     # returns how much the drone should move in the (x,y) direction such that
     # object stays in middle, within +/- tolerance pixels of the center
+    # ztolerance is a tuple of (lower bound tolerance, upper bound tolerance)
     
     def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None,
-    xtolerance = 20, ytolerance = 20, ztolerance = 75 ):
+    xtolerance = 20, ytolerance = 20, ztolerance = (75,75) ):
 
         numrows,numcols,channels = image.shape
 
@@ -252,8 +371,8 @@ class ProcessVideo(object):
         centery = numrows/2
 
         #create a "window" for desired center of mass position
-        width = xtolerance * 2
-        height = ytolerance * 2
+        width = xtolerance 
+        height = ytolerance
         xlower = centerx-width #left xvalue
         ylower = centery-height #"top" yvalue
         xupper = centerx+width #right xvalue
@@ -266,12 +385,11 @@ class ProcessVideo(object):
         zoneBottom = centery + centery/2
         
          # calculating if the drone should go up or down to match the desired altitude
-        tolerance = ztolerance
         climbSpeed = 0.8
         if currAltitude != None and desiredAltitude != None:
-            if (currAltitude < (desiredAltitude - tolerance)):
+            if (currAltitude < (desiredAltitude - ztolerance[0])):
                 zVelocity = climbSpeed
-            elif (currAltitude > (desiredAltitude + tolerance)):
+            elif (currAltitude > (desiredAltitude + ztolerance[1])):
                 zVelocity = climbSpeed * -1
             else:
                 zVelocity = 0
@@ -290,15 +408,15 @@ class ProcessVideo(object):
 
             # if it's out of horizontal close zone
             if cx < zoneLeft or cx > zoneRight:
-                alphax = 0.2
+                alphax = 0.185
             else:
-                alphax = 0.2
+                alphax = 0.185
         
             # if it's out of vertical close zone
             if cy < zoneTop or cy > zoneBottom:
-                alphay = 0.2
+                alphay = 0.185
             else:
-                alphay = 0.2
+                alphay = 0.185
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -361,7 +479,7 @@ class ProcessVideo(object):
     # return yawspeed keeps blue line vertical in bottom cam, xspeed keeps line in middle
     # keeps line between +/- thresh from 0 degrees (perfect at 0 degrees)
     # returns None if no yawspeed could be calculated
-    def ObjectOrientation(self, image, angle, thresh):
+    def ObjectOrientation(self, image, angle, thresh, yawspeed = 0.4):
         
         if angle == None:
             return None
@@ -374,16 +492,16 @@ class ProcessVideo(object):
         
         # Drone rotates Counter Clock-Wise
         if angle < upperAngle and angle > 90:
-            yawspeed = 0.4
+            yawSpeed = yawspeed
 
         # Drone rotates Clock_Wise
         elif angle > lowerAngle and angle < 90:
-            yawspeed = -0.4
+            yawSpeed = -1 * yawspeed
 
         else:
-            yawspeed = 0
+            yawSpeed = 0
 
-        return yawspeed
+        return yawSpeed
         
 
     # given a segmented image hsvImage and a percentThreshold of 
@@ -466,6 +584,7 @@ class ProcessVideo(object):
         #if we have looped through every object and dont see a circle, return None
         return image, None, None
 
+
     #This function will take in an image, and shape color as input, and return the center and radius
     #of the first circle that is detected. Will return None for center if no circle is detected, and 
     #None for radius, if the circle is out of the image bounds.
@@ -483,7 +602,9 @@ class ProcessVideo(object):
         numrows,numcols,channels=image.shape
         imagePerimeter = 2*numrows+2*numcols
 
-        contours = cv2.findContours(binaryImage.copy() , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(binaryImage.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        center = (None,None)
         
         #use contours[0] for opencv2 or contours[1] for opencv3
         contours = contours[1]
@@ -541,7 +662,7 @@ class ProcessVideo(object):
 
         #if we have looped through every object and dont see a circle, return None
         
-        return segmentedImage, None, (None,None)
+        return segmentedImage, None, center
 
 
     # Given an image, a point (x,y), and a width/height,
@@ -559,7 +680,7 @@ class ProcessVideo(object):
         return rect_image 
 
 
-    def DetectFaces(self,image):
+    def DetectFaces(self,image,faceLength = 190):
         cascPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/haarcascade_frontalface_default.xml"
 
         # Create the haar cascade
@@ -579,7 +700,8 @@ class ProcessVideo(object):
         # Draw a rectangle around the faces
         for (x, y, w, h) in faces:
             cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            distance = ( (685.2387*faceLength)/h)-223.3983
             cx = (2*x + w)/2
             cy = (2*y + w)/2
-            return cx,cy
+            return distance,(cx,cy)
 
