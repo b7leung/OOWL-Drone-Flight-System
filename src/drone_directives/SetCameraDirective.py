@@ -42,5 +42,5 @@ class SetCameraDirective(AbstractDroneDirective):
 
         rospy.logwarn("Set Drone Camera to: " + cameraName)
 
-        return 1, (0, 0, 0, 0), image, (None,None)
+        return 1, (0, 0, 0, 0), image, (None,None), 0, 0
 

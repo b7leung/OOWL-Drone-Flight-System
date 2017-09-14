@@ -49,6 +49,8 @@ class StateMachine(object):
         self.errorCount = 0
 
         self.MachineFinished = False
+        self.moveTime = 0
+        self.waitTime = 0
 
 
     # Returns update on what the drone should do next according to the current state
@@ -59,12 +61,12 @@ class StateMachine(object):
             # edge case: when the machine has run through all its phases, it's finished
             if self.currPhase >= len( self.stateMachineDef ):
                 self.MachineFinished = True
-                return (0,0,0,0), image
+                return (0,0,0,0), image, 0, 0
 
             # edge case: if the current phase is "None", just go to the next phase
             if self.stateMachineDef[self.currPhase][0] == None:
                 self.currPhase += 1
-                return (0,0,0,0), image
+                return (0,0,0,0), image, 0, 0
 
             # if the error flag was set, use it as the current state instead of the normal one
             if self.errorFlag:
@@ -72,7 +74,7 @@ class StateMachine(object):
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][1]
                 self.errorDuration += 1
-                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
+                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
                 # if it's been over the specified limit without success, abort
                 if self.errorDuration > self.errorMaxDuration or status == -1:
                     rospy.logwarn("********** ABORTING -- MACHINE FAILED **********") 
@@ -81,7 +83,7 @@ class StateMachine(object):
                 
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][1]
-                status, droneInstructions, image, coordinate = currState.RetrieveNextInstruction(image,navdata)
+                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime = currState.RetrieveNextInstruction(image,navdata)
 
             # if the current state is finished, increment counter
             if status == 1:
@@ -138,12 +140,12 @@ class StateMachine(object):
                 if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=17:
                     self.errorFlag = True
 
-            return droneInstructions, image
+            return droneInstructions, image, self.moveTime, self.waitTime
 
         else:
             
             rospy.logwarn("Machine Finished")
-            return (0,0,0,0), image
+            return (0,0,0,0), image, 0, 0
                 
     
 

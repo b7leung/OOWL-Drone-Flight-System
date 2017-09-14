@@ -63,7 +63,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         if cx == None or cy == None:
             rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
-            return 0, (0,0,0,0.5),image, (cx,cy)
+            return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
 
         
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image, cx, cy,
@@ -73,7 +73,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(image,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy)
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), 0, 0
         
 
 

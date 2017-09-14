@@ -57,7 +57,7 @@ class ReturnToLineDirective(AbstractDroneDirective):
 
         if cx == None or cy == None:
             rospy.logwarn("Returning -- no " + self.lineColor + " detected @ this altitude, increasing altitude")
-            return 0, (0,0,0,0.5),image, (cx,cy)
+            return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
 
         
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image, cx, cy,
@@ -67,6 +67,6 @@ class ReturnToLineDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), segLineImage, (cx,cy), 0, 0
         
 

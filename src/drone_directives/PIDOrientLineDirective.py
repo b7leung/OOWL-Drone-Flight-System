@@ -33,7 +33,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         P,I,D = self.GetSettings(settingsPath)
         self.pid = PIDController(360, 640, P,I,D)
-
+        self.moveTime = 0
+        self.waitTime = 0
     
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
@@ -63,12 +64,13 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+        altitude = navdata["SVCLAltitude"][1]
 
         #draws center of circle on image
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         self.pid.UpdateDeltaTime()
-        self.pid.UpdateError(cx,cy)
+        self.pid.UpdateError(cx,cy,altitude)
         self.pid.SetPIDTerms()
         xspeed, yspeed = self.pid.GetPIDValues()
 
@@ -124,6 +126,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
                 cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 3)
                 #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
                 rospy.logwarn("Only MOVING drone")
+                self.moveTime = 0.12
+                self.waitTime = 0.01
                 yawspeed = 0
                 
             
@@ -132,17 +136,19 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             elif yawspeed != 0:
                 #rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
                 rospy.logwarn("Only TURNING drone")
+                self.moveTime = 0.5
+                self.waitTime = 0.01
                 xspeed = 0
                 yspeed = 0
 
-            else:
+            #else:
 
-                rospy.logwarn("Only MOVING drone")
+             #   rospy.logwarn("Only MOVING drone")
                 #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
                 
             directiveStatus = 0 
             
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy), self.moveTime, self.waitTime
 
 
     # This method is called by the state machine when it considers this directive finished

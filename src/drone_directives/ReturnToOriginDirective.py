@@ -73,5 +73,5 @@ class ReturnToOriginDirective(AbstractDroneDirective):
             directiveStatus = 0
 
 
-        return directiveStatus, (roll, pitch, 0, 0), image, (None,None)
+        return directiveStatus, (roll, pitch, 0, 0), image, (None,None), 0, 0
 

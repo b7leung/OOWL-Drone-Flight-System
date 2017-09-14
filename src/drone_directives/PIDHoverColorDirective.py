@@ -18,11 +18,11 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-
         P,I,D = self.GetSettings(settingsPath)
         self.pid = PIDController(360, 640, Kp = P, Ki = I, Kd = D)
         
-
+        self.moveTime = 0.12
+        self.waitTime = 0.01
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have
@@ -93,7 +93,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             p,i,d = self.pid.ReturnPIDvalues()
             directiveStatus = 0
         
-        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime,self.waitTime
 
 
     # This method is called by the state machine when it considers this directive finished

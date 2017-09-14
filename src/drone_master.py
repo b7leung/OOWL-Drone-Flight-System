@@ -64,8 +64,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.pictureManager = PictureManager(self.droneRecordPath)
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
-        self.waitTime = 0
-        self.moveTime = 0
 
 
     # Each state machine that drone mastercan use is defined here;
@@ -169,8 +167,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         elif key == ord('a'):
 
-            self.moveTime = 0.0
-            self.waitTime = 0.0
+            self.moveTime = 0.1
+            self.waitTime = 0.01
 
             orangePlatformErr= (ReturnToColorDirective('orange', speedModifier = 0.4), 10)
 
@@ -195,8 +193,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     
         elif key == ord('p'):
 
-            self.moveTime = 0.0
-            self.waitTime = 0.0
             
             #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
             #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
@@ -230,7 +226,6 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             alg = [testalg]
 
             self.MachineSwitch( None, alg, algCycles, None, TEST_MACHINE)
-
 
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
@@ -271,10 +266,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         else:
             # retrieving the instructions for whatever state the machine is in 
             # and commanding the drone to move accordingly
-            droneInstructions, segImage = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
+            droneInstructions, segImage, moveTime, waitTime = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], self.moveTime, self.waitTime)
+            droneInstructions[2], droneInstructions[3], moveTime, waitTime)
         
         # draws battery display
         color = (255,255,255)

@@ -450,7 +450,7 @@ class ProcessVideo(object):
     # returns yawspeed, keeps blue line horizontal in bottom cam, yspeed keeps line in middle
     # keep blue line between +/- thresh of 90 degrees (considered perfect at 90 degrees)
     # returns None if no yawspeed could be calculated
-    def LineOrientation(self, image, angle, thresh, yawspeed = 0.4):
+    def LineOrientation(self, image, angle, thresh, yawspeed = 0.8):
 
         if angle == None:
             return None

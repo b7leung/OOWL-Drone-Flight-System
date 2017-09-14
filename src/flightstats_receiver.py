@@ -65,7 +65,7 @@ class FlightstatsReceiver(object):
         # a higher videoUpdateMax will make everything run faster, but getting height/center updates will be slower
         # describes a ratio: compute/rest 
         self.computeMax = 1
-        self.restMax = 1
+        self.restMax = 0
         self.counter = 0
 
 
