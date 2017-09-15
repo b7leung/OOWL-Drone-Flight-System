@@ -33,8 +33,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         P,I,D = self.GetSettings(settingsPath)
         self.pid = PIDController(360, 640, P,I,D)
-        self.moveTime = 0
-        self.waitTime = 0
+        self.moveTime = 0.1
+        self.waitTime = 0.01
     
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
@@ -126,7 +126,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
                 cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 3)
                 #rospy.logwarn("Only MOVING drone. x speed = " + str(xspeed) + "; y speed = " + str(yspeed))
                 rospy.logwarn("Only MOVING drone")
-                self.moveTime = 0.12
+                self.moveTime = 0.1
                 self.waitTime = 0.01
                 yawspeed = 0
                 
@@ -137,7 +137,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
                 #rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
                 rospy.logwarn("Only TURNING drone")
                 self.moveTime = 0.5
-                self.waitTime = 0.01
+                self.waitTime = 0.02
                 xspeed = 0
                 yspeed = 0
 

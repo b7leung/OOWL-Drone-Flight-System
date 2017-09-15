@@ -73,7 +73,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(image,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), 0, 0
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), 0.4, 0.02
         
 
 
