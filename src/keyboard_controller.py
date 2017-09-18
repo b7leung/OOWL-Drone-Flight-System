@@ -18,8 +18,8 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-	background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands3.png")
-	self.screen.blit(background,[0,0])
+        background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands3.png")
+        self.screen.blit(background,[0,0])
         pygame.display.update()
 
         # setup controller + its variables
@@ -44,17 +44,17 @@ class KeyboardController(object):
                         #switches camera to bottom when it launches
                         self.controller.SendTakeoff()
                         self.controller.SwitchCamera(1)
-                        print "Takeoff"
+                        print( "Takeoff")
                     elif event.key == pygame.K_SPACE:
                         self.controller.SendLand()
                         rospy.logwarn("-------- LANDING DRONE --------") 
-                        print "Land"
+                        print ("Land")
                     elif event.key == pygame.K_ESCAPE:
                         self.controller.SendEmergency()
-                        print "Emergency Land"
+                        print ("Emergency Land")
                     elif event.key == pygame.K_c:
                         self.controller.ToggleCamera()
-                        print "toggle camera"
+                        print ("toggle camera")
                     elif event.key == pygame.K_z:
                         self.controller.FlatTrim()
                     else:
@@ -65,22 +65,22 @@ class KeyboardController(object):
                             self.pitch = self.speed*-1
                         elif event.key == pygame.K_a:
                             self.roll = self.speed
-                            print "Roll Left"
+                            print ("Roll Left")
                         elif event.key == pygame.K_d:
                             self.roll = self.speed*-1
-                            print "Roll Right"
+                            print ("Roll Right")
                         elif event.key == pygame.K_q:
                             self.yaw_velocity = self.speed
-                            print "Yaw Left"
+                            print ("Yaw Left")
                         elif event.key == pygame.K_e:
                             self.yaw_velocity = self.speed*-1
-                            print "Yaw Right"
+                            print ("Yaw Right")
                         elif event.key == pygame.K_r:
                             self.z_velocity = self.speed*1
-                            print "Increase Altitude"
+                            print ("Increase Altitude")
                         elif event.key == pygame.K_f:
                             self.z_velocity = self.speed*-1
-                            print "Decrease Altitude"
+                            print ("Decrease Altitude")
                             
 
                         self.controller.SetCommand(self.roll, self.pitch,
