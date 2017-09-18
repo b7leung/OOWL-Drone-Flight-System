@@ -18,8 +18,8 @@ class FollowLineDirective(AbstractDroneDirective):
         self.speed = speed
         self.processVideo = ProcessVideo()
         #self.pid = PIDController(360,640, Kp = 0.148, Ki = 0.0, Kd = 0.021)
-        self.moveTime = 0
-        self.waitTime = 0
+        self.moveTime = 0.2
+        self.waitTime = 0.1
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -97,8 +97,8 @@ class FollowLineDirective(AbstractDroneDirective):
             # No turning or horizontal movement is applied.
             if yspeed != 0:
                 rospy.logwarn("Moving blue line back to center")
-                self.moveTime = 0.1
-                self.waitTime = 0.01
+                self.moveTime = 0.2
+                self.waitTime = 0.1
                 xspeed = 0
                 yawspeed = 0
 
@@ -113,14 +113,14 @@ class FollowLineDirective(AbstractDroneDirective):
                     direction = "RIGHT"
                     
                 rospy.logwarn("Turning the drone horizontal " + direction + ",  yaw = " + str(yawspeed) )
-                self.moveTime = 0.4
-                self.waitTime = 0.02
+                self.moveTime = 0.2
+                self.waitTime = 0.1
                 xspeed = 0
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.4
-                self.waitTime = 0.02
+                self.moveTime = 0.2
+                self.waitTime = 0.1
 
         if line1Center != None:
             self.processVideo.DrawCircle(segLineImage,(line1Center[0],line1Center[1]))

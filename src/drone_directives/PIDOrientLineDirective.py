@@ -33,8 +33,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         P,I,D = self.GetSettings(settingsPath)
         self.pid = PIDController(360, 640, P,I,D)
-        self.moveTime = 0.1
-        self.waitTime = 0.01
+        self.moveTime = 0.2
+        self.waitTime = 0.1
     
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
@@ -77,7 +77,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         if self.orientation == "PARALLEL":
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 5, yawspeed = 0.5)
             xWindowSize = 50
             yWindowSize = 50
 
@@ -85,7 +85,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 30, upperAngleBound = 125, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 5, yawspeed = 0.5)
             xWindowSize = 180
             yWindowSize = 70
 
@@ -136,8 +136,8 @@ class PIDOrientLineDirective(AbstractDroneDirective):
             elif yawspeed != 0:
                 #rospy.logwarn("Only TURNING drone. yaw speed = " + str(yawspeed))
                 rospy.logwarn("Only TURNING drone")
-                self.moveTime = 0.5
-                self.waitTime = 0.02
+                self.moveTime = 0.2
+                self.waitTime = 0.1
                 xspeed = 0
                 yspeed = 0
 
