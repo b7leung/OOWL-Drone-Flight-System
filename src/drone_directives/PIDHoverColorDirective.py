@@ -22,7 +22,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         self.pid = PIDController(360, 640, Kp = P, Ki = I, Kd = D)
         
         self.moveTime = 0.1
-        self.waitTime = 0.01
+        self.waitTime = 0.02
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have

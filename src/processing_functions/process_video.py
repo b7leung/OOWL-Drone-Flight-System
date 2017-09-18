@@ -408,15 +408,15 @@ class ProcessVideo(object):
 
             # if it's out of horizontal close zone
             if cx < zoneLeft or cx > zoneRight:
-                alphax = 0.185
+                alphax = 0.2
             else:
-                alphax = 0.185
+                alphax = 0.2
         
             # if it's out of vertical close zone
             if cy < zoneTop or cy > zoneBottom:
-                alphay = 0.185
+                alphay = 0.2
             else:
-                alphay = 0.185
+                alphay = 0.2
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)

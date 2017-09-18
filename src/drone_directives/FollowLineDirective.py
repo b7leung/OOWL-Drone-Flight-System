@@ -113,7 +113,7 @@ class FollowLineDirective(AbstractDroneDirective):
                     direction = "RIGHT"
                     
                 rospy.logwarn("Turning the drone horizontal " + direction + ",  yaw = " + str(yawspeed) )
-                self.moveTime = 0.5
+                self.moveTime = 0.4
                 self.waitTime = 0.02
                 xspeed = 0
 
