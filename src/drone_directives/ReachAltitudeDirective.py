@@ -12,6 +12,9 @@ class ReachAltitudeDirective(AbstractDroneDirective):
     def __init__(self, desiredAltitude, tolerance):
         self.desiredAltitude = desiredAltitude
         self.tolerance = tolerance
+        self.moveTime = 0.20
+        self.waitTime = 0.10
+
 
     # given the image and navdata of the drone, returns the following in order:
     #
@@ -42,5 +45,5 @@ class ReachAltitudeDirective(AbstractDroneDirective):
             zVel = 0
             directiveStatus = 1
 
-        return directiveStatus, (0, 0, 0, zVel), image, (None,None)
+        return directiveStatus, (0, 0, 0, zVel), image, (None,None), self.moveTime, self.waitTime
 

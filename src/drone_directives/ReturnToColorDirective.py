@@ -17,6 +17,8 @@ class ReturnToColorDirective(AbstractDroneDirective):
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
+        self.moveTime = 0.20
+        self.waitTime = 0.10
     
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -73,7 +75,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(image,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), 0.4, 0.02
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), self.moveTime, self.waitTime
         
 
 

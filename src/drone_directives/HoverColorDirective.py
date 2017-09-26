@@ -16,7 +16,8 @@ class HoverColorDirective(AbstractDroneDirective):
         self.platformColor = platformColor 
         self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-        
+        self.moveTime = 0.20
+        self.waitTime = 0.10
     
 
     # given the image and navdata of the drone, returns the following in order:
@@ -58,7 +59,7 @@ class HoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy), self.moveTime, self.waitTime
 
 
 

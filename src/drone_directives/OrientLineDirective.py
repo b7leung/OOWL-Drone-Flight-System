@@ -29,7 +29,8 @@ class OrientLineDirective(AbstractDroneDirective):
         self.platformColor = platformColor
         self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-
+        self.moveTime=0.2
+        self.waitTime=0.1
 
     # Given the image and navdata of the drone, returns the following in order:
     #
@@ -50,7 +51,7 @@ class OrientLineDirective(AbstractDroneDirective):
         if self.orientation == "PARALLEL":
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 7, yawspeed = 0.55)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.55)
             xWindowSize = 60
             yWindowSize = 60
             altLowerTolerance = 120
@@ -59,7 +60,7 @@ class OrientLineDirective(AbstractDroneDirective):
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 45, upperAngleBound = 110, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.7)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 4, yawspeed = 0.7)
             xWindowSize = 185
             yWindowSize = 65
             altLowerTolerance = 500
@@ -141,4 +142,4 @@ class OrientLineDirective(AbstractDroneDirective):
                 
             directiveStatus = 0 
 
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy)
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime

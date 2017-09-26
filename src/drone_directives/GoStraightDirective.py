@@ -43,6 +43,8 @@ class GoStraightDirective(AbstractDroneDirective):
             raise Exception("Direction not recognized")
 
         self.direction = direction
+        self.moveTime = 0.20
+        self.waitTime = 0.10
 
 
     # given the image and navdata of the drone, returns the following in order:
@@ -58,5 +60,5 @@ class GoStraightDirective(AbstractDroneDirective):
         
         rospy.logwarn("Drone is performing: " + self.direction)
 
-        return 1, self.instructions, image, (None,None)
+        return 1, self.instructions, image, (None,None), self.moveTime, self.waitTime
 

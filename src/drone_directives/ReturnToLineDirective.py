@@ -17,6 +17,8 @@ class ReturnToLineDirective(AbstractDroneDirective):
         self.lineColor = lineColor
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
+        self.moveTime = 0.20
+        self.waitTime = 0.10
     
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -45,7 +47,10 @@ class ReturnToLineDirective(AbstractDroneDirective):
         else:
             hasPlatform = False
         if hasPlatform:
-            cx, cy = line1Center[0], line1Center[1]
+            tolerance = 15
+            # if it sees a horizontal blue line, update that as the new return point
+            if ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)):
+                cx, cy = line1Center[0], line1Center[1]
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
             zspeed = 0
@@ -67,6 +72,6 @@ class ReturnToLineDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(segLineImage,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), segLineImage, (cx,cy), 0.4, 0.02
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime
         
 

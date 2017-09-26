@@ -665,6 +665,110 @@ class ProcessVideo(object):
         return segmentedImage, None, center
 
 
+    def RecognizeShape(self,image, shapeColor,lastLocation,threshold = 0.2):
+        #bottom camera f = 408.0038
+        #first segment the image by color of circle
+        
+        segmentedImage,_,binaryImage = self.DetectColor(image, shapeColor,"all")
+
+        numrows,numcols,channels=image.shape
+        imagePerimeter = 2*numrows+2*numcols
+
+        contours = cv2.findContours(binaryImage.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        center = (None,None)
+        circles = [None]
+        #use contours[0] for opencv2 or contours[1] for opencv3
+        contours = contours[1]
+        for shape in contours:
+            isCircle = True
+            perimeter = cv2.arcLength(shape,True)
+            #if the shape is too small, it is most likely noise, and we wish to disregard it
+            if perimeter > (0.06)*imagePerimeter:
+            #finds shapes that are within a certain percentage of original shape perimeter
+                vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
+                numVertices = len(vertices)
+                #the shape is determined by the number of vertices,i.e. a triangle has 3, square has 4, 
+                #pentagon has 5, and anything above will be considered circular.
+                if numVertices > 5:
+                    M = cv2.moments(vertices)
+                    if(M["m00"] != 0):
+                        cx = int(M["m10"] / M["m00"])
+                        cy= int(M["m01"] / M["m00"])
+                        #center of circle
+                        center = (cx,cy)
+                        numPoints = 0
+                        averageRadius = 0
+                        #we want to loop through every vertex on circle and measure distance to center
+                        for points in vertices:
+                            point = points[0]
+                            #this will check if the circle is being cut off by image boundary
+                            if(point[0] < 0 or point[0] >= numcols-0 or point[1] < 0 or point[1] >= numrows-0):
+                                isCircle = False
+                                break
+                            else:
+                                dist = (point - center)
+                                currentRadius = sqrt(inner(dist,dist))
+                                averageRadius += currentRadius
+                                numPoints += 1
+                                
+                        #we want to calculate the average radius and return it as # of pixels
+                        if(isCircle):
+                            averageRadius = (averageRadius/numPoints)
+                            for points in vertices:
+                                point = points[0]
+                                dist = (point - center)
+                                currentRadius = sqrt(inner(dist,dist))
+                                deltaRadius = abs(currentRadius - averageRadius)
+                                if deltaRadius > threshold*averageRadius:
+                                    isCircle = False
+                                    break
+                                
+                        if isCircle:
+                            if lastLocation == (None,None):
+                                 #draw circle onto image
+                                cv2.circle(segmentedImage, center,1,(255,255,255),-1)
+                                cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
+                                #cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
+                                #this will return after the first circle is detected
+                                return segmentedImage, averageRadius, center
+
+                            if circles[0] == None:
+                                circles = [(center,averageRadius)]
+                            else:
+                                circles.append((center,averageRadius))
+
+        if circles[0] != None:
+            distances = [None]
+            for circle in circles:
+                if distances[0]==None:
+                    x = (circle[0][0]-lastLocation[0])
+                    x=x*x
+                    y = circle[0][1]-lastLocation[1]
+                    y = y*y
+                    distances = [sqrt(x+y)]
+                else:
+                    x = (circle[0][0]-lastLocation[0])
+                    x=x*x
+                    y = circle[0][1]-lastLocation[1]
+                    y = y*y
+                    distances.append(sqrt(x+y))
+            circleIndex = argmin(distances)
+            nearestCircle = circles[circleIndex]
+            center = nearestCircle[0]
+            averageRadius = nearestCircle[1]
+            #draw circle onto image
+            cv2.circle(segmentedImage, center,1,(255,255,255),-1)
+            cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
+            #cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
+            #this will return after the first circle is detected
+            return segmentedImage, averageRadius, center
+
+            #if we have looped through every object and dont see a circle, return None
+        else:
+            return segmentedImage, None, center
+
+
     # Given an image, a point (x,y), and a width/height,
     # Will return a "cropped image" of the same dimensions
     # where only a box whose upper left corner starts at (x,y) 

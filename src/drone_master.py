@@ -127,6 +127,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             algCycles = -1
             self.MachineSwitch( None, alg, algCycles, None, FOLLOW_BLUE_LINE_MACHINE)
 
+        elif key == ord('f'):
+            self.moveTime = 0.2
+            self.waitTime = 0.1
+            '''alg = [
+            ( DetectFaceDirective(),4), 
+            ( FollowFaceDirective(),0)
+            ]
+            algCycles = -1
+            self.MachineSwitch(None,alg,algCycles,None,FOLLOW_MACHINE)'''
+
         elif key == ord('s'):
 
             # does the entire circle algorithm, in order.
@@ -153,7 +163,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath, 10, 0.25), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.25), 4, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr )
             ]
             algCycles = 6
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
@@ -215,12 +225,13 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.waitTime = 0.14
 
             error = (ReturnToLineDirective('blue', speedModifier = 0.4), 10)
+            blueLineErr = (ReturnToLineDirective('blue'), 10)
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            #testalg = ( FollowLineDirective('blue', speed = 0.8), 14, error)
+            testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr )
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
-            testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
+            #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             algCycles = 1
 
             alg = [testalg]

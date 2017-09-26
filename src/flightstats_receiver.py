@@ -67,7 +67,7 @@ class FlightstatsReceiver(object):
         self.computeMax = 1
         self.restMax = 0
         self.counter = 0
-
+        self.lastLocation = (None,None)
 
     def VideoUpdate(self, image):
         
@@ -77,7 +77,7 @@ class FlightstatsReceiver(object):
 
             # converting to hsv
             image = self.bridge.imgmsg_to_cv2(image, "bgr8")
-            segImage, radius, center = self.processVideo.DetectShape(image, 'orange')
+            segImage, radius, center = self.processVideo.RecognizeShape(image, 'orange',self.lastLocation)
 
             if radius == None:
                 if center == (None,None):
@@ -88,6 +88,7 @@ class FlightstatsReceiver(object):
                 (self.flightInfo["SVCLAltitude"])[1] = distance
 
             (self.flightInfo["center"])[1] = center 
+            self.lastLocation = center
             (self.flightInfo["segImage"]) = segImage
 
         else:

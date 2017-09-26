@@ -45,16 +45,13 @@ class FollowLineDirective(AbstractDroneDirective):
         cx = None
         cy = None
 
-        
+        #This is the condition for terminating follow line
         if linesVisible == 0:
             rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
             return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0
 
-        elif ( ( (linesVisible == 1) and line1Angle < 90 and line1Angle > tolerance + 10 )
-        or
-        ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (180 -line1Angle) < tolerance ) and
-        line2Angle + line1Angle < 90 + line1Angle and
-        line1Center != None and line2Center != None and line1Center[0] < line2Center[0] ) ):
+        elif  ( ((linesVisible == 1) and line1Angle < 90 and line1Angle > 45-tolerance ) or ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)) and
+        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] ) ):
 
             xspeed = 0
             yspeed = 0

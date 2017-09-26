@@ -33,5 +33,5 @@ class SetupDirective(AbstractDroneDirective):
 
         rospy.logwarn("Drone is set up to fly")
 
-        return 1, (0, 0, 0, 0), image, (None,None)
+        return 1, (0, 0, 0, 0), image, (None,None), 0, 0
 

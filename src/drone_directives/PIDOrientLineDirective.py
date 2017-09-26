@@ -36,6 +36,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
         self.moveTime = 0.2
         self.waitTime = 0.1
     
+
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have

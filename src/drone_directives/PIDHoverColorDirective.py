@@ -23,6 +23,8 @@ class PIDHoverColorDirective(AbstractDroneDirective):
         
         self.moveTime = 0.2
         self.waitTime = 0.1
+
+
     def GetSettings(self, settingsPath):
         # read a text file as a list of lines
         # find the last line, change to a file you have
@@ -93,7 +95,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             p,i,d = self.pid.ReturnPIDvalues()
             directiveStatus = 0
         
-        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime,self.waitTime
+        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime, self.waitTime
 
 
     # This method is called by the state machine when it considers this directive finished

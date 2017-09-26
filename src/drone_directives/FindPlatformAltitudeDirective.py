@@ -16,6 +16,8 @@ class FindPlatformAltitudeDirective(AbstractDroneDirective):
         self.platformColor = platformColor
         self.maxAltitude = maxAltitude
         self.processVideo = ProcessVideo()
+        self.moveTime = 0.20
+        self.waitTime = 0.10
 
 
     # given the image and navdata of the drone, returns the following in order:
@@ -62,5 +64,5 @@ class FindPlatformAltitudeDirective(AbstractDroneDirective):
 
         image = navdata["segImage"]
 
-        return directiveStatus, (0, 0, 0, zVel), image, (None,None)
+        return directiveStatus, (0, 0, 0, zVel), image, (None,None), self.moveTime, self.waitTime
 
