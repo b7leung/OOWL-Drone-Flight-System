@@ -30,6 +30,7 @@ class FlightstatsReceiver(object):
         self.flightInfo["batteryPercent"]=["Battery Left: ", self.defaultValue, "%", ""]
         self.flightInfo["state"]=["Status: ", self.defaultValue, "", ""]
         self.flightInfo["altitude"]=["Drone Altitude: ", self.defaultValue, "mm", ""]
+        self.flightInfo["altitude_raw"]=["Drone Raw Altitude: ", self.defaultValue, "mm", ""]
 
         self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", -1, "mm", ""]
         self.flightInfo["center"] = ["Platform Center: ", self.defaultValue, "", ""]
@@ -102,7 +103,7 @@ class FlightstatsReceiver(object):
 
     def UpdateAltitude(self, altitude):
         if self.zeroBalanced:
-            (self.flightInfo["altitude"])[1] = altitude.altitude_raw - self.zeroAltitude
+            (self.flightInfo["altitude_raw"])[1] = altitude.altitude_raw - self.zeroAltitude
         else:
             self.zeroBalanced = True
             self.zeroAltitude = altitude.altitude_raw
@@ -121,6 +122,7 @@ class FlightstatsReceiver(object):
         (self.flightInfo["velX"])[1] = navdata.vx
         (self.flightInfo["velY"])[1] = navdata.vy
         (self.flightInfo["velZ"])[1] = navdata.vz
+        (self.flightInfo["altitude"])[1] = navdata.altd
         (self.flightInfo["accelZ"])[1] = navdata.az
 
         

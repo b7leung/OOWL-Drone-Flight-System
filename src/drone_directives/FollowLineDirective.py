@@ -18,7 +18,7 @@ class FollowLineDirective(AbstractDroneDirective):
         self.speed = speed
         self.processVideo = ProcessVideo()
         #self.pid = PIDController(360,640, Kp = 0.148, Ki = 0.0, Kd = 0.021)
-        self.moveTime = 0.2
+        self.moveTime = 0.45
         self.waitTime = 0.1
 
 
@@ -51,7 +51,7 @@ class FollowLineDirective(AbstractDroneDirective):
             return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0
 
         elif  ( ((linesVisible == 1) and line1Angle < 90 and line1Angle > 45-tolerance ) or ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)) and
-        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] ) ):
+        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] and line1Center[0] < int(640 * 0.2) ) ):
 
             xspeed = 0
             yspeed = 0

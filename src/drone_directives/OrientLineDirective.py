@@ -44,6 +44,8 @@ class OrientLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
+        self.moveTime = 0.2
+
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
@@ -60,7 +62,7 @@ class OrientLineDirective(AbstractDroneDirective):
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 45, upperAngleBound = 110, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 4, yawspeed = 0.7)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 4, yawspeed = 0.55)
             xWindowSize = 185
             yWindowSize = 65
             altLowerTolerance = 500
@@ -128,6 +130,7 @@ class OrientLineDirective(AbstractDroneDirective):
             # just turn the drone; no need move drone
             elif yawspeed != 0:
                 rospy.logwarn("Only TURNING drone. Yaw speed = " + str(yawspeed))
+                self.moveTime = 3.5
                 xspeed = 0
                 yspeed = 0
                 zspeed = 0

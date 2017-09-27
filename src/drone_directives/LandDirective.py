@@ -26,7 +26,7 @@ class LandDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
         
         self.controller.SendLand()
-        rospy.logwarn("Drone is landing")
+        rospy.logwarn(" __________ Drone is landing __________ ")
 
-        return 1, (0, 0, 0, 0), image, (None,None),None,None
+        return 1, (0, 0, 0, 0), image, (None,None),0,0
 
