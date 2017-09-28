@@ -53,7 +53,7 @@ class OrientLineDirective(AbstractDroneDirective):
         if self.orientation == "PARALLEL":
 
             angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.55)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.45)
             xWindowSize = 60
             yWindowSize = 60
             altLowerTolerance = 120
@@ -62,7 +62,7 @@ class OrientLineDirective(AbstractDroneDirective):
         elif self.orientation == "PERPENDICULAR":
 
             angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 45, upperAngleBound = 110, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 4, yawspeed = 0.55)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 3, yawspeed = 0.45)
             xWindowSize = 185
             yWindowSize = 65
             altLowerTolerance = 500
@@ -101,12 +101,8 @@ class OrientLineDirective(AbstractDroneDirective):
             yLowerC = centery-yWindowSize
             xUpperC = centerx+xWindowSize
             yUpperC = centery+yWindowSize
-            if ( cx >= xUpperC or cx <= xLowerC or cy >= yUpperC or cy <= yLowerC ):
-                rospy.logwarn("FALSE POSITIVE")
-                directiveStatus = 0
-            else:
-                rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
-                directiveStatus = 1
+            rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
+            directiveStatus = 1
 
         elif cx == None or cy == None:
 

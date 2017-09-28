@@ -145,7 +145,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            altitude = 800
+            flightAltitude = 1150
+            objectAltitude = 1260
                         
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -153,7 +154,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
             ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
             ( ReturnToOriginDirective('orange',50), 7 ),
-            ( FindPlatformAltitudeDirective('orange', altitude + 200), 5)
+            ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
             ]
             
             orangePlatformErr = (ReturnToColorDirective('orange'), 10)
@@ -161,17 +162,17 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             angles = 6
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', altitude ), 10, orangePlatformErr ),
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective(self.droneRecordPath, 20, 0.1, self.objectName, angles), 1 ),
+            ( CapturePhotoDirective(self.droneRecordPath, 20, 0.14, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', altitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr )
+            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
+            ( FollowLineDirective('blue', speed = 0.25), 4, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
             end = [
-            ( OrientLineDirective('PARALLEL', 'green', 'orange', altitude ), 4, orangePlatformErr ),
+            ( OrientLineDirective('PARALLEL', 'green', 'orange', flightAltitude ), 4, orangePlatformErr ),
             ( LandDirective(), 1)
             ]
 
@@ -240,6 +241,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.MachineSwitch( None, alg, algCycles, None, TEST_MACHINE)
 
+
     # Taking in some machine's definition of states and a string name,
     # provides a "switch" for loading and removing the machines that
     # drone master uses to control the drone
@@ -287,19 +289,29 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # draws battery display
         color = (255,255,255)
         if self.flightInfo["batteryPercent"][1] != "?":
+
             batteryPercent = int(self.flightInfo["batteryPercent"][1])
-            if batteryPercent > 35:
-                color = (0, 255,0)
-            elif batteryPercent > 21:
-                color = (0,255,255)
-            else:
-                color = (255,0,0)
+
+            sum = int(batteryPercent * .01 * (255+255))
+            if sum > 255:
+                base = 255
+                overflow = sum - 255
+            else:       
+                base = sum
+                overflow = 0
+            
+            green = base
+            red = 255 - overflow
+
+            color = (0, green, red)
+
             batteryPercent = str(batteryPercent) + "%"
+
         else:
             batteryPercent = str((self.flightInfo["batteryPercent"][1]))+"%"
 
         cv2.putText(self.cv_image, batteryPercent,
-        (570,345), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
+        (560,345), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
 
 
     # this function will go a certain speed for a set amount of time, then rest for wait_time # of cycles
