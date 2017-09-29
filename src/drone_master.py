@@ -66,6 +66,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.pictureManager = PictureManager(self.droneRecordPath)
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
+        # max height of drone, in mm; any higher and the drone will auto-land
+        self.maxHeight = 1850
+        self.emergency = False
 
 
     # Each state machine that drone mastercan use is defined here;
@@ -145,7 +148,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1150
+            flightAltitude = 1400
             objectAltitude = 1260
                         
             init = [
@@ -271,6 +274,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     # Runs an iteration of the current state machine to get the next set of instructions, depending on the 
     # machine's current state.
     def ReceivedVideo(self):
+        
+        # checks altitude; if it is higher than allowed, then drone will land
+        currHeight = self.flightInfo["altitude"][1]
+        if currHeight != "?" and currHeight > self.maxHeight:
+            self.controller.SendLand()
+            self.emergency = True
+
+        if self.emergency:
+            rospy.logwarn("***** EMERGENCY LANDING: DRONE'S ALTITUDE IS " + str(currHeight) +" mm; MAX IS " +
+            str(self.maxHeight) + " mm *****")
   
         # If no machine is loaded, then drone master does nothing 
         # (so that the drone may be controlled with the keyboard)

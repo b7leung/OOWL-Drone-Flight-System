@@ -61,7 +61,8 @@ class CapturePhotoDirective(AbstractDroneDirective):
                 if self.objectAltitude == None:
                     altitude = str(navdata["altitude"][1])
                 else:
-                    altitude = navdata["altitude"][1] - self.objectAltitude
+                    offset = 200
+                    altitude = navdata["altitude"][1] + offset - self.objectAltitude
                     if altitude > 0:
                         altitude = "+" + str(altitude)
                     else:
