@@ -49,10 +49,11 @@ class FollowLineDirective(AbstractDroneDirective):
             rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
             return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0
 
-        # in order to be considered "finished", there must be 2 lines, one which is horizontal and one that is less than 90 degrees,
-        # and the horizontal line is far enough left.
+        # in order to be considered "finished", there must be 2 lines, 
+        # one which is horizontal and one that is less than 90 degrees.
+        # The horizontal line must be far enough left.
         elif ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)) and
-        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] and line1Center[0] < int(640 * 0.19) ):
+        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] and line1Center[0] < int(640 * 0.3) ):
 
             xspeed = 0
             yspeed = 0
@@ -117,7 +118,7 @@ class FollowLineDirective(AbstractDroneDirective):
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.2
+                self.moveTime = 0.3
                 self.waitTime = 0.1
 
         if line1Center != None:

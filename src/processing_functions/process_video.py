@@ -329,9 +329,9 @@ class ProcessVideo(object):
         return angle
 
 
-    # Takes in a segmented image input and returns a tuple in the form (x,y,bool),
-    # where x and y are the center of mass and bool is whether an object was found
-    # If it does not exist, the center of mass is set to the middle of the screen
+    # Takes in a segmented image input and returns a tuple in the form (x,y),
+    # where x and y are the center of mass.
+    # If it does not exist, (None,None) is returned
     def CenterOfMass(self,image):
 
         numrows,numcols,channels=image.shape
@@ -353,8 +353,47 @@ class ProcessVideo(object):
             return(cx,cy)
 
 	else:
-            # if center of mass doesn't exist; set them as the center
+            
             return (None, None)
+
+
+    # Takes in a segmented image input and returns an array of tuple(s) in the form (x,y),
+    # where x and y are the center of mass of each detected shape.
+    # If it does not exist, an empty array is returned
+    def MultiCenterOfMass(self, image):
+        
+        # turning segmented image into a binary image and performing a close on it
+        processedImg = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
+        _, processedImg = cv2.threshold(processedImg, 127, 255, 0)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_CLOSE, kernel)
+        drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)
+
+        # finding and drawing contours onto the image
+        _, contours, _ = cv2.findContours(processedImg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_L1)
+        drawn = 0
+        centers = []
+        for c in contours:
+            
+            if cv2.contourArea(c) > 150:
+
+                # finding the center
+                M = cv2.moments(c)
+
+                if M["m00"]!=0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                    centers.append((cX,cY))
+
+                    # drawing center and contour on image
+                    cv2.drawContours(drawImg, [c], -1, (0, 140, 255), 4)
+                    cv2.circle(drawImg, (cX, cY), 7, (0,255,0), -1)
+
+                drawn += 1
+        
+        #rospy.logwarn("# of shapes: " + str(drawn))
+
+        return centers, drawImg
 
 
     # takes in an image and the center of masses for its segmented version, 

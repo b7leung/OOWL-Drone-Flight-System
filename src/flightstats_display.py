@@ -68,6 +68,7 @@ class MainGridWidget(FlightstatsReceiver, QtGui.QWidget):
         for key, value in processedDict.iteritems():
             # entries are that aren't meant to be displayed are typed below
             if key != "segImage":
+                
                 newText = str(value[1])+ " " + value[2] + " " +  value[3]
                 # addingcurrent data
                 if initial is True:
