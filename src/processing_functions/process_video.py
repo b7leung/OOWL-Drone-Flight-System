@@ -106,7 +106,44 @@ class ProcessVideo(object):
     def CalcFocal(self,objectPixelSize,objectTrueSize,distance):
         focal = (objectPixelSize*distance)/trueObjectSize
         return focal
+
+
+    def MultiShowLine(self, image):
+
+        # turning segmented image into a binary image and performing a close on it
+        processedImg = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
+        _, processedImg = cv2.threshold(processedImg, 15, 255, 0)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_CLOSE, kernel)
+        drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)
+
+        # finding and drawing contours onto the image
+        _, contours, _ = cv2.findContours(processedImg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_L1)
+
+        drawn = 0
+        centers = []
+        for c in contours:
+            
+            if cv2.contourArea(c) > 110:
+
+                # finding the center
+                M = cv2.moments(c)
+
+                if M["m00"]!=0:
+                    cX = int(M["m10"] / M["m00"])
+                    cY = int(M["m01"] / M["m00"])
+                    centers.append((cX,cY))
+
+                    # drawing center and contour on image
+                    cv2.drawContours(drawImg, [c], -1, (255, 191, 30), 4)
+                    cv2.circle(drawImg, (cX, cY), 7, (0,255,0), -1)
+
+                drawn += 1
         
+        rospy.logwarn("# of shapes: " + str(drawn))
+
+        return centers, drawImg
+
 
     def ShowTwoLines(self, image):
         
@@ -375,7 +412,7 @@ class ProcessVideo(object):
         centers = []
         for c in contours:
             
-            if cv2.contourArea(c) > 150:
+            if cv2.contourArea(c) > 105:
 
                 # finding the center
                 M = cv2.moments(c)

@@ -112,16 +112,18 @@ class FlightstatsReceiver(object):
 
         if len(centers) == 0:
 
+            #rospy.logwarn("No Platform")
             center = (None,None)
 
         elif len(centers) == 1:
 
             center = centers[0]
+            #rospy.logwarn("Found 1")
 
         elif len(centers) == 2:
 
             if self.lastLoc != (None,None):
-                rospy.logwarn("found 2 -- picking closer to last")
+                #rospy.logwarn("Found 2 -- picking closer to last")
 
                 # just pick whichever is closer to the last center
                 c1XDist = abs(self.lastLoc[0] - centers[0][0])
@@ -136,7 +138,7 @@ class FlightstatsReceiver(object):
 
             else:
 
-                rospy.logwarn("found 2 -- picking closer to center")
+                #rospy.logwarn("Found 2 -- picking closer to center")
                 # just pick whichever's x-coord is nearer to center
                 xCenter = 320
                 c1XDist = abs(xCenter - centers[0][0])
@@ -150,17 +152,19 @@ class FlightstatsReceiver(object):
         # if there are 3 or more platforms
         else:
 
-            sorted(centers, key=self.getX)
-            rospy.logwarn(str(centers))
+            centers = sorted(centers, key=self.getX)
 
             if len(centers) % 2 == 0:
                 midX = int( (centers[len(centers)/2][0] + centers[(len(centers)/2)+1][0])/2 )
                 midY = int( (centers[len(centers)/2][1] + centers[(len(centers)/2)+1][1])/2 )
             else:
-                midX = centers[int( (len(centers)/2.0) + 0.5 )][0] 
-                midY = centers[int( (len(centers)/2.0) + 0.5 )][1] 
+                midX = centers[int( (len(centers)/2.0) + 0.5 )-1][0] 
+                midY = centers[int( (len(centers)/2.0) + 0.5 )-1][1] 
 
             center = (midX, midY)
+
+            #rospy.logwarn("Found " + str(len(centers)) + ": " + str(centers))
+            #rospy.logwarn("Using " + str(center))
         
         self.lastLoc = center
 

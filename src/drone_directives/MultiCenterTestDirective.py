@@ -24,13 +24,10 @@ class MultiCenterTestDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
             
-        image = navdata["segImage"]
-        center = navdata["center"][1]
-        
-        if center != (None,None):
-            cv2.circle(image, (center[0], center[1]), 7, (0,255,100), -1)
+        segLineImage = self.processVideo.DetectColor(image, 'blue')
 
-        
+        centers, image = self.processVideo.MultiShowLine(segLineImage)
+ 
         
         return 1, (0, 0, 0, 0), image, (None, None), 0, 0
 
