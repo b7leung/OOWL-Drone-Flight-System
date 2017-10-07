@@ -4,6 +4,8 @@ import rospy
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 import numpy
+import math
+import cv2
 
 # This directive will give directions that attempt to push the drone
 # back towards the target location if it has drifted out of the cameras vision
@@ -12,14 +14,23 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
     # sets up this directive
     # platformColor: color of the platform to return to
-    def __init__(self, platformColor, speedModifier = 0.5):
+    def __init__(self, platformColor, speedModifier = 0.5, radiusThresh = 170):
 
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
+        self.radiusThresh = radiusThresh
         self.moveTime = 0.20
         self.waitTime = 0.10
     
+    def InsideCircle(self, point, circleCenter, circleRadius):
+        x = point[0]
+        y = point[1]
+        center_x = circleCenter[0]
+        center_y = circleCenter[1]
+        radius = circleRadius
+        
+        return (math.pow((x-center_x),2) + math.pow((y-center_y),2)) < math.pow(radius,2)
 
     # Given the image and navdata of the drone, returns the following in order:
     #
@@ -40,10 +51,18 @@ class ReturnToColorDirective(AbstractDroneDirective):
         
         #navdata stores the last location in the case of an error
         cx = navdata[1][0]
-        cy = navdata[1][1]     
+        cy = navdata[1][1]  
 
+        if cx == None or cy == None:
+            rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
+            return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
 
-        if navdata[0]["center"][1][0] != None and navdata[0]["center"][1][1] != None:
+        cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
+        if ( navdata[0]["center"][1][0] != None and navdata[0]["center"][1][1] != None ):
+            cv2.circle(image, (navdata[0]["center"][1][0], navdata[0]["center"][1][1] ), 7, (0,0,255), -1)
+
+        if ( navdata[0]["center"][1][0] != None and navdata[0]["center"][1][1] != None and 
+        self.InsideCircle( (navdata[0]["center"][1][0], navdata[0]["center"][1][1] ), (cx,cy), self.radiusThresh) ):
             hasPlatform = True
         else:
             hasPlatform = False
@@ -63,9 +82,6 @@ class ReturnToColorDirective(AbstractDroneDirective):
             directiveStatus = 0
             zspeed = 0.5
 
-        if cx == None or cy == None:
-            rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
-            return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
 
         
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image, cx, cy,

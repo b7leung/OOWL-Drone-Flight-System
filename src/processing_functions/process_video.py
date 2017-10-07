@@ -10,7 +10,7 @@ import time
 from cv_bridge import CvBridge, CvBridgeError
 from os.path import expanduser
 from random import randint
-from math import isinf
+from math import *
 
 # This class contains helper functions that each process
 # video frames in some way
@@ -107,7 +107,8 @@ class ProcessVideo(object):
         focal = (objectPixelSize*distance)/trueObjectSize
         return focal
 
-
+    # returns an array of all lines from segmented image, each with a center and angle.
+    # The first tuple is always the middle line to use (closest to horizontal)
     def MultiShowLine(self, image):
 
         # turning segmented image into a binary image and performing a close on it
@@ -115,16 +116,43 @@ class ProcessVideo(object):
         _, processedImg = cv2.threshold(processedImg, 15, 255, 0)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
         processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_CLOSE, kernel)
-        drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)
 
         # finding and drawing contours onto the image
         _, contours, _ = cv2.findContours(processedImg, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_TC89_L1)
 
+        drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)
+
         drawn = 0
         centers = []
+        lines = []
+
         for c in contours:
             
             if cv2.contourArea(c) > 110:
+
+                rect = cv2.minAreaRect(c)
+                box = cv2.boxPoints(rect)
+                box1 = int0(box)
+                #cv2.drawContours(drawImg, [box1], 0, (0,0,255),2)
+                # finding longest line
+                longest = ( (0,0), (0,0), 0)
+                for i in range(len(box)-1):
+                    lineLen = math.sqrt(math.pow((box[i+1][0] - box[i][0]),2) 
+                    + math.pow((box[i+1][1] - box[i][1]),2) ) 
+                    if lineLen > longest[2]:
+                        longest = ( ((box[i+1][0]),(box[i+1][1])), ((box[i][0]),(box[i][1])), lineLen)
+                cv2.line(image, longest[0], longest[1], (0,0,255),3)
+                vert = longest[1][1] - longest[0][1]
+                horiz = longest[1][0] - longest[0][0]
+                if horiz !=0:
+                    angle = rad2deg(arctan(vert/horiz))
+                else: 
+                    angle = 90
+
+                if angle != 90:
+                    angle = -angle
+                if angle < 0:
+                    angle = angle + 180
 
                 # finding the center
                 M = cv2.moments(c)
@@ -132,17 +160,42 @@ class ProcessVideo(object):
                 if M["m00"]!=0:
                     cX = int(M["m10"] / M["m00"])
                     cY = int(M["m01"] / M["m00"])
-                    centers.append((cX,cY))
-
+    
                     # drawing center and contour on image
-                    cv2.drawContours(drawImg, [c], -1, (255, 191, 30), 4)
-                    cv2.circle(drawImg, (cX, cY), 7, (0,255,0), -1)
+                    #cv2.drawContours(drawImg, [c], -1, (255, 191, 30), 4)
+                    #cv2.circle(drawImg, (cX, cY), 7, (0,255,0), -1)
+                    
+                    lines.append((angle, (cX,cY)))
 
                 drawn += 1
-        
-        rospy.logwarn("# of shapes: " + str(drawn))
 
-        return centers, drawImg
+        # finding middle line, closest to the horizontal
+        lines = sorted(lines, key = self.getHoriz)
+
+        if len(lines) == 0:
+            lines = (None,None,None)
+        elif len(lines) == 1:
+            lines = (None, lines[0], None)
+        elif len(lines) == 2:
+            if lines[1][0] > 90:
+                lines = (lines[1], lines[0], None)
+            else:
+                lines = (None, lines[0], lines[1])
+        elif len(lines) == 3:
+            if lines[1][0] > 90:
+                lines = (lines[1], lines[0], lines[2])
+            else:
+                lines = (lines[2], lines[0], lines[1])
+
+        return lines, image
+
+
+    def getHoriz(self, line):
+        angle = line[0]
+        if angle < 180 - angle:
+            return angle
+        else:
+            return 180-angle
 
 
     def ShowTwoLines(self, image):
@@ -158,7 +211,7 @@ class ProcessVideo(object):
                 
         line1List = []
         line2List = []
-        line1= None
+        line1 = None
         line2 = None
         line1Angle= None
         line1Center = None

@@ -4,6 +4,7 @@ import rospy
 import cv2
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
+import math
 
 # describes instruction on what the drone should do in order to orient itself
 # to a line underneath it
@@ -31,6 +32,8 @@ class OrientLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         self.moveTime=0.2
         self.waitTime=0.1
+        self.prevCenter = None
+
 
     # Given the image and navdata of the drone, returns the following in order:
     #
@@ -50,9 +53,60 @@ class OrientLineDirective(AbstractDroneDirective):
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]
         
-        if self.orientation == "PARALLEL":
+        if cx != None and cy != None:
+            cv2.circle(segLineImage, (cx,cy), 6, (255,255,255), -1)
 
-            angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0, upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
+        # when directive first starts, it latches onto the first orange platform it sees
+        if self.prevCenter == None:
+
+            if cx != None and cy != None:
+                self.prevCenter = (cx,cy)
+
+        elif cx != None and cy != None:
+
+            # checking if curr center is consistent with previous one
+            centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
+            + math.pow((self.prevCenter[0] - cx),2 ) ) 
+            if centerDist > 100:
+                rospy.logwarn("ERROR: ORIGINAL CENTER LOST")
+                cx = self.prevCenter[0]
+                cy = self.prevCenter[1]
+                directiveStatus = -1
+                return directiveStatus, (0,0,0,0), segLineImage, (cx,cy), 0,0
+            else:
+                self.prevCenter = (cx,cy)
+
+        
+        if self.orientation == "PARALLEL":
+            
+            # pick the green line closest to the hover platform
+            lines, segLineImage = self.processVideo.MultiShowLine(segLineImage)
+            angle = None
+            closest = None
+            for line in lines:
+                if( line != None and cx!= None and
+                (closest == None or abs( cx - line[1][0] ) < abs( cx - closest[1][0])) ):
+
+                    closest = line
+                    angle = closest[0]
+            
+            if closest != None: 
+                cv2.circle(segLineImage, closest[1], 15, (0,255,0), -1)
+                for line in lines:
+                    if line!= None and line[1] != closest[1]:
+                        cv2.circle(segLineImage, line[1], 15, (0,0,255), -1)
+
+            #angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0,
+            #upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
+            #converting angle
+            if angle != None:
+                if angle == 90:
+                    angle = 0
+                elif angle < 90:
+                    angle = angle + 90
+                else:
+                    angle = angle - 90
+
             yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.45)
             xWindowSize = 60
             yWindowSize = 60
@@ -78,7 +132,6 @@ class OrientLineDirective(AbstractDroneDirective):
         xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = (altLowerTolerance, altUpperTolerance))
 
         #draws center of circle on image
-        self.processVideo.DrawCircle(segLineImage,(cx,cy))
         
         numRows, numCols, _ = image.shape
         centerx = numCols/2
@@ -142,3 +195,8 @@ class OrientLineDirective(AbstractDroneDirective):
             directiveStatus = 0 
 
         return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime
+
+
+    def Finished(self):
+        self.prevCenter = None
+

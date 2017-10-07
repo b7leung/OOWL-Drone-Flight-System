@@ -9,6 +9,7 @@ from ardrone_autonomy.msg import Navdata
 from ardrone_autonomy.msg import navdata_altitude
 from processing_functions.process_video import ProcessVideo
 from sensor_msgs.msg import Image
+import math
 
 class FlightstatsReceiver(object):
     
@@ -70,6 +71,8 @@ class FlightstatsReceiver(object):
         self.counter = 0
         self.lastLocation = (None,None)
         self.lastLoc = (None,None)
+        self.lastCenterCount = 0
+        self.lastCenterMax = 14
 
     def VideoUpdate(self, image):
         
@@ -165,10 +168,25 @@ class FlightstatsReceiver(object):
 
             #rospy.logwarn("Found " + str(len(centers)) + ": " + str(centers))
             #rospy.logwarn("Using " + str(center))
-        
-        self.lastLoc = center
 
-        return self.lastLoc
+        # algorithm waits for a brief moment if last location changes drastically to make
+        # sure that it really changed
+        if self.lastLoc != (None,None) and center != (None,None):
+            dist = math.sqrt( math.pow((self.lastLoc[1] - center[1]),2) 
+            + math.pow((self.lastLoc[0] - center[0]),2 ) ) 
+            if dist > 100:
+                self.lastCenterCount +=1
+                #rospy.logwarn("Counting: " + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
+                if self.lastCenterCount >= self.lastCenterMax:
+                    self.lastCenterCount = 0
+                    self.lastLoc = center
+            else:
+                self.lastCenterCount = 0
+                self.lastLoc = center
+        else:
+            self.lastLoc = center
+
+        return center
 
 
     def getX(self,coordinates):

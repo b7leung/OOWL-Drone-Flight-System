@@ -170,7 +170,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath, 20, 0.07, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.40), 4, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.25), 4, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
@@ -232,10 +232,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             error = (ReturnToLineDirective('blue', speedModifier = 0.4), 10)
             blueLineErr = (ReturnToLineDirective('blue'), 10)
+            orangePlatformErr = (ReturnToColorDirective('orange'), 10)
 
-            #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700 ), 10, error )
+            #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr )
+            #testalg = ( FollowLineDirective('blue', speed = 0.25), 6)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             testalg = ( MultiCenterTestDirective(), 6)

@@ -35,10 +35,17 @@ class FollowLineDirective(AbstractDroneDirective):
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
 
-        line1Angle, line1Center, line2Angle, line2Center = self.processVideo.ShowTwoLines(segLineImage)
+        lines, image = self.processVideo.MultiShowLine(segLineImage)
 
-        linesVisible = (line1Angle != None) + (line2Angle != None) 
-        
+        if lines[0] != None:
+            cv2.circle(image, lines[0][1], 8, (0,0,255), -1)
+        if lines[1] != None:
+            cv2.circle(image, lines[1][1], 15, (0,255,0), -1)
+        if lines[2] != None:
+            cv2.circle(image, lines[2][1], 8, (255,0,0), -1)
+
+        linesVisible = (lines[0]!= None) + (lines[1] != None) + (lines[2] != None)
+         
         tolerance = 15
 
         cx = None
@@ -52,8 +59,9 @@ class FollowLineDirective(AbstractDroneDirective):
         # in order to be considered "finished", there must be 2 lines, 
         # one which is horizontal and one that is less than 90 degrees.
         # The horizontal line must be far enough left.
-        elif ( linesVisible == 2 and ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)) and
-        line2Angle < 90  and line1Center != None and line2Center != None and line1Center[0] < line2Center[0] and line1Center[0] < int(640 * 0.3) ):
+        elif ( lines[1] != None and lines[2] != None and
+        ( (lines[1][0] < (0 + tolerance) ) or (lines[1][0]) > (180-tolerance)) and
+        lines[2][1][0] < int(640 * 0.65) ):
 
             xspeed = 0
             yspeed = 0
@@ -66,8 +74,8 @@ class FollowLineDirective(AbstractDroneDirective):
             directiveStatus = 0
 
             xspeed = -self.speed
-            cx = line1Center[0]
-            cy = line1Center[1]
+            cx = lines[1][1][0]
+            cy = lines[1][1][1]
             #self.pid.UpdateDeltaTime()
             #self.pid.UpdateError(cx,cy,navdata["SVCLAltitude"][1])
             #self.pid.SetPIDTerms()
@@ -79,6 +87,7 @@ class FollowLineDirective(AbstractDroneDirective):
             #    yspeed = yspeed *1.45
             
             # converting
+            line1Angle = lines[1][0]
             if line1Angle == 90:
                 line1Angle = 0
             elif line1Angle < 90:
@@ -118,14 +127,8 @@ class FollowLineDirective(AbstractDroneDirective):
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.3
+                self.moveTime = 0.2
                 self.waitTime = 0.1
-
-        if line1Center != None:
-            self.processVideo.DrawCircle(segLineImage,(line1Center[0],line1Center[1]))
-
-        if line2Center != None:
-            self.processVideo.DrawCircle(segLineImage,(line2Center[0],line2Center[1]))
                 
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx, cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime
 
