@@ -35,6 +35,7 @@ class FlightstatsReceiver(object):
 
         self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", -1, "mm", ""]
         self.flightInfo["center"] = ["Inferred Center: ", self.defaultValue, "", ""]
+        self.flightInfo["lastCenter"] = ["Previous Center: ", (None,None), "", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
@@ -71,8 +72,9 @@ class FlightstatsReceiver(object):
         self.counter = 0
         self.lastLocation = (None,None)
         self.lastLoc = (None,None)
+        self.lastCenter = (None,None)
         self.lastCenterCount = 0
-        self.lastCenterMax = 14
+        self.lastCenterMax = 18
 
     def VideoUpdate(self, image):
         
@@ -169,6 +171,24 @@ class FlightstatsReceiver(object):
             #rospy.logwarn("Found " + str(len(centers)) + ": " + str(centers))
             #rospy.logwarn("Using " + str(center))
 
+        if len(centers) > 1 and self.lastCenter != (None,None):
+            
+            closest = None
+            smallestLen = None
+            # loop to pick whichever is closer to the last center
+            for i in range(len(centers)):
+
+                cXDist = abs(self.lastCenter[0] - centers[i][0])
+                cYDist = abs(self.lastCenter[1] - centers[i][1])
+                length = math.sqrt(math.pow(cXDist,2) + math.pow(cYDist,2) )
+                if smallestLen == None or length < smallestLen:
+                    closest = centers[i]
+                    smallestLen = length
+
+            self.lastCenter = closest
+            (self.flightInfo["lastCenter"][1]) = self.lastCenter 
+            
+
         # algorithm waits for a brief moment if last location changes drastically to make
         # sure that it really changed
         if self.lastLoc != (None,None) and center != (None,None):
@@ -179,6 +199,8 @@ class FlightstatsReceiver(object):
                 #rospy.logwarn("Counting: " + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
                 if self.lastCenterCount >= self.lastCenterMax:
                     self.lastCenterCount = 0
+                    # saving last center in case
+                    self.lastCenter = self.lastLoc
                     self.lastLoc = center
             else:
                 self.lastCenterCount = 0
@@ -186,11 +208,16 @@ class FlightstatsReceiver(object):
         else:
             self.lastLoc = center
 
+
         return center
 
 
     def getX(self,coordinates):
         return coordinates[0]
+    
+    # force set what the center is
+    def SetCenter(self, center):
+        self.lastLoc = center
 
 
     def UpdateAltitude(self, altitude):

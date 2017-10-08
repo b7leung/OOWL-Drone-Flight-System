@@ -24,13 +24,15 @@ class StateMachine(object):
     # errordirectives are optional, and can specify a directive to switch to when the main directive has "errored".
     # It must also subclass AbstractDroneDirective
 
-    def DefineMachine(self, initalizeInstructions, algorithmInstructions, algCycles, endingInstructions):
+    def DefineMachine(self, initalizeInstructions, algorithmInstructions, algCycles, endingInstructions, receiver):
         
         # combine phases into a large array. First elem in the tuple is the instruction set for the phase;
         # second elem is the number of cycles the phase should have.
         self.stateMachineDef = [ (initalizeInstructions, 1), (algorithmInstructions, algCycles),
         (endingInstructions, 1) ]
-        
+
+        self.receiver = receiver
+
         # keeps track of how many cycles has been run in the current phase
         self.phaseCycles = 0
         # keeps track of what phase we're in (init is 0, alg is 1, end is 2)
@@ -109,6 +111,7 @@ class StateMachine(object):
                     if self.errorFlag:
                         rospy.logwarn("Error state over; returning")
                         self.errorFlag = False
+                        self.receiver.SetCenter(self.lastLocation)
                     else:
 
                         self.currPhaseIndex = (self.currPhaseIndex + 1)
@@ -137,7 +140,7 @@ class StateMachine(object):
                 self.errorCount +=1 
                 currStateError = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]
 
-                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=17:
+                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=9:
                     self.errorFlag = True
 
             return droneInstructions, image, self.moveTime, self.waitTime

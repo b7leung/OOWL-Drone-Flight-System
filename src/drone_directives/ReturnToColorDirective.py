@@ -44,35 +44,29 @@ class ReturnToColorDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        if( self.platformColor == 'orange' ):
-            image = navdata[0]["segImage"]
-        else:
-            image = self.processVideo.DetectColor(image, self.platformColor)
-        
+        image = self.processVideo.DetectColor(image, self.platformColor)
+        centers, _ = self.processVideo.MultiCenterOfMass(image)
+
         #navdata stores the last location in the case of an error
         cx = navdata[1][0]
         cy = navdata[1][1]  
 
-        if cx == None or cy == None:
+        if cx == None or cy == None :
             rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
             return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
 
         cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
-        if ( navdata[0]["center"][1][0] != None and navdata[0]["center"][1][1] != None ):
-            cv2.circle(image, (navdata[0]["center"][1][0], navdata[0]["center"][1][1] ), 7, (0,0,255), -1)
 
-        if ( navdata[0]["center"][1][0] != None and navdata[0]["center"][1][1] != None and 
-        self.InsideCircle( (navdata[0]["center"][1][0], navdata[0]["center"][1][1] ), (cx,cy), self.radiusThresh) ):
-            hasPlatform = True
-        else:
-            hasPlatform = False
+        hasPlatform = False
 
-        #platform_image = self.processVideo.DetectColor(image, self.platformColor)
-        #cropped = self.processVideo.CropVisible(platform_image, 50,50, 500, 220)
-        #hasPlatform = self.processVideo.IsHueDominant(platform_image, 0, 360, 0.1)   
+        for c in centers:
 
+            cv2.circle(image, c, 10, (0,255,255), -1)
+            if self.InsideCircle( c , (cx,cy), self.radiusThresh):
+                hasPlatform = True
+                cx, cy = c[0], c[1]
+        
         if hasPlatform:
-            cx, cy = navdata[0]["center"][1][0], navdata[0]["center"][1][1]
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
             zspeed = 0
@@ -82,15 +76,11 @@ class ReturnToColorDirective(AbstractDroneDirective):
             directiveStatus = 0
             zspeed = 0.5
 
-
-        
-        xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image, cx, cy,
+        xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image.copy(), cx, cy,
         ytolerance = 50, xtolerance = 50)
         
         rospy.logwarn("X Speed: " + str(xspeed) + " Y Speed: " + str(yspeed))
-
-        self.processVideo.DrawCircle(image,(cx,cy))
-
+        
         return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), self.moveTime, self.waitTime
         
 

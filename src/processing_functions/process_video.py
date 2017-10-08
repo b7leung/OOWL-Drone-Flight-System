@@ -454,7 +454,7 @@ class ProcessVideo(object):
         
         # turning segmented image into a binary image and performing a close on it
         processedImg = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
-        _, processedImg = cv2.threshold(processedImg, 127, 255, 0)
+        _, processedImg = cv2.threshold(processedImg, 10, 255, 0)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
         processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_CLOSE, kernel)
         drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)
@@ -481,8 +481,6 @@ class ProcessVideo(object):
 
                 drawn += 1
         
-        #rospy.logwarn("# of shapes: " + str(drawn))
-
         return centers, drawImg
 
 
@@ -629,6 +627,7 @@ class ProcessVideo(object):
 
         else:
             yawSpeed = 0
+
 
         return yawSpeed
         

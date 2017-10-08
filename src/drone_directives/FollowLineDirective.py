@@ -95,7 +95,7 @@ class FollowLineDirective(AbstractDroneDirective):
             else:
                 line1Angle = line1Angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 7)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 7, yawspeed = 0.45)
 
 
             # If drone is still trying follow the line, it adapts to one of three algorithms:
@@ -121,13 +121,13 @@ class FollowLineDirective(AbstractDroneDirective):
                     direction = "RIGHT"
                     
                 rospy.logwarn("Turning the drone horizontal " + direction + ",  yaw = " + str(yawspeed) )
-                self.moveTime = 0.2
+                self.moveTime = 1
                 self.waitTime = 0.1
                 xspeed = 0
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.2
+                self.moveTime = 0.3
                 self.waitTime = 0.1
                 
         return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime

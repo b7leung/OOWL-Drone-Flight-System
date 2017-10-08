@@ -67,7 +67,7 @@ class OrientLineDirective(AbstractDroneDirective):
             # checking if curr center is consistent with previous one
             centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
             + math.pow((self.prevCenter[0] - cx),2 ) ) 
-            if centerDist > 100:
+            if centerDist > 170:
                 rospy.logwarn("ERROR: ORIGINAL CENTER LOST")
                 cx = self.prevCenter[0]
                 cy = self.prevCenter[1]
@@ -76,11 +76,11 @@ class OrientLineDirective(AbstractDroneDirective):
             else:
                 self.prevCenter = (cx,cy)
 
-        
+        lines, segLineImage = self.processVideo.MultiShowLine(segLineImage)
+
         if self.orientation == "PARALLEL":
             
             # pick the green line closest to the hover platform
-            lines, segLineImage = self.processVideo.MultiShowLine(segLineImage)
             angle = None
             closest = None
             for line in lines:
@@ -96,8 +96,6 @@ class OrientLineDirective(AbstractDroneDirective):
                     if line!= None and line[1] != closest[1]:
                         cv2.circle(segLineImage, line[1], 15, (0,0,255), -1)
 
-            #angle = self.processVideo.ShowLine(segLineImage,lowerAngleBound = 0,
-            #upperAngleBound = 70, secondBounds = (110,180), thresh = 35)
             #converting angle
             if angle != None:
                 if angle == 90:
@@ -107,20 +105,47 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.45)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 8, yawspeed = 0.45)
+            if yawspeed!=None:
+                yawspeed = -1*yawspeed
             xWindowSize = 60
             yWindowSize = 60
             altLowerTolerance = 120
             altUpperTolerance = 120
 
         elif self.orientation == "PERPENDICULAR":
+            
+            # pick the blue line closest to the hover platform, AND is right of the hover platform
+            angle = None
+            closest = None
+            for line in lines:
+                if( line != None and cx != None and line[1][0] >= cx and
+                (  closest == None or  abs( cx - line[1][0] ) < abs( cx - closest[1][0]) ) ):
+                    closest = line
+                    angle = closest[0]
 
-            angle = self.processVideo.ShowLine(segLineImage, lowerAngleBound = 45, upperAngleBound = 110, thresh = 15)
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 3, yawspeed = 0.45)
+            if closest != None: 
+                cv2.circle(segLineImage, closest[1], 15, (0,255,0), -1)
+                for line in lines:
+                    if line!= None and line[1] != closest[1]:
+                        cv2.circle(segLineImage, line[1], 15, (0,0,255), -1)
+
+            #converting angle
+            if angle != None:
+                if angle == 90:
+                    angle = 0
+                elif angle < 90:
+                    angle = angle + 90
+                else:
+                    angle = angle - 90
+
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 12, yawspeed = 0.4)
+            if yawspeed!=None:
+                yawspeed = -1*yawspeed
             xWindowSize = 185
             yWindowSize = 65
-            altLowerTolerance = 500
-            altUpperTolerance = 150
+            altLowerTolerance = 200
+            altUpperTolerance = 300
         
         # defines window to make the drone focus on moving away from the edges and back into
         # the center; yaw will be turned off
