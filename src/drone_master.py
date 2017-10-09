@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Lipton Brisk Lemon Iced Tea"
+        self.objectName = "Lipton Brisk Iced Tea Can"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -69,6 +69,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # max height of drone, in mm; any higher and the drone will auto-land
         self.maxHeight = 1750
         self.emergency = False
+        self.captureRound = 0.5
 
 
     # Each state machine that drone mastercan use is defined here;
@@ -133,14 +134,25 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.MachineSwitch( None, alg, algCycles, None, FOLLOW_BLUE_LINE_MACHINE)
 
         elif key == ord('f'):
-            self.moveTime = 0.2
-            self.waitTime = 0.1
-            '''alg = [
-            ( DetectFaceDirective(),4), 
-            ( FollowFaceDirective(),0)
+           
+            self.moveTime = 0.20
+            self.waitTime = 0.10
+            flightAltitude = 1200
+            objectAltitude = 1260
+            self.captureRound+=0.5
+
+            orangePlatformErr = (ReturnToColorDirective('orange'), 4)
+            
+            angles = 8
+            alg = [
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
+            ( CapturePhotoDirective2(self.droneRecordPath, 20, 0.07, self.objectName, angles, self.captureRound, objectAltitude), 1 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 )
             ]
-            algCycles = -1
-            self.MachineSwitch(None,alg,algCycles,None,FOLLOW_MACHINE)'''
+            
+            
+            self.MachineSwitch( None, alg, angles, None, AUTO_CIRCLE_MACHINE)
 
         elif key == ord('s'):
 
@@ -165,12 +177,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             angles = 8
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 8, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( CapturePhotoDirective(self.droneRecordPath, 20, 0.07, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.12), 7, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.08), 9, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
@@ -236,8 +248,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            #testalg = ( FollowLineDirective('blue', speed = 0.25), 6)
-            testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
+            testalg = ( FollowLineDirective('blue', speed = 0.25), 6)
+            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             #testalg = ( MultiCenterTestDirective(), 6)
 

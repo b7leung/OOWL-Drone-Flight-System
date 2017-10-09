@@ -2,7 +2,6 @@
 
 import rospy
 from processing_functions.process_video import ProcessVideo
-#from processing_functions.pid_controller import PIDController
 from AbstractDroneDirective import *
 import cv2
 
@@ -34,6 +33,8 @@ class FollowLineDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
+        platforms = len((self.processVideo.MultiCenterOfMass(navdata["segImage"]))[0])
+        rospy.logwarn("Platforms: " + str(platforms))
 
         lines, image = self.processVideo.MultiShowLine(segLineImage)
 
@@ -48,20 +49,23 @@ class FollowLineDirective(AbstractDroneDirective):
          
         tolerance = 15
 
-        cx = None
-        cy = None
 
         #This is the condition for terminating follow line
         if linesVisible == 0:
             rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
             return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0
 
+        cx = lines[1][1][0]
+        cy = lines[1][1][1]
+        _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+        navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
+
         # in order to be considered "finished", there must be 2 lines, 
         # one which is horizontal and one that is less than 90 degrees.
         # The horizontal line must be far enough left.
-        elif ( lines[1] != None and lines[2] != None and
+        if ( platforms == 1 and yspeed == 0 and lines[1] != None and lines[2] != None and
         ( (lines[1][0] < (0 + tolerance) ) or (lines[1][0]) > (180-tolerance)) and
-        lines[2][1][0] < int(640 * 0.65) ):
+        lines[2][1][0] < int(640 * 0.75) ):
 
             xspeed = 0
             yspeed = 0
@@ -74,14 +78,6 @@ class FollowLineDirective(AbstractDroneDirective):
             directiveStatus = 0
 
             xspeed = -self.speed
-            cx = lines[1][1][0]
-            cy = lines[1][1][1]
-            #self.pid.UpdateDeltaTime()
-            #self.pid.UpdateError(cx,cy,navdata["SVCLAltitude"][1])
-            #self.pid.SetPIDTerms()
-            #_,yspeed = self.pid.GetPIDValues()
-            _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
-            navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
 
             #if abs(yspeed) < 1:
             #    yspeed = yspeed *1.45
@@ -127,7 +123,7 @@ class FollowLineDirective(AbstractDroneDirective):
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.3
+                self.moveTime = 0.5
                 self.waitTime = 0.1
                 
         return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime

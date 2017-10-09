@@ -67,10 +67,11 @@ class OrientLineDirective(AbstractDroneDirective):
             # checking if curr center is consistent with previous one
             centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
             + math.pow((self.prevCenter[0] - cx),2 ) ) 
-            if centerDist > 170:
+            if centerDist > 200:
                 rospy.logwarn("ERROR: ORIGINAL CENTER LOST")
                 cx = self.prevCenter[0]
                 cy = self.prevCenter[1]
+                cv2.circle(segLineImage, (cx,cy), 10, (0,0,255), 4)
                 directiveStatus = -1
                 return directiveStatus, (0,0,0,0), segLineImage, (cx,cy), 0,0
             else:
@@ -105,13 +106,13 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 8, yawspeed = 0.45)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 10, yawspeed = 0.45)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 60
-            yWindowSize = 60
-            altLowerTolerance = 120
-            altUpperTolerance = 120
+            xWindowSize = 80
+            yWindowSize = 80
+            altLowerTolerance = 145
+            altUpperTolerance = 295
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -139,7 +140,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 12, yawspeed = 0.4)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10, yawspeed = 0.4)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 185

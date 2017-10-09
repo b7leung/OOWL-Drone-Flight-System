@@ -74,7 +74,7 @@ class FlightstatsReceiver(object):
         self.lastLoc = (None,None)
         self.lastCenter = (None,None)
         self.lastCenterCount = 0
-        self.lastCenterMax = 18
+        self.lastCenterMax = 8
 
     def VideoUpdate(self, image):
         
@@ -196,8 +196,9 @@ class FlightstatsReceiver(object):
             + math.pow((self.lastLoc[0] - center[0]),2 ) ) 
             if dist > 100:
                 self.lastCenterCount +=1
-                #rospy.logwarn("Counting: " + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
+                rospy.logwarn("Change Center Count: " + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
                 if self.lastCenterCount >= self.lastCenterMax:
+                    rospy.logwarn("Changing center")
                     self.lastCenterCount = 0
                     # saving last center in case
                     self.lastCenter = self.lastLoc

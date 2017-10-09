@@ -187,6 +187,11 @@ class ProcessVideo(object):
             else:
                 lines = (lines[2], lines[0], lines[1])
 
+        # safety check; line to the right of the middle must be actually to the right
+        if lines[2] != None:
+            if lines[2][1][0] < lines[1][1][0]:
+                lines = (lines[0], lines[1], None)
+
         return lines, image
 
 
@@ -454,7 +459,7 @@ class ProcessVideo(object):
         
         # turning segmented image into a binary image and performing a close on it
         processedImg = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
-        _, processedImg = cv2.threshold(processedImg, 10, 255, 0)
+        _, processedImg = cv2.threshold(processedImg, 5, 255, 0)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
         processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_CLOSE, kernel)
         drawImg = cv2.cvtColor(processedImg, cv2.COLOR_GRAY2BGR)

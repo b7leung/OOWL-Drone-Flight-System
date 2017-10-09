@@ -140,7 +140,7 @@ class StateMachine(object):
                 self.errorCount +=1 
                 currStateError = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]
 
-                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=9:
+                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=7:
                     self.errorFlag = True
 
             return droneInstructions, image, self.moveTime, self.waitTime
