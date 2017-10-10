@@ -67,8 +67,13 @@ class OrientLineDirective(AbstractDroneDirective):
             # checking if curr center is consistent with previous one
             centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
             + math.pow((self.prevCenter[0] - cx),2 ) ) 
-            if centerDist > 200:
-                rospy.logwarn("ERROR: ORIGINAL CENTER LOST")
+            if centerDist > 260:
+                rospy.logwarn("ERROR: ORIGINAL CENTER LOST, showing all " + str(len(navdata["allCenters"][1])))
+                for i in range(len(navdata["allCenters"][1])):
+                    cv2.circle(segLineImage, navdata["allCenters"][1][i], 6, (255,0,0), -1)
+                if cx != None and cy != None:
+                    cv2.circle(segLineImage, (cx,cy), 10, (255,255,255), -1)
+
                 cx = self.prevCenter[0]
                 cy = self.prevCenter[1]
                 cv2.circle(segLineImage, (cx,cy), 10, (0,0,255), 4)
@@ -77,7 +82,8 @@ class OrientLineDirective(AbstractDroneDirective):
             else:
                 self.prevCenter = (cx,cy)
 
-        lines, segLineImage = self.processVideo.MultiShowLine(segLineImage)
+        # to do, debt
+        lines, segLineImage = self.processVideo.MultiShowLine(segLineImage, sort = False)
 
         if self.orientation == "PARALLEL":
             
@@ -106,13 +112,13 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 10, yawspeed = 0.45)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 12, yawspeed = 0.42)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 80
-            yWindowSize = 80
-            altLowerTolerance = 145
-            altUpperTolerance = 295
+            xWindowSize = 90
+            yWindowSize = 90
+            altLowerTolerance = 155
+            altUpperTolerance = 305
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -140,7 +146,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10, yawspeed = 0.4)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10, yawspeed = 0.42)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 185

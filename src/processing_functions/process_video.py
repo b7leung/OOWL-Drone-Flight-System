@@ -109,7 +109,7 @@ class ProcessVideo(object):
 
     # returns an array of all lines from segmented image, each with a center and angle.
     # The first tuple is always the middle line to use (closest to horizontal)
-    def MultiShowLine(self, image):
+    def MultiShowLine(self, image, sort = True):
 
         # turning segmented image into a binary image and performing a close on it
         processedImg = cv2.cvtColor(image.copy(), cv2.COLOR_BGR2GRAY)
@@ -141,7 +141,7 @@ class ProcessVideo(object):
                     + math.pow((box[i+1][1] - box[i][1]),2) ) 
                     if lineLen > longest[2]:
                         longest = ( ((box[i+1][0]),(box[i+1][1])), ((box[i][0]),(box[i][1])), lineLen)
-                cv2.line(image, longest[0], longest[1], (0,0,255),3)
+                cv2.line(image, longest[0], longest[1], (255,255,255),3)
                 vert = longest[1][1] - longest[0][1]
                 horiz = longest[1][0] - longest[0][0]
                 if horiz !=0:
@@ -168,31 +168,34 @@ class ProcessVideo(object):
                     lines.append((angle, (cX,cY)))
 
                 drawn += 1
+        # to do, debt
+        if sort == False:
+            return lines, image
+        else:
+            # finding middle line, closest to the orientation
+            lines = sorted(lines, key = self.getHoriz)
 
-        # finding middle line, closest to the horizontal
-        lines = sorted(lines, key = self.getHoriz)
+            if len(lines) == 0:
+                lines = (None,None,None)
+            elif len(lines) == 1:
+                lines = (None, lines[0], None)
+            elif len(lines) == 2:
+                if lines[1][0] > 90:
+                    lines = (lines[1], lines[0], None)
+                else:
+                    lines = (None, lines[0], lines[1])
+            elif len(lines) == 3:
+                if lines[1][0] > 90:
+                    lines = (lines[1], lines[0], lines[2])
+                else:
+                    lines = (lines[2], lines[0], lines[1])
 
-        if len(lines) == 0:
-            lines = (None,None,None)
-        elif len(lines) == 1:
-            lines = (None, lines[0], None)
-        elif len(lines) == 2:
-            if lines[1][0] > 90:
-                lines = (lines[1], lines[0], None)
-            else:
-                lines = (None, lines[0], lines[1])
-        elif len(lines) == 3:
-            if lines[1][0] > 90:
-                lines = (lines[1], lines[0], lines[2])
-            else:
-                lines = (lines[2], lines[0], lines[1])
+            # safety check; line to the right of the middle must be actually to the right
+            if lines[2] != None:
+                if lines[2][1][0] < lines[1][1][0]:
+                    lines = (lines[0], lines[1], None)
 
-        # safety check; line to the right of the middle must be actually to the right
-        if lines[2] != None:
-            if lines[2][1][0] < lines[1][1][0]:
-                lines = (lines[0], lines[1], None)
-
-        return lines, image
+            return lines, image
 
 
     def getHoriz(self, line):
@@ -201,6 +204,10 @@ class ProcessVideo(object):
             return angle
         else:
             return 180-angle
+
+    def getVert(self, line):
+        angle = line[0]
+        return abs(90-angle)
 
 
     def ShowTwoLines(self, image):

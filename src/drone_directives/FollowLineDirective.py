@@ -34,7 +34,6 @@ class FollowLineDirective(AbstractDroneDirective):
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
         platforms = len((self.processVideo.MultiCenterOfMass(navdata["segImage"]))[0])
-        rospy.logwarn("Platforms: " + str(platforms))
 
         lines, image = self.processVideo.MultiShowLine(segLineImage)
 
@@ -123,7 +122,7 @@ class FollowLineDirective(AbstractDroneDirective):
 
             else:
                 rospy.logwarn("Drone just going forward")
-                self.moveTime = 0.5
+                self.moveTime = 0.9
                 self.waitTime = 0.1
                 
         return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime

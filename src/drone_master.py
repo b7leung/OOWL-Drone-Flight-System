@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Lipton Brisk Iced Tea Can"
+        self.objectName = "Amazon Prime Cardboard Box"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -177,12 +177,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             angles = 8
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 8, orangePlatformErr ),
+            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective(self.droneRecordPath, 20, 0.07, self.objectName, angles, objectAltitude), 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
+            ( CapturePhotoDirective(self.droneRecordPath, 20, 0.1, self.objectName, angles, objectAltitude), 1 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.08), 9, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.12), 9, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
@@ -248,8 +248,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            testalg = ( FollowLineDirective('blue', speed = 0.25), 6)
-            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
+            #testalg = ( FollowLineDirective('blue', speed = 0.25), 6)
+            testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             #testalg = ( MultiCenterTestDirective(), 6)
 

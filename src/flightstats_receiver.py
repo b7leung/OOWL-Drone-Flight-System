@@ -36,6 +36,7 @@ class FlightstatsReceiver(object):
         self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", -1, "mm", ""]
         self.flightInfo["center"] = ["Inferred Center: ", self.defaultValue, "", ""]
         self.flightInfo["lastCenter"] = ["Previous Center: ", (None,None), "", ""]
+        self.flightInfo["allCenters"] = ["All Centers: ", self.defaultValue, "", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
         self.flightInfo["rotY"]=["Front/Back Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
@@ -114,6 +115,7 @@ class FlightstatsReceiver(object):
     def InferCenter(self, image):
         
         centers, _ = self.processVideo.MultiCenterOfMass(image)
+        (self.flightInfo["allCenters"][1]) = centers
 
         if len(centers) == 0:
 
@@ -131,12 +133,13 @@ class FlightstatsReceiver(object):
                 #rospy.logwarn("Found 2 -- picking closer to last")
 
                 # just pick whichever is closer to the last center
-                c1XDist = abs(self.lastLoc[0] - centers[0][0])
-                c1YDist = abs(self.lastLoc[1] - centers[0][1])
-                c2XDist = abs(self.lastLoc[0] - centers[1][0])
-                c2YDist = abs(self.lastLoc[1] - centers[1][1])
-                
-                if c1XDist < c2XDist and c1YDist < c2YDist:
+                c1Dist = math.sqrt( math.pow((self.lastLoc[1] - centers[0][1]),2) 
+                + math.pow((self.lastLoc[0] - centers[0][0]),2 ) ) 
+
+                c2Dist = math.sqrt( math.pow((self.lastLoc[1] - centers[1][1]),2) 
+                + math.pow((self.lastLoc[0] - centers[1][0]),2 ) ) 
+
+                if c1Dist < c2Dist:
                     center = centers[0]
                 else:
                     center = centers[1]
@@ -194,9 +197,10 @@ class FlightstatsReceiver(object):
         if self.lastLoc != (None,None) and center != (None,None):
             dist = math.sqrt( math.pow((self.lastLoc[1] - center[1]),2) 
             + math.pow((self.lastLoc[0] - center[0]),2 ) ) 
-            if dist > 100:
+            if dist > 140:
                 self.lastCenterCount +=1
-                rospy.logwarn("Change Center Count: " + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
+                rospy.logwarn("visible: " + str(len(centers)) + " change Center Count: " 
+                + str(self.lastCenterCount) + " / " + str(self.lastCenterMax))
                 if self.lastCenterCount >= self.lastCenterMax:
                     rospy.logwarn("Changing center")
                     self.lastCenterCount = 0
@@ -210,7 +214,8 @@ class FlightstatsReceiver(object):
             self.lastLoc = center
 
 
-        return center
+        #return center
+        return self.lastLoc
 
 
     def getX(self,coordinates):
