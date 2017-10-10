@@ -112,11 +112,11 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 12, yawspeed = 0.42)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 13, yawspeed = 0.42)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 90
-            yWindowSize = 90
+            xWindowSize = 95
+            yWindowSize = 95
             altLowerTolerance = 155
             altUpperTolerance = 305
 
@@ -146,7 +146,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 10, yawspeed = 0.42)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 13, yawspeed = 0.42)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 185

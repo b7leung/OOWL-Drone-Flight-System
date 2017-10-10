@@ -18,6 +18,9 @@ class FollowLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         self.moveTime = 0.45
         self.waitTime = 0.1
+        self.prevAngle = None
+        self.prevAngleCount = 0
+        self.prevAngleCountMax = 25
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -64,7 +67,7 @@ class FollowLineDirective(AbstractDroneDirective):
         # The horizontal line must be far enough left.
         if ( platforms == 1 and yspeed == 0 and lines[1] != None and lines[2] != None and
         ( (lines[1][0] < (0 + tolerance) ) or (lines[1][0]) > (180-tolerance)) and
-        lines[2][1][0] < int(640 * 0.75) ):
+        lines[2][1][0] < int(640 * 0.9) ):
 
             xspeed = 0
             yspeed = 0
@@ -78,11 +81,14 @@ class FollowLineDirective(AbstractDroneDirective):
 
             xspeed = -self.speed
 
-            #if abs(yspeed) < 1:
-            #    yspeed = yspeed *1.45
-            
+            # only uses the angle if it is similar to the last one. If it is too different, algorithm
+            # uses the previous angle for a time until the timer is up, as a buffer against a random large angle change
+            if self.prevAngle == None or 
+                
+                self.prevAngle = lines[1][0]
+
             # converting
-            line1Angle = lines[1][0]
+            line1Angle = self.prevAngle
             if line1Angle == 90:
                 line1Angle = 0
             elif line1Angle < 90:
@@ -90,7 +96,7 @@ class FollowLineDirective(AbstractDroneDirective):
             else:
                 line1Angle = line1Angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 7, yawspeed = 0.45)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 10, yawspeed = 0.45)
 
 
             # If drone is still trying follow the line, it adapts to one of three algorithms:
@@ -126,4 +132,8 @@ class FollowLineDirective(AbstractDroneDirective):
                 self.waitTime = 0.1
                 
         return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime
+
+    def Finished(self):
+        self.prevAngle = None
+        self.prevAngleCount = 0
 
