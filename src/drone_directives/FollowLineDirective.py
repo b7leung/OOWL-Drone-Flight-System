@@ -20,7 +20,7 @@ class FollowLineDirective(AbstractDroneDirective):
         self.waitTime = 0.1
         self.prevAngle = None
         self.prevAngleCount = 0
-        self.prevAngleCountMax = 25
+        self.prevAngleCountMax = 185
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -83,9 +83,21 @@ class FollowLineDirective(AbstractDroneDirective):
 
             # only uses the angle if it is similar to the last one. If it is too different, algorithm
             # uses the previous angle for a time until the timer is up, as a buffer against a random large angle change
-            if self.prevAngle == None or 
-                
+            thresh = 15
+            if ( self.prevAngle == None or abs(self.prevAngle - lines[1][0]) < thresh 
+            or abs(self.prevAngle - lines[1][0]) > (180 - thresh) ):
                 self.prevAngle = lines[1][0]
+                self.prevAngleCount = 0
+            else:
+                
+                self.prevAngleCount += 1
+                if self.prevAngleCount >= self.prevAngleCountMax:
+                    rospy.logwarn("Switched from "+ str(self.prevAngle) + " degrees to "+ str(lines[1][0]))
+                    self.prevAngle = lines[1][0]
+                    self.prevAngleCount = 0
+                else:
+                    rospy.logwarn("Large sudden change in angle -- using old angle of " 
+                    + str(self.prevAngle) + " instead of " + str(lines[1][0]))
 
             # converting
             line1Angle = self.prevAngle
