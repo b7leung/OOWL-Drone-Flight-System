@@ -4,6 +4,8 @@ import rospy
 from processing_functions.process_video import ProcessVideo
 from AbstractDroneDirective import *
 import numpy
+import cv2
+import math
 
 # This directive will give directions that attempt to push the drone
 # back towards the target location if it has drifted out of the cameras vision
@@ -12,14 +14,24 @@ class ReturnToLineDirective(AbstractDroneDirective):
 
     # sets up this directive
     # platformColor: color of the platform to return to
-    def __init__(self, lineColor, speedModifier = 0.5):
+    def __init__(self, lineColor, speedModifier = 0.5, radiusThresh = 255):
 
         self.lineColor = lineColor
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
+        self.radiusThresh = radiusThresh
         self.moveTime = 0.20
         self.waitTime = 0.10
-    
+
+    def InsideCircle(self, point, circleCenter, circleRadius):
+        x = point[0]
+        y = point[1]
+        center_x = circleCenter[0]
+        center_y = circleCenter[1]
+        radius = circleRadius
+        
+        return (math.pow((x-center_x),2) + math.pow((y-center_y),2)) < math.pow(radius,2)
+
 
     # Given the image and navdata of the drone, returns the following in order:
     #
@@ -33,24 +45,32 @@ class ReturnToLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        segLineImage, _, _ = self.processVideo.DetectColor(image, self.lineColor, "all")
+        segLineImage = self.processVideo.DetectColor(image, self.lineColor)
+        lines, image = self.processVideo.MultiShowLine(segLineImage)
 
-        line1Angle, line1Center, line2Angle, line2Center = self.processVideo.ShowTwoLines(segLineImage)
+        #navdata stores the last location and angle in the case of an error
+        cx = navdata[1][0][0]
+        cy = navdata[1][0][1]     
+        angle = navdata[1][1]
 
-        #navdata stores the last location in the case of an error
-        cx = navdata[1][0]
-        cy = navdata[1][1]     
-
-
-        if line1Angle != None:
-            hasPlatform = True
-        else:
-            hasPlatform = False
+        cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
+        
+        hasPlatform = False
+        # thresh in degrees
+        thresh = 15 
+        for line in lines:
+            if line!=None:
+                # original line was found if angle & position match original, to some threshold
+                if ( self.InsideCircle(line[1], (cx,cy), self.radiusThresh ) and
+                (abs(angle - line[0]) < thresh or abs(angle - line[0]) > (180 - thresh)) ):
+                    hasPlatform = True
+                    cv2.circle(image, line[1], 15, (0,255,0), -1)
+                    cx = line[1][0]
+                    cy = line[1][1]
+                else:
+                    cv2.circle(image, line[1], 15, (0,0,255), 5)
+ 
         if hasPlatform:
-            tolerance = 15
-            # if it sees a horizontal blue line, update that as the new return point
-            if ( (line1Angle < (0 + tolerance)) or (line1Angle) > (180-tolerance)):
-                cx, cy = line1Center[0], line1Center[1]
             rospy.logwarn("Returned to platform")
             directiveStatus = 1
             zspeed = 0
@@ -58,7 +78,7 @@ class ReturnToLineDirective(AbstractDroneDirective):
         else:
             rospy.logwarn("Returning to platform")
             directiveStatus = 0
-            zspeed = 0.5
+            zspeed = 0.3
 
         if cx == None or cy == None:
             rospy.logwarn("Returning -- no " + self.lineColor + " detected @ this altitude, increasing altitude")
@@ -70,8 +90,8 @@ class ReturnToLineDirective(AbstractDroneDirective):
         
         rospy.logwarn("X Speed: " + str(xspeed) + " Y Speed: " + str(yspeed))
 
-        self.processVideo.DrawCircle(segLineImage,(cx,cy))
+        self.processVideo.DrawCircle(image ,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy),angle), self.moveTime, self.waitTime
         
 

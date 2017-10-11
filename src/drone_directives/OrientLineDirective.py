@@ -67,7 +67,7 @@ class OrientLineDirective(AbstractDroneDirective):
             # checking if curr center is consistent with previous one
             centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
             + math.pow((self.prevCenter[0] - cx),2 ) ) 
-            if centerDist > 260:
+            if centerDist > 225:
                 rospy.logwarn("ERROR: ORIGINAL CENTER LOST, showing all " + str(len(navdata["allCenters"][1])))
                 for i in range(len(navdata["allCenters"][1])):
                     cv2.circle(segLineImage, navdata["allCenters"][1][i], 6, (255,0,0), -1)
@@ -151,7 +151,7 @@ class OrientLineDirective(AbstractDroneDirective):
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 185
-            yWindowSize = 65
+            yWindowSize = 95
             altLowerTolerance = 200
             altUpperTolerance = 300
         

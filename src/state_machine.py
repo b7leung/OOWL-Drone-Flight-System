@@ -111,7 +111,10 @@ class StateMachine(object):
                     if self.errorFlag:
                         rospy.logwarn("Error state over; returning")
                         self.errorFlag = False
-                        self.receiver.SetCenter(self.lastLocation)
+                        if isinstance(self.lastLocation[0], tuple):
+                            self.receiver.SetCenter(self.lastLocation[0])
+                        else:
+                            self.receiver.SetCenter(self.lastLocation)
                     else:
 
                         self.currPhaseIndex = (self.currPhaseIndex + 1)

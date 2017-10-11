@@ -41,11 +41,11 @@ class FollowLineDirective(AbstractDroneDirective):
         lines, image = self.processVideo.MultiShowLine(segLineImage)
 
         if lines[0] != None:
-            cv2.circle(image, lines[0][1], 8, (0,0,255), -1)
+            cv2.circle(image, lines[0][1], 15, (0,0,255), -1)
         if lines[1] != None:
             cv2.circle(image, lines[1][1], 15, (0,255,0), -1)
         if lines[2] != None:
-            cv2.circle(image, lines[2][1], 8, (255,0,0), -1)
+            cv2.circle(image, lines[2][1], 15, (255,0,0), -1)
 
         linesVisible = (lines[0]!= None) + (lines[1] != None) + (lines[2] != None)
          
@@ -60,7 +60,7 @@ class FollowLineDirective(AbstractDroneDirective):
         cx = lines[1][1][0]
         cy = lines[1][1][1]
         _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
-        navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 80)
+        navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 95)
 
         # in order to be considered "finished", there must be 2 lines, 
         # one which is horizontal and one that is less than 90 degrees.
@@ -77,27 +77,31 @@ class FollowLineDirective(AbstractDroneDirective):
         
         else:
             
-            directiveStatus = 0
 
             xspeed = -self.speed
 
             # only uses the angle if it is similar to the last one. If it is too different, algorithm
             # uses the previous angle for a time until the timer is up, as a buffer against a random large angle change
             thresh = 15
+
             if ( self.prevAngle == None or abs(self.prevAngle - lines[1][0]) < thresh 
             or abs(self.prevAngle - lines[1][0]) > (180 - thresh) ):
                 self.prevAngle = lines[1][0]
                 self.prevAngleCount = 0
+                directiveStatus = 0
             else:
                 
-                self.prevAngleCount += 1
+                """self.prevAngleCount += 1
                 if self.prevAngleCount >= self.prevAngleCountMax:
                     rospy.logwarn("Switched from "+ str(self.prevAngle) + " degrees to "+ str(lines[1][0]))
                     self.prevAngle = lines[1][0]
                     self.prevAngleCount = 0
                 else:
-                    rospy.logwarn("Large sudden change in angle -- using old angle of " 
-                    + str(self.prevAngle) + " instead of " + str(lines[1][0]))
+                """
+                rospy.logwarn("Large sudden change in angle -- using old angle of " 
+                + str(self.prevAngle) + " instead of " + str(lines[1][0]))
+
+                directiveStatus = -1
 
             # converting
             line1Angle = self.prevAngle
@@ -143,7 +147,7 @@ class FollowLineDirective(AbstractDroneDirective):
                 self.moveTime = 0.9
                 self.waitTime = 0.1
                 
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, (cx, cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, ((cx, cy), self.prevAngle), self.moveTime, self.waitTime
 
     def Finished(self):
         self.prevAngle = None
