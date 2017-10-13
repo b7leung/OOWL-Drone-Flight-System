@@ -30,5 +30,5 @@ class MultiCenterTestDirective(AbstractDroneDirective):
         for c in centers:
             cv2.circle(image, c, 10, (0,255,255), -1)
             
-        return 1, (0, 0, 0, 0), image, (None, None), 0, 0
+        return 1, (0, 0, 0, 0), image, (None, None), 0, 0, None
 

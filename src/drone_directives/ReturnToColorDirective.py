@@ -81,9 +81,6 @@ class ReturnToColorDirective(AbstractDroneDirective):
         
         rospy.logwarn("X Speed: " + str(xspeed) + " Y Speed: " + str(yspeed))
         
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, (cx,cy), self.moveTime, self.waitTime, None
         
-
-
-
 

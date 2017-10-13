@@ -17,4 +17,4 @@ class FlatTrimDirective(AbstractDroneDirective):
         self.controller.FlatTrim()
         rospy.logwarn("Reset Flat Trim")
 
-        return 1, (0, 0, 0, 0), image, (None,None),0,0
+        return 1, (0, 0, 0, 0), image, (None,None),0,0, None

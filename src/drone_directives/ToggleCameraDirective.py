@@ -28,5 +28,5 @@ class ToggleCameraDirective(AbstractDroneDirective):
         self.controller.ToggleCamera()
         rospy.logwarn("Toggled Drone Camera")
 
-        return 1, (0, 0, 0, 0), image, (None,None), 0, 0
+        return 1, (0, 0, 0, 0), image, (None,None), 0, 0, None
 

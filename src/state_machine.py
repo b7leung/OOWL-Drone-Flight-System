@@ -76,7 +76,7 @@ class StateMachine(object):
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][1]
                 self.errorDuration += 1
-                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
+                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime, newCenter = currState.RetrieveNextInstruction(image,(navdata,self.lastLocation))
                 # if it's been over the specified limit without success, abort
                 if self.errorDuration > self.errorMaxDuration or status == -1:
                     rospy.logwarn("********** ABORTING -- MACHINE FAILED **********") 
@@ -85,7 +85,7 @@ class StateMachine(object):
                 
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][1]
-                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime = currState.RetrieveNextInstruction(image,navdata)
+                status, droneInstructions, image, coordinate, self.moveTime, self.waitTime, newCenter = currState.RetrieveNextInstruction(image,navdata)
 
             # if the current state is finished, increment counter
             if status == 1:
@@ -103,6 +103,11 @@ class StateMachine(object):
                     if ( hasattr( currState, 'Finished' ) and callable (currState.Finished ) and 
                     self.stateMachineDef[self.currPhase][1] != -1 ):
                         currState.Finished()
+                    
+                    # update center if directive calls for it
+                    if newCenter != None:
+                        rospy.logwarn("setting new center")
+                        self.receiver.SetCenter(newCenter)
 
                     self.stateFinishedCounter = 0
                     droneInstructions = (0,0,0,0)

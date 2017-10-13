@@ -28,5 +28,5 @@ class LandDirective(AbstractDroneDirective):
         self.controller.SendLand()
         rospy.logwarn(" __________ Drone is landing __________ ")
 
-        return 1, (0, 0, 0, 0), image, (None,None),0,0
+        return 1, (0, 0, 0, 0), image, (None,None),0,0, None
 

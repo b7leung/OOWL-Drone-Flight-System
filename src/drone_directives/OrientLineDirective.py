@@ -33,6 +33,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.moveTime=0.2
         self.waitTime=0.1
         self.prevCenter = None
+        self.forceCenter = None
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -55,6 +56,11 @@ class OrientLineDirective(AbstractDroneDirective):
         
         if cx != None and cy != None:
             cv2.circle(segLineImage, (cx,cy), 6, (255,255,255), -1)
+        
+        centers = navdata["allCenters"][1]
+
+        if self.forceCenter != None:
+            self.forceCenter = None
 
         # when directive first starts, it latches onto the first orange platform it sees
         if self.prevCenter == None:
@@ -62,15 +68,26 @@ class OrientLineDirective(AbstractDroneDirective):
             if cx != None and cy != None:
                 self.prevCenter = (cx,cy)
 
+            # pick the rightmost center 
+            rightmostCenter = centers[0]
+            if self.orientation == "PARALLEL":
+                for i in range(len(centers)):
+                    if centers[i][0] > rightmostCenter[0]:
+                        rightmostCenter = centers[i]
+                self.forceCenter = rightmostCenter
+
+
+                    
+
         elif cx != None and cy != None:
 
             # checking if curr center is consistent with previous one
             centerDist = math.sqrt( math.pow((self.prevCenter[1] - cy),2) 
             + math.pow((self.prevCenter[0] - cx),2 ) ) 
             if centerDist > 225:
-                rospy.logwarn("ERROR: ORIGINAL CENTER LOST, showing all " + str(len(navdata["allCenters"][1])))
-                for i in range(len(navdata["allCenters"][1])):
-                    cv2.circle(segLineImage, navdata["allCenters"][1][i], 6, (255,0,0), -1)
+                rospy.logwarn("ERROR: ORIGINAL CENTER LOST, showing all " + str(len(centers)))
+                for i in range(len(centers)):
+                    cv2.circle(segLineImage, centers[i], 6, (255,0,0), -1)
                 if cx != None and cy != None:
                     cv2.circle(segLineImage, (cx,cy), 10, (255,255,255), -1)
 
@@ -78,7 +95,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 cy = self.prevCenter[1]
                 cv2.circle(segLineImage, (cx,cy), 10, (0,0,255), 4)
                 directiveStatus = -1
-                return directiveStatus, (0,0,0,0), segLineImage, (cx,cy), 0,0
+                return directiveStatus, (0,0,0,0), segLineImage, (cx,cy), 0,0, None
             else:
                 self.prevCenter = (cx,cy)
 
@@ -116,10 +133,10 @@ class OrientLineDirective(AbstractDroneDirective):
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 95
+            xWindowSize = 130
             yWindowSize = 95
             altLowerTolerance = 155
-            altUpperTolerance = 305
+            altUpperTolerance = 250
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -147,7 +164,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 13, yawspeed = 0.55)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.55)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 185
@@ -227,9 +244,10 @@ class OrientLineDirective(AbstractDroneDirective):
                 
             directiveStatus = 0 
 
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime, self.forceCenter
 
 
     def Finished(self):
         self.prevCenter = None
+        self.forceCenter = None
 

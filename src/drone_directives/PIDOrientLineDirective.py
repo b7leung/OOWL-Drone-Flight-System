@@ -149,7 +149,7 @@ class PIDOrientLineDirective(AbstractDroneDirective):
                 
             directiveStatus = 0 
             
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), segLineImage, (cx,cy), self.moveTime, self.waitTime, None
 
 
     # This method is called by the state machine when it considers this directive finished

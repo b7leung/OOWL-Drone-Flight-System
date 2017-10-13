@@ -36,7 +36,7 @@ class FollowLineDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
-        platforms = len((self.processVideo.MultiCenterOfMass(navdata["segImage"]))[0])
+        platforms = (self.processVideo.MultiCenterOfMass(navdata["segImage"]))[0]
 
         lines, image = self.processVideo.MultiShowLine(segLineImage)
 
@@ -55,19 +55,37 @@ class FollowLineDirective(AbstractDroneDirective):
         #This is the condition for terminating follow line
         if linesVisible == 0:
             rospy.logwarn(" *** ERROR: Lost " + self.lineColor + " line *** ")
-            return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0
+            return -1, (0, 0, 0, 0), segLineImage, (None, None),0, 0, None
 
         cx = lines[1][1][0]
         cy = lines[1][1][1]
         _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 95)
 
+        newCenter = None
+
+        # alternate way to finish
+        xWindowSize = 130
+        yWindowSize = 95
+        xLower = 320 - xWindowSize
+        yLower = 180 - yWindowSize
+        xUpper = 320 + xWindowSize
+        yUpper = 180 + yWindowSize
+
+        foundRightPlatform = False
+        for platform in platforms:
+            if( lines[1] != None and platform[0] > lines[1][1][0] and
+            platform[0] < xUpper and platform[0] > xLower and platform[1] < yUpper and platform[1] > yLower ):
+                cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 4)
+                foundRightPlatform = True
+                newCenter = platform
+
         # in order to be considered "finished", there must be 2 lines, 
         # one which is horizontal and one that is less than 90 degrees.
         # The horizontal line must be far enough left.
-        if ( platforms == 1 and yspeed == 0 and lines[1] != None and lines[2] != None and
+        if ( foundRightPlatform or (len(platforms) == 1 and yspeed == 0 and lines[1] != None and lines[2] != None and
         ( (lines[1][0] < (0 + tolerance) ) or (lines[1][0]) > (180-tolerance)) and
-        lines[2][1][0] < int(640 * 0.9) ):
+        lines[2][1][0] < int(640 * 0.9)) ):
 
             xspeed = 0
             yspeed = 0
@@ -112,7 +130,7 @@ class FollowLineDirective(AbstractDroneDirective):
             else:
                 line1Angle = line1Angle - 90
 
-            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 10, yawspeed = 0.45)
+            yawspeed = self.processVideo.LineOrientation(segLineImage, line1Angle, 8, yawspeed = 0.45)
 
 
             # If drone is still trying follow the line, it adapts to one of three algorithms:
@@ -147,7 +165,7 @@ class FollowLineDirective(AbstractDroneDirective):
                 self.moveTime = 0.9
                 self.waitTime = 0.1
                 
-        return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, ((cx, cy), self.prevAngle), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, yawspeed, 0), image, ((cx, cy), self.prevAngle), self.moveTime, self.waitTime, newCenter
 
     def Finished(self):
         self.prevAngle = None

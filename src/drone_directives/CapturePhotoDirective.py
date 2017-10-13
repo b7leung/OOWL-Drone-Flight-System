@@ -80,7 +80,7 @@ class CapturePhotoDirective(AbstractDroneDirective):
             rospy.logwarn("****** Successfully took " + str(self.picturesToTake) + " pictures ******")
             directiveStatus = 1
 
-        return directiveStatus, (0, 0, 0, 0.0), image, (None, None), 0, 0
+        return directiveStatus, (0, 0, 0, 0.0), image, (None, None), 0, 0,None
     
 
     # This method is called by the state machine when it considers this directive finished

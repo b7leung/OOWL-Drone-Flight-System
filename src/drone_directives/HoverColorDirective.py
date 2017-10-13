@@ -59,10 +59,7 @@ class HoverColorDirective(AbstractDroneDirective):
             rospy.logwarn("Trying to Hover on " + self.platformColor)
             directiveStatus = 0
 
-        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy), self.moveTime, self.waitTime, None
 
 
-
-
-        
 

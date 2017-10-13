@@ -92,6 +92,6 @@ class ReturnToLineDirective(AbstractDroneDirective):
 
         self.processVideo.DrawCircle(image ,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy),angle), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy),angle), self.moveTime, self.waitTime, None
         
 

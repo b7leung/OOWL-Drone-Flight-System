@@ -60,5 +60,5 @@ class GoStraightDirective(AbstractDroneDirective):
         
         rospy.logwarn("Drone is performing: " + self.direction)
 
-        return 1, self.instructions, image, (None,None), self.moveTime, self.waitTime
+        return 1, self.instructions, image, (None,None), self.moveTime, self.waitTime, None
 

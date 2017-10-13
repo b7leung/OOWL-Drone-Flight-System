@@ -95,7 +95,7 @@ class PIDHoverColorDirective(AbstractDroneDirective):
             p,i,d = self.pid.ReturnPIDvalues()
             directiveStatus = 0
         
-        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime, self.waitTime
+        return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime, self.waitTime, None
 
 
     # This method is called by the state machine when it considers this directive finished

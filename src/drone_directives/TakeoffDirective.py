@@ -28,5 +28,5 @@ class TakeoffDirective(AbstractDroneDirective):
         self.controller.SendTakeoff()
         rospy.logwarn("Drone is taking off")
 
-        return 1, (0, 0, 0, 0), image, (None,None), 0, 0
+        return 1, (0, 0, 0, 0), image, (None,None), 0, 0, None
 

@@ -45,5 +45,5 @@ class ReachAltitudeDirective(AbstractDroneDirective):
             zVel = 0
             directiveStatus = 1
 
-        return directiveStatus, (0, 0, 0, zVel), image, (None,None), self.moveTime, self.waitTime
+        return directiveStatus, (0, 0, 0, zVel), image, (None,None), self.moveTime, self.waitTime, None
 
