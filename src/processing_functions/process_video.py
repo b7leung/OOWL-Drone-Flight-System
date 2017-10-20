@@ -31,16 +31,19 @@ class ProcessVideo(object):
         
         numRows,numCols,channels=image.shape
         lower2=upper2=array([0,0,0])
+
 	#definitions for upper and lower hsv values for each color
         if(color=='orange'): #0,50,170,10,254,255
             hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
             #lower  hsv boundary #172 50 180,180 254 255
+            #hsv_boundaries2 = [([174, 52, 112],[180, 254, 255])]
             hsv_boundaries2 = [([172, 50, 180],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
-        if(color=='front orange'):
+
+        elif(color=='front orange'):
             #0 50 0 25, 254 255
             hsv_boundaries = [( [0, 55, 10],[60, 254, 255] )]
             #168 50 0,180 254 255
@@ -51,15 +54,29 @@ class ProcessVideo(object):
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
             upper2=array(hsv_boundaries2[0][1], dtype = "uint8")
 
-        if(color=='blue'):
+        elif(color=='blue'):
             hsv_boundaries = [ ([102,110,70],[115,255,255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
         
-        if(color=='green'):
+        elif(color=='green'):
             hsv_boundaries = [ ([40, 70, 0],[70, 190, 254])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
+
+        elif(color=='pink'):
+            hsv_boundaries = [ ([161, 68, 127],[171, 209, 255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+
+        elif(color=='yellow'):
+            hsv_boundaries = [ ([17, 10, 100],[32, 188, 255])]
+            lower=array(hsv_boundaries[0][0], dtype = "uint8")
+            upper= array(hsv_boundaries[0][1],dtype = "uint8")
+
+
+        else:
+            raise Exception("Color not recognized")
 
 	#convert bgr to hsv image for color segmentation
         hsv_image=cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -79,6 +96,14 @@ class ProcessVideo(object):
         #we put a circle in the center of the image 
         #cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
         
+        if color =='yellow':
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
+            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
+            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_CLOSE, kernel)
+            #kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+            #segmentedImage = cv2.dilate(segmentedImage, kernel2, iterations = 2)
+
         #rospy.logwarn(hsv_image[numRows/2][numCols/2])
         #rospy.logwarn("seg: " + str(hsv_output[numRows/2][numCols/2]))
         #segmentedImage is bgr, and mask is a binary image with values within color range

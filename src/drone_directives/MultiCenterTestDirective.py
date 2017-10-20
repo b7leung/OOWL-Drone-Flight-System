@@ -8,8 +8,9 @@ from processing_functions.process_video import ProcessVideo
 class MultiCenterTestDirective(AbstractDroneDirective):
 
     # sets up this directive
-    def __init__(self):
-
+    def __init__(self, color):
+        
+        self.color = color
         self.processVideo = ProcessVideo()
 
         
@@ -24,11 +25,7 @@ class MultiCenterTestDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        image = self.processVideo.DetectColor(image, "orange")
-        centers, image = self.processVideo.MultiCenterOfMass(image)
-        
-        for c in centers:
-            cv2.circle(image, c, 10, (0,255,255), -1)
+        image = self.processVideo.DetectColor(image, self.color)
             
         return 1, (0, 0, 0, 0), image, (None, None), 0, 0, None
 

@@ -160,8 +160,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1260
-            objectAltitude = 1260
+            flightAltitude = 1400
+            objectAltitude = 1400
                         
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -177,7 +177,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             angles = 8
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 10, orangePlatformErr ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( CapturePhotoDirective(self.droneRecordPath, 20, 0.08, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
@@ -187,7 +187,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
             end = [
-            ( OrientLineDirective('PARALLEL', 'green', 'orange', flightAltitude ), 4, orangePlatformErr ),
+            ( OrientLineDirective('PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErr ),
             ( LandDirective(), 1)
             ]
 
@@ -248,10 +248,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'green', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
-            testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
+            #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            #testalg = ( MultiCenterTestDirective(), 6)
+            testalg = ( MultiCenterTestDirective("pink"), 6)
 
             algCycles = -1
 

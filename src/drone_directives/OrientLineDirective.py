@@ -135,8 +135,8 @@ class OrientLineDirective(AbstractDroneDirective):
                 yawspeed = -1*yawspeed
             xWindowSize = 130
             yWindowSize = 95
-            altLowerTolerance = 155
-            altUpperTolerance = 250
+            altLowerTolerance = 115
+            altUpperTolerance = 220
 
         elif self.orientation == "PERPENDICULAR":
             
