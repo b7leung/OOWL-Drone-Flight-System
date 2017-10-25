@@ -67,7 +67,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
         # max height of drone, in mm; any higher and the drone will auto-land
-        self.maxHeight = 1750
+        self.maxHeight = 2000
         self.emergency = False
         self.captureRound = 0.5
 
@@ -251,7 +251,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            testalg = ( MultiCenterTestDirective("orange"), 6)
+            testalg = ( MultiCenterTestDirective("pink"), 6)
 
             algCycles = -1
 

@@ -174,7 +174,7 @@ class OrientLineDirective(AbstractDroneDirective):
             xWindowSize = 185
             yWindowSize = 95
             altLowerTolerance = 200
-            altUpperTolerance = 300
+            altUpperTolerance = 250
         
         # defines window to make the drone focus on moving away from the edges and back into
         # the center; yaw will be turned off
@@ -198,8 +198,8 @@ class OrientLineDirective(AbstractDroneDirective):
         yUpper = centery+yReturnSize
 
         # perpendicular can disregard height
-        if self.orientation == "PERPENDICULAR":
-            zspeed = 0
+        #if self.orientation == "PERPENDICULAR":
+        #    zspeed = 0
 
         if ( yawspeed == 0 and xspeed == 0 and yspeed == 0 and zspeed == 0 and cx != None and cy != None ):
             
