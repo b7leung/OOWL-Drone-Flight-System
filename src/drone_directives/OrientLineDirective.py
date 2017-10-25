@@ -77,8 +77,6 @@ class OrientLineDirective(AbstractDroneDirective):
                 self.forceCenter = rightmostCenter
 
 
-                    
-
         elif cx != None and cy != None:
 
             # checking if curr center is consistent with previous one
@@ -107,12 +105,18 @@ class OrientLineDirective(AbstractDroneDirective):
             # pick the green line closest to the hover platform
             angle = None
             closest = None
+            closestDist = None
             for line in lines:
-                if( line != None and cx!= None and
-                (closest == None or abs( cx - line[1][0] ) < abs( cx - closest[1][0])) ):
+                if cx != None:
 
-                    closest = line
-                    angle = closest[0]
+                    dist = math.sqrt( math.pow((line[1][1] - cy),2) 
+                    + math.pow((line[1][0] - cx),2 ) ) 
+
+                    if( line != None and (closest == None or dist < closestDist) ):
+
+                        closest = line
+                        angle = closest[0]
+                        closestDist = dist
             
             if closest != None: 
                 cv2.circle(segLineImage, closest[1], 15, (0,255,0), -1)

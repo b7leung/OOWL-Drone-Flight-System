@@ -87,7 +87,7 @@ class FlightstatsReceiver(object):
             image = self.bridge.imgmsg_to_cv2(image, "bgr8")
             segImage, radius, center = self.processVideo.RecognizeShape(image, 'orange',self.lastLocation)
 
-            (self.flightInfo["center"][1]) = self.InferCenter(segImage)
+            (self.flightInfo["center"][1]) = self.InferCenter(self.processVideo.RemoveNoise(segImage))
 
             if radius == None:
                 if center == (None,None):

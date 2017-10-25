@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Amazon Prime Cardboard Box"
+        self.objectName = "Lipton Brisk Iced Tea Can"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -160,8 +160,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1400
-            objectAltitude = 1400
+            flightAltitude = 1500
+            objectAltitude = 1500
                         
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -251,7 +251,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            testalg = ( MultiCenterTestDirective("pink"), 6)
+            testalg = ( MultiCenterTestDirective("orange"), 6)
 
             algCycles = -1
 

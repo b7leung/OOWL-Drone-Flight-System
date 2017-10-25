@@ -45,6 +45,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
         
         image = self.processVideo.DetectColor(image, self.platformColor)
+        image = self.processVideo.RemoveNoise(image)
         centers, _ = self.processVideo.MultiCenterOfMass(image)
 
         #navdata stores the last location in the case of an error

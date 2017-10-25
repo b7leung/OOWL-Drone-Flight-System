@@ -25,7 +25,14 @@ class MultiCenterTestDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        image = self.processVideo.DetectColor(image, self.color)
+        #image = self.processVideo.DetectColor(image, self.color, process = True)
+        image = self.processVideo.RemoveNoise(navdata["segImage"])
+        
+        cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+
+        if cx != None and cy != None:
+            cv2.circle(image, (cx,cy), 6, (255,255,255), -1)
+
             
         return 1, (0, 0, 0, 0), image, (None, None), 0, 0, None
 

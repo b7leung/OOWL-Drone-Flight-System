@@ -27,7 +27,7 @@ class ProcessVideo(object):
 #"binary" returns a binary image, 1 is region within color range
 #"hsv" returns an hsv image, of pixels within color range
 
-    def DetectColor(self,image,color,returnType = "segmented"):
+    def DetectColor(self,image,color,returnType = "segmented", process = False):
         
         numRows,numCols,channels=image.shape
         lower2=upper2=array([0,0,0])
@@ -96,14 +96,6 @@ class ProcessVideo(object):
         #we put a circle in the center of the image 
         #cv2.circle(segmentedImage,(numcols/2,numrows/2),4,150,1)
         
-        if color =='yellow':
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
-            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
-            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
-            #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_CLOSE, kernel)
-            #kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
-            #segmentedImage = cv2.dilate(segmentedImage, kernel2, iterations = 2)
-
         #rospy.logwarn(hsv_image[numRows/2][numCols/2])
         #rospy.logwarn("seg: " + str(hsv_output[numRows/2][numCols/2]))
         #segmentedImage is bgr, and mask is a binary image with values within color range
@@ -116,6 +108,17 @@ class ProcessVideo(object):
         elif returnType == "all":
             return segmentedImage,hsv_output,mask
 
+
+    def RemoveNoise(self, image):
+        processedImg = image.copy()
+        #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
+        #processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_OPEN, kernel)
+        #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
+        #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_CLOSE, kernel)
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        processedImg= cv2.erode(processedImg, kernel2, iterations = 1)
+
+        return processedImg
 
 
     #a non classical more accurate model for calculating distance,object true size expected in mm
