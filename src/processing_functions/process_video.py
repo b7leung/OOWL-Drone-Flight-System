@@ -37,7 +37,7 @@ class ProcessVideo(object):
             hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
             #lower  hsv boundary #172 50 180,180 254 255
             #hsv_boundaries2 = [([174, 52, 112],[180, 254, 255])]
-            hsv_boundaries2 = [([172, 50, 180],[180, 254, 255])]
+            hsv_boundaries2 = [([174, 50, 180],[180, 254, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
