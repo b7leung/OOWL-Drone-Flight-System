@@ -62,7 +62,7 @@ class OrientLineDirective(AbstractDroneDirective):
         if self.forceCenter != None:
             self.forceCenter = None
 
-        # when directive first starts, it latches onto the first orange platform it sees
+        # when directive first starts, it latches onto the first correct orange platform it sees
         if self.prevCenter == None:
 
             if cx != None and cy != None:
@@ -75,7 +75,22 @@ class OrientLineDirective(AbstractDroneDirective):
                     if centers[i][0] > rightmostCenter[0]:
                         rightmostCenter = centers[i]
                 self.forceCenter = rightmostCenter
-
+            else:
+                # pick the center that is under a vertical line
+                # finding most vertical line
+                objectLineImg = self.processVideo.DetectColor(image, "pink")
+                objectLines, objectLineImg= self.processVideo.MultiShowLine(objectLineImg, sort = False)
+                mostVertical = None
+                for line in objectLines:
+                    if line != None:
+                        if mostVertical == None or abs(90-line[0]) < abs(90 - mostVertical[0]):
+                            mostVertical = line
+                # finding center closest to that vertical line
+                correctCenter = centers[0]
+                for i in range(len(centers)):
+                    if abs(mostVertical[1][0] - centers[i][0]) < abs(mostVertical[1][0] - correctCenter[0]):
+                        correctCenter = centers[i]
+                self.forceCenter = correctCenter
 
         elif cx != None and cy != None:
 
@@ -98,11 +113,11 @@ class OrientLineDirective(AbstractDroneDirective):
                 self.prevCenter = (cx,cy)
 
         # to do, debt
-        lines, segLineImage = self.processVideo.MultiShowLine(segLineImage, sort = False)
 
         if self.orientation == "PARALLEL":
+            lines, segLineImage = self.processVideo.MultiShowLine(segLineImage, sort = False)
             
-            # pick the green line closest to the hover platform
+            # pick the pink line closest to the hover platform
             angle = None
             closest = None
             closestDist = None
@@ -140,9 +155,13 @@ class OrientLineDirective(AbstractDroneDirective):
             xWindowSize = 130
             yWindowSize = 95
             altLowerTolerance = 115
-            altUpperTolerance = 220
+            altUpperTolerance = 150
 
         elif self.orientation == "PERPENDICULAR":
+            
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2,2))
+            segLineImage = cv2.morphologyEx(segLineImage, cv2.MORPH_OPEN, kernel)
+            lines, segLineImage = self.processVideo.MultiShowLine(segLineImage, sort = False)
             
             # pick the blue line closest to the hover platform, AND is right of the hover platform
             angle = None

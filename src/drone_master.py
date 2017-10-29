@@ -182,7 +182,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( CapturePhotoDirective(self.droneRecordPath, 20, 0.08, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
-            ( FollowLineDirective('blue', speed = 0.11), 11, blueLineErr )
+            ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             

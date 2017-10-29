@@ -34,10 +34,15 @@ class ProcessVideo(object):
 
 	#definitions for upper and lower hsv values for each color
         if(color=='orange'): #0,50,170,10,254,255
-            hsv_boundaries = [( [0, 50, 170],[10, 254, 255] )]
+            # for when lighting is dim
+            #s_min = 50
+            #s_max = 254
+            #for when lighting is bright
+            s_min = 94
+            s_max = 255
+            hsv_boundaries = [( [0, s_min, 170],[10, s_max, 255] )]
             #lower  hsv boundary #172 50 180,180 254 255
-            #hsv_boundaries2 = [([174, 52, 112],[180, 254, 255])]
-            hsv_boundaries2 = [([174, 50, 180],[180, 254, 255])]
+            hsv_boundaries2 = [([174, s_min, 180],[180, s_max, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -109,13 +114,13 @@ class ProcessVideo(object):
             return segmentedImage,hsv_output,mask
 
 
-    def RemoveNoise(self, image):
+    def RemoveNoise(self, image, size = 5):
         processedImg = image.copy()
         #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7,7))
         #processedImg = cv2.morphologyEx(processedImg, cv2.MORPH_OPEN, kernel)
         #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_OPEN, kernel)
         #segmentedImage = cv2.morphologyEx(segmentedImage, cv2.MORPH_CLOSE, kernel)
-        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (size,size))
         processedImg= cv2.erode(processedImg, kernel2, iterations = 1)
 
         return processedImg

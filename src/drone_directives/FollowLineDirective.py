@@ -74,7 +74,7 @@ class FollowLineDirective(AbstractDroneDirective):
 
         foundRightPlatform = False
         for platform in platforms:
-            if( lines[1] != None and platform[0] > lines[1][1][0] and
+            if( linesVisible > 1 and lines[1] != None and platform[0] > lines[1][1][0] and
             platform[0] < xUpper and platform[0] > xLower and platform[1] < yUpper and platform[1] > yLower ):
                 cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 4)
                 foundRightPlatform = True
