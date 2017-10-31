@@ -91,8 +91,6 @@ class StateMachine(object):
             if status == 1:
 
                 self.stateFinishedCounter += 1
-                if coordinate != (None,None):
-                    self.lastLocation = coordinate
                 self.lastLocation = coordinate
 
                 # if the state has hit the specified duration to be considered "finished"

@@ -172,22 +172,23 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
             ]
             
-            orangePlatformErr = (ReturnToColorDirective('orange'), 4)
+            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 4)
+            orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink"), 4)
             blueLineErr = (ReturnToLineDirective('blue'), 6)
 
             angles = 8
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 10, orangePlatformErr ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 10, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( CapturePhotoDirective(self.droneRecordPath, 20, 0.06, self.objectName, angles, objectAltitude), 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErr ),
+            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErrHoriz ),
             ( FollowLineDirective('blue', speed = 0.09), 12, blueLineErr )
             ]
             testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
             end = [
-            ( OrientLineDirective('PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErr ),
+            ( OrientLineDirective('PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErrParallel ),
             ( LandDirective(), 1)
             ]
 

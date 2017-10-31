@@ -34,6 +34,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.waitTime=0.1
         self.prevCenter = None
         self.forceCenter = None
+        self.prevAngle = None
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -138,9 +139,11 @@ class OrientLineDirective(AbstractDroneDirective):
                 for line in lines:
                     if line!= None and line[1] != closest[1]:
                         cv2.circle(segLineImage, line[1], 15, (0,0,255), -1)
-
+            
+            
             #converting angle
             if angle != None:
+                self.prevAngle = angle
                 if angle == 90:
                     angle = 0
                 elif angle < 90:
@@ -184,6 +187,7 @@ class OrientLineDirective(AbstractDroneDirective):
 
             #converting angle
             if angle != None:
+                self.prevAngle = angle
                 if angle == 90:
                     angle = 0
                 elif angle < 90:
@@ -271,10 +275,11 @@ class OrientLineDirective(AbstractDroneDirective):
                 
             directiveStatus = 0 
 
-        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, (cx,cy), self.moveTime, self.waitTime, self.forceCenter
+        return directiveStatus, (xspeed, yspeed, yawspeed, zspeed), segLineImage, ((cx,cy), self.prevAngle), self.moveTime, self.waitTime, self.forceCenter
 
 
     def Finished(self):
+        self.prevAngle = None
         self.prevCenter = None
         self.forceCenter = None
 
