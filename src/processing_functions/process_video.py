@@ -161,7 +161,7 @@ class ProcessVideo(object):
 
         for c in contours:
             
-            if cv2.contourArea(c) > 110:
+            if cv2.contourArea(c) > 170:
 
                 rect = cv2.minAreaRect(c)
                 box = cv2.boxPoints(rect)

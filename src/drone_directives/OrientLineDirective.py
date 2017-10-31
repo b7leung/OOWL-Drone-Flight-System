@@ -154,8 +154,12 @@ class OrientLineDirective(AbstractDroneDirective):
                 yawspeed = -1*yawspeed
             xWindowSize = 130
             yWindowSize = 95
-            altLowerTolerance = 115
-            altUpperTolerance = 150
+            altLowerTolerance = 135
+            altUpperTolerance = 175
+            # defines window to make the drone focus on moving away from the edges and back into
+            # the center; yaw will be turned off
+            xReturnSize = 185
+            yReturnSize = 95
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -190,15 +194,15 @@ class OrientLineDirective(AbstractDroneDirective):
             yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.55)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 185
+            xWindowSize = 235
             yWindowSize = 95
             altLowerTolerance = 200
             altUpperTolerance = 250
-        
-        # defines window to make the drone focus on moving away from the edges and back into
-        # the center; yaw will be turned off
-        xReturnSize = 185
-        yReturnSize = 95
+            # defines window to make the drone focus on moving away from the edges and back into
+            # the center; yaw will be turned off
+            xReturnSize = 235
+            yReturnSize = 95
+
         
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], self.hoverAltitude, 

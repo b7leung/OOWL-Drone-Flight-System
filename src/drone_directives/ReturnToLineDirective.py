@@ -53,15 +53,15 @@ class ReturnToLineDirective(AbstractDroneDirective):
         cy = navdata[1][0][1]     
         angle = navdata[1][1]
 
-        cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
+        #cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
         
         hasPlatform = False
         # thresh in degrees
         thresh = 15 
         for line in lines:
             if line!=None:
-                # original line was found if angle & position match original, to some threshold
-                if ( self.InsideCircle(line[1], (cx,cy), self.radiusThresh ) and
+                # original line was found if angle matches original, to some threshold
+                if ( 
                 (abs(angle - line[0]) < thresh or abs(angle - line[0]) > (180 - thresh)) ):
                     hasPlatform = True
                     cv2.circle(image, line[1], 15, (0,255,0), -1)
@@ -71,12 +71,12 @@ class ReturnToLineDirective(AbstractDroneDirective):
                     cv2.circle(image, line[1], 15, (0,0,255), 5)
  
         if hasPlatform:
-            rospy.logwarn("Returned to platform")
+            rospy.logwarn("Returned to " + self.lineColor + " line")
             directiveStatus = 1
             zspeed = 0
 
         else:
-            rospy.logwarn("Returning to platform")
+            rospy.logwarn("Returning to "+ self.lineColor + " line")
             directiveStatus = 0
             zspeed = 0.3
 
