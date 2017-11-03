@@ -113,6 +113,13 @@ class StateMachine(object):
                     # if error flag was on, just turn it off and go back the state before error occurred
                     if self.errorFlag:
                         rospy.logwarn("Error state over; returning")
+                        oldState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][0]
+                        # if the current directive has an OnErrorReturn() method, call it to perform any clean-up work after returning
+                        if ( hasattr( oldState, 'OnErrorReturn' ) and callable (oldState.OnErrorReturn) and 
+                            self.stateMachineDef[self.currPhase][1] != -1 ):
+                            #debt; customized to get 1st (center). should be generic
+                            oldState.OnErrorReturn(coordinate[0])
+                        self.errorDuration = 0
                         self.errorFlag = False
                         if isinstance(self.lastLocation[0], tuple):
                             self.receiver.SetCenter(self.lastLocation[0])
@@ -146,7 +153,7 @@ class StateMachine(object):
                 self.errorCount +=1 
                 currStateError = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]
 
-                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=7:
+                if len(currStateError) == 3 and currStateError[2] != None and self.errorCount >=4:
                     self.errorFlag = True
 
             return droneInstructions, image, self.moveTime, self.waitTime

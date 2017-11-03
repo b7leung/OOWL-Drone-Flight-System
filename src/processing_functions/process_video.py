@@ -38,11 +38,14 @@ class ProcessVideo(object):
             #s_min = 50
             #s_max = 254
             #for when lighting is bright
+            """
             s_min = 94
             s_max = 255
             hsv_boundaries = [( [0, s_min, 170],[10, s_max, 255] )]
-            #lower  hsv boundary #172 50 180,180 254 255
             hsv_boundaries2 = [([174, s_min, 180],[180, s_max, 255])]
+            """
+            hsv_boundaries = [( [0, 94, 170],[12, 255, 255] )]
+            hsv_boundaries2 = [([174, 94, 180],[180, 255, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -198,7 +201,8 @@ class ProcessVideo(object):
                     #cv2.drawContours(drawImg, [c], -1, (255, 191, 30), 4)
                     #cv2.circle(drawImg, (cX, cY), 7, (0,255,0), -1)
                     
-                    lines.append((angle, (cX,cY)))
+                    # line angle, center, endpoint 1, endpoint 2, length
+                    lines.append((angle, (cX,cY), longest[0], longest[1], longest[2]))
 
                 drawn += 1
         # to do, debt

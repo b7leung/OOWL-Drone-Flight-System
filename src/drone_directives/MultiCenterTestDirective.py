@@ -29,7 +29,7 @@ class MultiCenterTestDirective(AbstractDroneDirective):
         #image = self.processVideo.RemoveNoise(image, 2)
         #image = self.processVideo.RemoveNoise(navdata["segImage"])
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4,4))
-        image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+        #image = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
 
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]

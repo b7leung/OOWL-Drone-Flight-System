@@ -65,8 +65,8 @@ class FollowLineDirective(AbstractDroneDirective):
         newCenter = None
 
         # alternate way to finish
-        xWindowSize = 220
-        yWindowSize = 135
+        xWindowSize = 200
+        yWindowSize = 120
         xLower = 320 - xWindowSize
         yLower = 180 - yWindowSize
         xUpper = 320 + xWindowSize

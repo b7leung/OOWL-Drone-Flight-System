@@ -23,6 +23,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
         self.lineColor = lineColor
         self.moveTime = 0.20
         self.waitTime = 0.10
+        self.bestPlatformFound = None
     
     def InsideCircle(self, point, circleCenter, circleRadius):
         x = point[0]
@@ -41,10 +42,20 @@ class ReturnToColorDirective(AbstractDroneDirective):
             else:
                 return False
         else:
-            slope = (point[1]-linePoint[1])/(point[0]-linePoint[0])
-            if( abs( math.tan(lineAngle) - slope) < thresh ):
+            # slope compensates for a upper left origin coord system
+            slope = (float(linePoint[1])-point[1]) / (point[0]-float(linePoint[0]))
+
+            slopeAngle = math.degrees(math.atan(slope))
+            if slopeAngle < 0:
+                #rospy.logwarn("seen added 180")
+                slopeAngle += 180
+            #rospy.logwarn(str(point) + str(linePoint) +" >> slope: " + str(slope))
+            #rospy.logwarn("Original: " + str(lineAngle) + " seen: " + str(slopeAngle))
+            if( abs( lineAngle - slopeAngle) < thresh):
+                #rospy.logwarn("GOOD")
                 return True
             else:
+                #rospy.logwarn("BAD")
                 return False
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -75,36 +86,32 @@ class ReturnToColorDirective(AbstractDroneDirective):
         # find last platform based on last seen line angle
         if lastAngle != None:
             lines, image = self.processVideo.MultiShowLine(lineSeg, sort = False)
-            # angle of seen line must be within thresh (degrees)
-            thresh = 15
+            thresh = 26
+            validLine = None
+            # picks the line closest to last angle, and within thresh (degrees)
             for line in lines:
-                # checking relative to distance to 90 degrees
-                if( line != None and ( abs( abs(lastAngle -90) - abs(line[0]-90) ) < thresh ) ):
-                    # finding center closest to that valid line
-                    for c in centers:
-                        if self.PointAlongLine(line[1], line[0], c, 15):
-                            cx, cy = c[0], c[1]
-                            cv2.circle(image, (cx,cy), 12, (0,255,0), -1)
-                            cv2.circle(image, (cx,cy), 12, (255,255,255), 7)
-                            cv2.circle(image, line[1], 7, (0,255,0), -1)
-                            cv2.circle(image, line[1], 7, (255,255,255), 4)
-                            hasPlatform = True
+                #rospy.logwarn("last: " + str(lastAngle) + " this: " + str(line[0]))
+                angleDifference = min( abs(lastAngle -line[0]), 180 -abs(lastAngle -line[0]) ) 
+                if( line != None and angleDifference < thresh and (validLine == None or validLine[1] > angleDifference) ):
+                    #rospy.logwarn("valid")
+                    validLine = (line, angleDifference)
 
-        """
-        if cx == None or cy == None :
-            rospy.logwarn("Returning -- no " + self.platformColor + " detected @ this altitude, increasing altitude")
-            return 0, (0,0,0,0.5),image, (cx,cy), 0, 0
-
-        cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
-
-
-        for c in centers:
-
-            cv2.circle(image, c, 10, (0,255,255), -1)
-            if self.InsideCircle( c , (cx,cy), self.radiusThresh):
-                hasPlatform = True
-                cx, cy = c[0], c[1]
-        """
+            if validLine != None:
+                line = validLine[0]
+                # finding center closest to the most valid line
+                for c in centers:
+                    alongLine = self.PointAlongLine(line[1], line[0], c, 25)
+                    # blue line => orient perpendicular => valid point must be to the left of line
+                    if self.lineColor == "blue" and c[0] > line[1][0]:
+                        alongLine = False
+                    if alongLine:
+                        cv2.line(image, line[1], c, (0,255,255),3)
+                        cx, cy = c[0], c[1]
+                        cv2.circle(image, (cx,cy), 12, (0,255,0), -1)
+                        cv2.circle(image, (cx,cy), 12, (255,255,255), 7)
+                        cv2.circle(image, line[1], 7, (0,255,0), -1)
+                        cv2.circle(image, line[1], 7, (255,255,255), 4)
+                        hasPlatform = True
         
         if hasPlatform:
             rospy.logwarn("Returned to platform")
@@ -112,7 +119,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
             zspeed = 0
 
         else:
-            rospy.logwarn("Returning to platform")
+            rospy.logwarn("Returning to platform -- last angle seen was "+ str(lastAngle))
             directiveStatus = 0
             zspeed = 0.5
 
@@ -128,5 +135,10 @@ class ReturnToColorDirective(AbstractDroneDirective):
         cv2.rectangle(image, (border-1*offset, border-1*offset), (640-border+1*offset,360-border+1*offset), (0,229, 255), 1)
         cv2.rectangle(image, (border-2*offset, border-2*offset), (640-border+2*offset,360-border+2*offset), (0,0, 255), 1)
         return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy), lastAngle), self.moveTime, self.waitTime, None
+
+    def Finished(self):
+        rospy.logwarn("RETURN TO COLOR FINISHED *******************")
+        rospy.logwarn("RETURN TO COLOR FINISHED *******************")
+        self.bestPlatformFound = None
         
 
