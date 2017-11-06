@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Lipton Brisk Iced Tea Can"
+        self.objectName = "Coca Cola Can"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -172,8 +172,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
             ]
             
-            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 10)
-            orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink"), 10)
+            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 4)
+            orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink"), 4)
             blueLineErr = (ReturnToLineDirective('blue'), 6)
 
             angles = 8
@@ -247,13 +247,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             blueLineErr = (ReturnToLineDirective('blue'), 10)
             #orangePlatformErr = (ReturnToColorDirective('orange'), 10)
             orangePlatformErr = None
+            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 10)
 
             #testalg = ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
-            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, error )
+            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, orangePlatformErrHoriz)
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            testalg = ( MultiCenterTestDirective("orange"), 6)
+            testalg = ( MultiCenterTestDirective("pink"), 6)
 
             algCycles = -1
 

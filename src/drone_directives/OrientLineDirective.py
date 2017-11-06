@@ -112,7 +112,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 return directiveStatus, (0,0,0,0), segLineImage, (cx,cy), 0,0, None
             else:
                 self.prevCenter = (cx,cy)
-
+        
 
         if self.orientation == "PARALLEL":
             lines, segLineImage = self.processVideo.MultiShowLine(segLineImage, sort = False)
@@ -127,7 +127,7 @@ class OrientLineDirective(AbstractDroneDirective):
                     dist = math.sqrt( math.pow((line[1][1] - cy),2) 
                     + math.pow((line[1][0] - cx),2 ) ) 
 
-                    if( line != None and (closest == None or dist < closestDist) ):
+                    if( line != None and line[4] > 30 and (closest == None or (dist < closestDist)) ):
 
                         closest = line
                         angle = closest[0]
@@ -144,7 +144,7 @@ class OrientLineDirective(AbstractDroneDirective):
             if angle != None:
 
                 # checking if previous angle is consistent with current one
-                if self.prevAngle == None or abs(self.prevAngle - angle) < 27:
+                if self.prevAngle == None or min( abs(self.prevAngle - angle), 180 - abs(self.prevAngle - angle) ) < 17:
                     self.prevAngle = angle
                 else:
                     rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch")
@@ -195,7 +195,7 @@ class OrientLineDirective(AbstractDroneDirective):
             #converting angle
             if angle != None:
                 # checking if previous angle is consistent with current one
-                if self.prevAngle == None or abs(self.prevAngle - angle) < 27:
+                if self.prevAngle == None or min( abs(self.prevAngle - angle), 180 - abs(self.prevAngle - angle) ) < 27:
                     self.prevAngle = angle
                 else:
                     rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch")
@@ -301,5 +301,7 @@ class OrientLineDirective(AbstractDroneDirective):
 
     def OnErrorReturn(self, returnData):
         # set previous center to what was found in the error algorithm
+        rospy.logwarn("ORIENT LINE ON ERROR RETURN***")
         self.prevCenter = returnData
+        self.prevAngle == None
 

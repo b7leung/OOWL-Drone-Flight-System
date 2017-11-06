@@ -51,7 +51,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
                 slopeAngle += 180
             #rospy.logwarn(str(point) + str(linePoint) +" >> slope: " + str(slope))
             #rospy.logwarn("Original: " + str(lineAngle) + " seen: " + str(slopeAngle))
-            if( abs( lineAngle - slopeAngle) < thresh):
+            if( min( abs( lineAngle - slopeAngle), 180 - abs( lineAngle - slopeAngle) ) < thresh):
                 #rospy.logwarn("GOOD")
                 return True
             else:
@@ -86,6 +86,9 @@ class ReturnToColorDirective(AbstractDroneDirective):
         # find last platform based on last seen line angle
         if lastAngle != None:
             lines, image = self.processVideo.MultiShowLine(lineSeg, sort = False)
+            for center in centers:
+                cv2.circle(image, center, 4, (255,255,255), -1)
+
             thresh = 26
             validLine = None
             # picks the line closest to last angle, and within thresh (degrees)
@@ -105,6 +108,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
                     if self.lineColor == "blue" and c[0] > line[1][0]:
                         alongLine = False
                     if alongLine:
+                        lastAngle = line[0]
                         cv2.line(image, line[1], c, (0,255,255),3)
                         cx, cy = c[0], c[1]
                         cv2.circle(image, (cx,cy), 12, (0,255,0), -1)
@@ -114,7 +118,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
                         hasPlatform = True
         
         if hasPlatform:
-            rospy.logwarn("Returned to platform")
+            rospy.logwarn("Successfully returned to platform -- last angle seen was "+ str(lastAngle))
             directiveStatus = 1
             zspeed = 0
 

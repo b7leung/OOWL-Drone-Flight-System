@@ -44,8 +44,8 @@ class ProcessVideo(object):
             hsv_boundaries = [( [0, s_min, 170],[10, s_max, 255] )]
             hsv_boundaries2 = [([174, s_min, 180],[180, s_max, 255])]
             """
-            hsv_boundaries = [( [0, 94, 170],[12, 255, 255] )]
-            hsv_boundaries2 = [([174, 94, 180],[180, 255, 255])]
+            hsv_boundaries = [( [0, 61, 120],[15, 255, 255] )]
+            hsv_boundaries2 = [([174, 61, 120],[180, 255, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")
@@ -73,7 +73,10 @@ class ProcessVideo(object):
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
 
         elif(color=='pink'):
-            hsv_boundaries = [ ([161, 68, 127],[171, 209, 255])]
+            #duct tape
+            #hsv_boundaries = [ ([161, 68, 127],[171, 209, 255])]
+            # printed
+            hsv_boundaries = [ ([161, 68, 127],[172, 255, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
 
@@ -861,9 +864,10 @@ class ProcessVideo(object):
             isCircle = True
             perimeter = cv2.arcLength(shape,True)
             #if the shape is too small, it is most likely noise, and we wish to disregard it
-            if perimeter > (0.06)*imagePerimeter:
+            if perimeter > (0.05)*imagePerimeter:
             #finds shapes that are within a certain percentage of original shape perimeter
-                vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
+                vertices = cv2.approxPolyDP(shape, 0.009* perimeter,True)
+                #vertices = cv2.approxPolyDP(shape, 0.009 * perimeter,True)
                 numVertices = len(vertices)
                 #the shape is determined by the number of vertices,i.e. a triangle has 3, square has 4, 
                 #pentagon has 5, and anything above will be considered circular.
@@ -905,7 +909,7 @@ class ProcessVideo(object):
                             if lastLocation == (None,None):
                                  #draw circle onto image
                                 cv2.circle(segmentedImage, center,1,(255,255,255),-1)
-                                cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
+                                cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),4)
                                 #cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
                                 #this will return after the first circle is detected
                                 return segmentedImage, averageRadius, center
@@ -936,7 +940,7 @@ class ProcessVideo(object):
             averageRadius = nearestCircle[1]
             #draw circle onto image
             cv2.circle(segmentedImage, center,1,(255,255,255),-1)
-            cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),2)
+            cv2.circle(segmentedImage,center, int(averageRadius),(255,255,255),4)
             #cv2.drawContours(segmentedImage,[vertices],-1,(0,255,0),2)
             #this will return after the first circle is detected
             return segmentedImage, averageRadius, center
