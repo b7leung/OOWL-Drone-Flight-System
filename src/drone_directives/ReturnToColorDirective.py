@@ -89,7 +89,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
             for center in centers:
                 cv2.circle(image, center, 4, (255,255,255), -1)
 
-            thresh = 26
+            thresh = 21
             validLine = None
             # picks the line closest to last angle, and within thresh (degrees)
             for line in lines:

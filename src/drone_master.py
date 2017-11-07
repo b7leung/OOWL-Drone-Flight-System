@@ -177,22 +177,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             blueLineErr = (ReturnToLineDirective('blue'), 6)
 
             angles = 8
+            photoDirective = CapturePhotoDirective(self.droneRecordPath, 5, 0.24, self.objectName, angles, objectAltitude)
+
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 10, orangePlatformErrParallel ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective(self.droneRecordPath, 5, 0.24, self.objectName, angles, objectAltitude), 1 ),
+            ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErrHoriz ),
             ( FollowLineDirective('blue', speed = 0.09), 7, blueLineErr )
             ]
-            testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
             
+            # land on the 8th angle
             end = [
-            ( OrientLineDirective('PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErrParallel ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
+            ( photoDirective, 1 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( LandDirective(), 1)
             ]
 
-            self.MachineSwitch( None, alg, angles, end, AUTO_CIRCLE_MACHINE)
+            self.MachineSwitch( None, alg, angles-1, end, AUTO_CIRCLE_MACHINE)
 
         elif key == ord('a'):
 
