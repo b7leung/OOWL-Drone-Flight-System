@@ -160,8 +160,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1400 
-            objectAltitude = 1400
+            flightAltitude = 1250 
+            objectAltitude = 1250
                         
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -184,8 +184,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 8, orangePlatformErrHoriz ),
-            ( FollowLineDirective('blue', speed = 0.09), 7, blueLineErr )
+            ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 6, orangePlatformErrHoriz ),
+            ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]
             
             # land on the 8th angle
@@ -193,7 +193,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
+            ( SetCameraDirective("BOTTOM"), 1 ),
             ( LandDirective(), 1)
             ]
 

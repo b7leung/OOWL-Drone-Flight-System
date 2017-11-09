@@ -147,7 +147,8 @@ class OrientLineDirective(AbstractDroneDirective):
                 if self.prevAngle == None or min( abs(self.prevAngle - angle), 180 - abs(self.prevAngle - angle) ) < 17:
                     self.prevAngle = angle
                 else:
-                    rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch")
+                    rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch. Before: " +
+                    str(self.prevAngle) + " Now: " + str(angle))
                     directiveStatus = -1
                     return directiveStatus, (0,0,0,0), segLineImage, ((cx,cy), self.prevAngle), 0,0, None
 
@@ -198,7 +199,8 @@ class OrientLineDirective(AbstractDroneDirective):
                 if self.prevAngle == None or min( abs(self.prevAngle - angle), 180 - abs(self.prevAngle - angle) ) < 27:
                     self.prevAngle = angle
                 else:
-                    rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch")
+                    rospy.logwarn("ERROR: ORIGINAL CENTER LOST; angle mismatch. Before: " +
+                    str(self.prevAngle) + " Now: " + str(angle))
                     directiveStatus = -1
                     return directiveStatus, (0,0,0,0), segLineImage, ((cx,cy), self.prevAngle), 0,0, None
 
@@ -220,9 +222,6 @@ class OrientLineDirective(AbstractDroneDirective):
             # the center; yaw will be turned off
             xReturnSize = 235
             yReturnSize = 95
-
-        
-
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], self.hoverAltitude, 
