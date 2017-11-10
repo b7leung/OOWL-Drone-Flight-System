@@ -36,7 +36,7 @@ class FollowLineDirective(AbstractDroneDirective):
     def RetrieveNextInstruction(self, image, navdata):
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
-        platforms = (self.processVideo.MultiCenterOfMass(navdata["segImage"]))[0]
+        platforms = navdata["allCenters"][1]
 
         lines, image = self.processVideo.MultiShowLine(segLineImage)
 

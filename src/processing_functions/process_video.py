@@ -44,8 +44,9 @@ class ProcessVideo(object):
             hsv_boundaries = [( [0, s_min, 170],[10, s_max, 255] )]
             hsv_boundaries2 = [([174, s_min, 180],[180, s_max, 255])]
             """
-            hsv_boundaries = [( [0, 61, 120],[15, 255, 255] )]
-            hsv_boundaries2 = [([174, 61, 120],[180, 255, 255])]
+            hsv_boundaries = [( [0, 75, 120],[15, 255, 255] )]
+            hsv_boundaries2 = [([178, 75, 120],[180, 255, 255])]
+            #hsv_boundaries2 = [([174, 61, 120],[180, 255, 255])]
             lower=array(hsv_boundaries[0][0], dtype = "uint8")
             upper= array(hsv_boundaries[0][1],dtype = "uint8")
             lower2=array(hsv_boundaries2[0][0], dtype = "uint8")

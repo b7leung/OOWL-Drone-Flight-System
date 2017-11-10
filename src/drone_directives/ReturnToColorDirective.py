@@ -73,8 +73,9 @@ class ReturnToColorDirective(AbstractDroneDirective):
         lineSeg = self.processVideo.DetectColor(image, self.lineColor)
         #platformSeg = self.processVideo.DetectColor(image, self.platformColor)
         #platformSeg = self.processVideo.RemoveNoise(platformSeg)
-        platformSeg = navdata[0]["segImage"]
-        centers, _ = self.processVideo.MultiCenterOfMass(platformSeg)
+        #platformSeg = navdata[0]["segImage"]
+        #centers, _ = self.processVideo.MultiCenterOfMass(platformSeg)
+        centers = navdata[0]["allCenters"][1]
 
         #navdata stores the last location in the case of an error
         cx = navdata[1][0][0]

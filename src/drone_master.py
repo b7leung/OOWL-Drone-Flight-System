@@ -177,7 +177,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             blueLineErr = (ReturnToLineDirective('blue'), 6)
 
             angles = 8
-            photoDirective = CapturePhotoDirective(self.droneRecordPath, 5, 0.24, self.objectName, angles, objectAltitude)
+            photoDirective = CapturePhotoDirective(self.droneRecordPath, 10, 0.12, self.objectName, angles, objectAltitude)
 
             alg = [
             ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
@@ -259,7 +259,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, orangePlatformErrHoriz)
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            testalg = ( MultiCenterTestDirective("pink"), 6)
+            testalg = ( MultiCenterTestDirective("orange"), 6)
 
             algCycles = -1
 

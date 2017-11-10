@@ -25,7 +25,7 @@ class MultiCenterTestDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        image = navdata["segImage"]
+        image = self.processVideo.RemoveNoise(navdata["segImage"])
         alt = int(navdata["SVCLAltitude"][1])
         rospy.logwarn("Curr Altitude = " + str(alt))
         if alt == -1:
