@@ -77,20 +77,45 @@ class OrientLineDirective(AbstractDroneDirective):
                         rightmostCenter = centers[i]
                 self.forceCenter = rightmostCenter
             else:
-                # pick the center that is under a vertical line
+                # pick the center that is left of most horizontal blue line
                 # finding most vertical line
-                objectLineImg = self.processVideo.DetectColor(image, "pink")
+                objectLineImg = self.processVideo.DetectColor(image, "blue")
                 objectLines, objectLineImg= self.processVideo.MultiShowLine(objectLineImg, sort = False)
+                #mostHorizontal = None
                 mostVertical = None
                 for line in objectLines:
                     if line != None:
                         if mostVertical == None or ((abs(90-line[0]) < abs(90 - mostVertical[0])) and line[4] > 30):
+                        #if ( mostHorizontal == None or
+                        #( min(mostHorizontal[0], 180 - mostHorizontal[0] ) > (min(line[0], 180 - line[0] ) )
+                        #and line[4] > 30 ) ):
+                            #mostHorizontal = line
                             mostVertical = line
-                # finding center closest to that vertical line
+
+                """
+                # finding center closest to the left endpoint of that vertical line
+                if mostHorizontal[2][0] < mostHorizontal[3][0]:
+                    leftEndpoint = mostHorizontal[2]
+                else:
+                    leftEndpoint = mostHorizontal[3]
+                """
+
                 correctCenter = centers[0]
+
                 for i in range(len(centers)):
+                    """
+                    correctEndpointDist = math.sqrt( math.pow((correctCenter[1] - leftEndpoint[1]),2) 
+                    + math.pow((correctCenter[0] - leftEndpoint[0]),2 ) ) 
+
+                    currEndpointDist = math.sqrt( math.pow((centers[i][1] - leftEndpoint[1]),2) 
+                    + math.pow((centers[i][0] - leftEndpoint[0]),2 ) ) 
+                    
+                    if currEndpointDist < correctEndpointDist:
+                        correctCenter = centers[i]
+                    """
                     if abs(mostVertical[1][0] - centers[i][0]) < abs(mostVertical[1][0] - correctCenter[0]):
                         correctCenter = centers[i]
+
                 self.forceCenter = correctCenter
 
         elif cx != None and cy != None:
@@ -159,14 +184,14 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 16, yawspeed = 0.50)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 11, yawspeed = 0.50)
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 130
-            yWindowSize = 95
-            altLowerTolerance = 135
-            altUpperTolerance = 225
+            xWindowSize = 80
+            yWindowSize = 80
+            altLowerTolerance = 10
+            altUpperTolerance = 90
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
             xReturnSize = 185

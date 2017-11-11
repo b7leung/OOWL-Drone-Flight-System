@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Coca Cola Can"
+        self.objectName = "Dell XPS 13 Laptop"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -137,8 +137,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
            
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1200
-            objectAltitude = 1260
+            flightAltitude = 1300
+            objectAltitude = 1300
             self.captureRound+=0.5
 
             orangePlatformErr = (ReturnToColorDirective('orange'), 4)
@@ -160,8 +160,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1250 
-            objectAltitude = 1250
+            flightAltitude = 1380 
+            objectAltitude = 1380
                         
             init = [
             ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
@@ -177,10 +177,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             blueLineErr = (ReturnToLineDirective('blue'), 6)
 
             angles = 8
-            photoDirective = CapturePhotoDirective(self.droneRecordPath, 10, 0.12, self.objectName, angles, objectAltitude)
+            photoDirective = CapturePhotoDirective(self.droneRecordPath, 20, 0.07, self.objectName, angles, objectAltitude)
 
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
@@ -190,7 +190,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             
             # land on the 8th angle
             end = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 6, orangePlatformErrParallel ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 4, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ),
