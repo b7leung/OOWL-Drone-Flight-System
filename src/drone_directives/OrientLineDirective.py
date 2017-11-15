@@ -190,8 +190,10 @@ class OrientLineDirective(AbstractDroneDirective):
                 yawspeed = -1*yawspeed
             xWindowSize = 80
             yWindowSize = 80
+            xWindowOffset = 0
+            yWindowOffset = -50
             altLowerTolerance = 10
-            altUpperTolerance = 90
+            altUpperTolerance = 65
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
             xReturnSize = 185
@@ -239,18 +241,21 @@ class OrientLineDirective(AbstractDroneDirective):
             yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.50)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 235
+            xWindowSize = 195
             yWindowSize = 95
+            xWindowOffset = 0
+            yWindowOffset = 0
             altLowerTolerance = 200
             altUpperTolerance = 250
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
-            xReturnSize = 235
+            xReturnSize = 195
             yReturnSize = 95
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], self.hoverAltitude, 
-        xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = (altLowerTolerance, altUpperTolerance))
+        xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = (altLowerTolerance, altUpperTolerance),
+        xOffset = xWindowOffset, yOffset = yWindowOffset)
 
         #draws center of circle on image
         
@@ -259,10 +264,10 @@ class OrientLineDirective(AbstractDroneDirective):
         centery = numRows/2
 
         # box defines when the directive is finished
-        xLower = centerx-xReturnSize
-        yLower = centery-yReturnSize
-        xUpper = centerx+xReturnSize
-        yUpper = centery+yReturnSize
+        xLower = centerx-xReturnSize + xWindowOffset
+        yLower = centery-yReturnSize - yWindowOffset
+        xUpper = centerx+xReturnSize + xWindowOffset
+        yUpper = centery+yReturnSize - yWindowOffset
 
         # perpendicular can disregard height
         #if self.orientation == "PERPENDICULAR":

@@ -57,7 +57,7 @@ class ReturnToLineDirective(AbstractDroneDirective):
         
         hasPlatform = False
         # thresh in degrees
-        thresh = 15 
+        thresh = 18 
         for line in lines:
             if line!=None:
                 # original line was found if angle matches original, to some threshold

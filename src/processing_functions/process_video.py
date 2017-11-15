@@ -543,7 +543,7 @@ class ProcessVideo(object):
     # ztolerance is a tuple of (lower bound tolerance, upper bound tolerance)
     
     def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None,
-    xtolerance = 20, ytolerance = 20, ztolerance = (75,75) ):
+    xtolerance = 20, ytolerance = 20, ztolerance = (75,75), xOffset = 0, yOffset = 0):
 
         numrows,numcols,channels = image.shape
 
@@ -553,10 +553,10 @@ class ProcessVideo(object):
         #create a "window" for desired center of mass position
         width = xtolerance 
         height = ytolerance
-        xlower = centerx-width #left xvalue
-        ylower = centery-height #"top" yvalue
-        xupper = centerx+width #right xvalue
-        yupper = centery+height #"bottom" yvalue
+        xlower = centerx-width + xOffset #left xvalue
+        ylower = centery-height - yOffset #"top" yvalue
+        xupper = centerx+width + xOffset #right xvalue
+        yupper = centery+height - yOffset #"bottom" yvalue
 
         # alpha changes depending on if (cx,cy) is in blue box or not
         zoneLeft = centerx - centerx/2
