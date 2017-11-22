@@ -98,9 +98,12 @@ class StateMachine(object):
                 if self.stateFinishedCounter >= currStateDuration:
                     
                     # if the current directive has a Finished() method, call it to perform any clean-up work
+                    # finished() returns either a (x,y) describing the final center of that state, or None if not applicable.
                     if ( hasattr( currState, 'Finished' ) and callable (currState.Finished ) and 
                     self.stateMachineDef[self.currPhase][1] != -1 ):
-                        currState.Finished()
+                        lastCenter = currState.Finished()
+                        if lastCenter != None:
+                            self.receiver.UpdateRecordedCenter(lastCenter)
                     
                     # update center if directive calls for it
                     if newCenter != None:

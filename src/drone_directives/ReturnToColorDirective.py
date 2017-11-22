@@ -14,14 +14,14 @@ class ReturnToColorDirective(AbstractDroneDirective):
 
     # sets up this directive
     # platformColor: color of the platform to return to
-    def __init__(self, platformColor, lineColor, speedModifier = 0.5, radiusThresh = 170):
+    def __init__(self, platformColor, lineColor, speedModifier = 0.6, radiusThresh = 170):
 
         self.platformColor = platformColor
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
         self.radiusThresh = radiusThresh
         self.lineColor = lineColor
-        self.moveTime = 0.20
+        self.moveTime = 0.35
         self.waitTime = 0.10
         self.bestPlatformFound = None
     
@@ -117,6 +117,21 @@ class ReturnToColorDirective(AbstractDroneDirective):
                         cv2.circle(image, line[1], 7, (0,255,0), -1)
                         cv2.circle(image, line[1], 7, (255,255,255), 4)
                         hasPlatform = True
+
+        # if no angle was found, just use location
+        else:
+
+            image = navdata[0]["segImage"]
+
+            cv2.circle(image, (cx,cy), self.radiusThresh, (0,255,0), 1)
+            cv2.circle(image, (cx,cy), 7, (0,255,0), -1)
+
+            for c in centers:
+
+                cv2.circle(image, c, 10, (0,255,255), -1)
+                if self.InsideCircle( c , (cx,cy), self.radiusThresh):
+                    hasPlatform = True
+                    cx, cy = c[0], c[1]
         
         if hasPlatform:
             rospy.logwarn("Successfully returned to platform -- last angle seen was "+ str(lastAngle))
@@ -131,6 +146,8 @@ class ReturnToColorDirective(AbstractDroneDirective):
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image.copy(), cx, cy,
         ytolerance = 50, xtolerance = 50)
         
+        xspeed = min( xspeed * self.speedModifier, 1 )
+        yspeed = min( yspeed * self.speedModifier, 1 )
         rospy.logwarn("X Speed: " + str(xspeed) + " Y Speed: " + str(yspeed))
         
         # draw rectangles so it's easy to tell that it's in return mode
@@ -139,11 +156,13 @@ class ReturnToColorDirective(AbstractDroneDirective):
         cv2.rectangle(image, (border, border), (640-border,360-border), (0,0, 255), 1)
         cv2.rectangle(image, (border-1*offset, border-1*offset), (640-border+1*offset,360-border+1*offset), (0,229, 255), 1)
         cv2.rectangle(image, (border-2*offset, border-2*offset), (640-border+2*offset,360-border+2*offset), (0,0, 255), 1)
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy), lastAngle), self.moveTime, self.waitTime, None
+
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), image, ((cx,cy), lastAngle), self.moveTime, self.waitTime, None
 
     def Finished(self):
         rospy.logwarn("RETURN TO COLOR FINISHED *******************")
         rospy.logwarn("RETURN TO COLOR FINISHED *******************")
         self.bestPlatformFound = None
+        return None
         
 

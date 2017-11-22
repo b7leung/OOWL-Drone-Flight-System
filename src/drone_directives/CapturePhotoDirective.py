@@ -89,4 +89,5 @@ class CapturePhotoDirective(AbstractDroneDirective):
         self.picturesTaken = 1
         self.captureRound += 1
         self.shownInitMessage = False
+        return None
 

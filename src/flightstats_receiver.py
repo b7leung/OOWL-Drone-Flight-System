@@ -36,6 +36,7 @@ class FlightstatsReceiver(object):
         self.flightInfo["SVCLAltitude"] = ["SVCL Altitude: ", -1, "mm", ""]
         self.flightInfo["center"] = ["Inferred Center: ", self.defaultValue, "", ""]
         self.flightInfo["lastCenter"] = ["Previous Center: ", (None,None), "", ""]
+        self.flightInfo["lastRecordedCenter"] = ["Last Recorded Algorithm Center: ", (None,None), "", ""]
         self.flightInfo["allCenters"] = ["All Centers: ", self.defaultValue, "", ""]
 
         self.flightInfo["rotX"]=["Left/Right Tilt: ", self.defaultValue, u'\N{DEGREE SIGN}', ""]
@@ -224,6 +225,10 @@ class FlightstatsReceiver(object):
     # force set what the center is
     def SetCenter(self, center):
         self.lastLoc = center
+
+
+    def UpdateRecordedCenter(self, center):
+        (self.flightInfo["lastRecordedCenter"][1]) = center 
 
 
     def UpdateAltitude(self, altitude):

@@ -30,7 +30,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.platformColor = platformColor
         self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-        self.moveTime=0.2
+        self.moveTime=0.30
         self.waitTime=0.1
         self.prevCenter = None
         self.forceCenter = None
@@ -241,15 +241,15 @@ class OrientLineDirective(AbstractDroneDirective):
             yawspeed = self.processVideo.LineOrientation(segLineImage, angle, 9, yawspeed = 0.50)
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 195
+            xWindowSize = 295
             yWindowSize = 95
-            xWindowOffset = 0
+            xWindowOffset = -100
             yWindowOffset = 0
             altLowerTolerance = 200
             altUpperTolerance = 250
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
-            xReturnSize = 195
+            xReturnSize = 295
             yReturnSize = 95
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
@@ -324,9 +324,11 @@ class OrientLineDirective(AbstractDroneDirective):
 
 
     def Finished(self):
+        center = self.prevCenter
         self.prevAngle = None
         self.prevCenter = None
         self.forceCenter = None
+        return center
 
     def OnErrorReturn(self, returnData):
         # set previous center to what was found in the error algorithm

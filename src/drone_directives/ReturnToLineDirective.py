@@ -20,7 +20,7 @@ class ReturnToLineDirective(AbstractDroneDirective):
         self.processVideo = ProcessVideo()
         self.speedModifier = speedModifier
         self.radiusThresh = radiusThresh
-        self.moveTime = 0.20
+        self.moveTime = 0.25
         self.waitTime = 0.10
 
     def InsideCircle(self, point, circleCenter, circleRadius):
@@ -88,10 +88,12 @@ class ReturnToLineDirective(AbstractDroneDirective):
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image, cx, cy,
         ytolerance = 50, xtolerance = 50)
         
+        yspeed = min( yspeed * self.speedModifier, 1 )
+        xspeed = min( xspeed * self.speedModifier, 1 )
         rospy.logwarn("X Speed: " + str(xspeed) + " Y Speed: " + str(yspeed))
 
         self.processVideo.DrawCircle(image ,(cx,cy))
 
-        return directiveStatus, (xspeed*self.speedModifier, yspeed*self.speedModifier, 0, zspeed), image, ((cx,cy),angle), self.moveTime, self.waitTime, None
+        return directiveStatus, (xspeed, yspeed, 0, zspeed), image, ((cx,cy),angle), self.moveTime, self.waitTime, None
         
 

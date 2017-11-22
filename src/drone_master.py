@@ -42,7 +42,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Expo Whiteboard Eraser"
+        self.objectName = "GREEN_SCREEN"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -172,18 +172,20 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
             ]
             
-            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 4)
-            orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink"), 4)
-            blueLineErr = (ReturnToLineDirective('blue'), 6)
+            orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue", speedModifier = 0.85), 4)
+            orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink", speedModifier = 0.85), 4)
+            blueLineErr = (ReturnToLineDirective('blue', speedModifier = 0.85), 6)
 
             angles = 8
-            photoDirective = CapturePhotoDirective(self.droneRecordPath, 20, 0.07, self.objectName, angles, objectAltitude)
+            #30
+            photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.04, self.objectName, angles, objectAltitude)
 
             alg = [
             ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 2, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
+            ( ResumePlatformDirective('orange', speedModifier = 0), 2),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 5, orangePlatformErrHoriz ),
             ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]

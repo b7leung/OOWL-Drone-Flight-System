@@ -160,4 +160,5 @@ class FollowLineDirective(AbstractDroneDirective):
     def Finished(self):
         self.prevAngle = None
         self.prevAngleCount = 0
+        return None
 
