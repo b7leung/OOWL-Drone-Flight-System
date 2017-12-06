@@ -31,6 +31,9 @@ class CapturePhotoDirective(AbstractDroneDirective):
         self.picturesTaken = 1
         self.lastTaken = time.clock()
         self.shownInitMessage = False
+
+        # stores the images in the form of a tuple (image, filename)
+        self.imageCache = []
     
 
     # given the image and navdata of the drone, returns the following in order:
@@ -68,9 +71,10 @@ class CapturePhotoDirective(AbstractDroneDirective):
                     else:
                         altitude = str(altitude)
                 pictureName = ( str(currAngle) + " Degrees _ Picture " + str(self.picturesTaken) 
-                + " _ " + altitude + " mm _ " + self.objectName + " _ " + datetime.datetime.now().isoformat() )
-                pictureName = self.pictureManager.Capture(image, imageName = pictureName)
-                rospy.logwarn("Saved picture # " + str(self.picturesTaken) + " as " + pictureName)
+                + " _ " + self.objectName )
+                self.imageCache.append((image, pictureName))
+                #pictureName = self.pictureManager.Capture(image, imageName = pictureName)
+                rospy.logwarn("Took picture # " + str(self.picturesTaken) + " as " + pictureName + ".png")
                 self.picturesTaken += 1
                 self.lastTaken = time.clock()
 
@@ -90,4 +94,20 @@ class CapturePhotoDirective(AbstractDroneDirective):
         self.captureRound += 1
         self.shownInitMessage = False
         return None
+
+    # saves all the images stored in the cache
+    def SavePhotos(self, image, navdata):
+        rospy.logwarn("Processing the " + str(len(self.imageCache)) + " pictures taken ...")
+        pictureNum = 1
+        
+        for image in self.imageCache:
+            pictureName = self.pictureManager.Capture(image[0], imageName = image[1])
+            rospy.logwarn( "Saving picture " + str(pictureNum) + "/" + str(len(self.imageCache)) + " : " + pictureName)
+            pictureNum += 1
+
+        rospy.logwarn(" ... Done")
+        directiveStatus = 1
+        return directiveStatus, (0, 0, 0, 0.0), image, (None, None), 0, 0, None
+
+
 

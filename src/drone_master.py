@@ -42,15 +42,15 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "GREEN_SCREEN"
+        self.objectName = "UCC Canned Coffee"
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
         + datetime.datetime.now().strftime("%m-%d-%Y__%H:%M:%S, %A")+"_Flight_" + self.objectName + "/")
         if not os.path.exists(self.droneRecordPath):
             os.makedirs(self.droneRecordPath)
-        self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
-        self.logger.Start()
+        #self.logger = Logger(self.droneRecordPath, "AR Drone Flight")
+        #self.logger.Start()
 
         #import PID and color constants
         self.settingsPath = expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/calibrater_settings.txt"
@@ -67,9 +67,10 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
         # max height of drone, in mm; any higher and the drone will auto-land
-        self.maxHeight = 2000
+        self.maxHeight = 1930
         self.emergency = False
         self.captureRound = 0.5
+        self.oldBattery = -1
 
 
     # Each state machine that drone mastercan use is defined here;
@@ -80,112 +81,48 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     # (directive, stateduration);
     # directive & errorDirective must subclass AbstractDroneDirective.
     def KeyListener(self):
-        
+
         key=cv2.waitKey(1) & 0xFF
-
-        if key == ord('t'):
-            
-            # self correcting takeoff
-            self.moveTime = 0.0
-            self.waitTime = 0.0
-            init = [
-            ( FlatTrimDirective(), 1), ( IdleDirective("pause for flat trim"), 10 ),
-            ( ToggleCameraDirective(), 1 ), ( IdleDirective("pause to toggle camera"), 10 ),
-            ( TakeoffDirective(), 1), ( IdleDirective("pause for takeoff"), 130 ),
-            ( ReturnToOriginDirective(100), 15 )
-            ]
-            self.MachineSwitch( init, None, 0, None, SELF_CORRECTING_TAKEOFF_MACHINE)
-
-        elif key == ord('1'):
-
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(HoverColorDirective('orange', 700), 0)]
-            algCycles = -1
-            self.MachineSwitch( None , alg, algCycles, None, HOVER_ORANGE_MACHINE )
-            
-        elif key == ord('2'):
-
-            self.moveTime = 0.22
-            self.waitTime = 0.12
-            alg = [( OrientLineDirective( 'PARALLEL', 'green', 'orange', 700), 0 )]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, FACE_OBJECT_MACHINE)
-
-        elif key == ord('3'):
+        
+        # take picture
+        if key == ord('3'):
 
             pictureName = self.pictureManager.Capture(self.cv_image)
             rospy.logwarn("Saved picture as " + pictureName)
 
-        elif key == ord('4'):
+        # toggle camera
+        elif key == ord('c'):
 
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [ ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 0 ) ]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, FIX_TO_BLUE_LINE_MACHINE)
+            self.controller.ToggleCamera()
+            rospy.logwarn("Toggled Camera")
 
-        elif key == ord('5'):
-            
-            self.moveTime = 0.15
-            self.waitTime = 0.08
-            alg = [(FollowLineDirective('blue'), 0)]
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, FOLLOW_BLUE_LINE_MACHINE)
+        # land (spacebar)
+        elif key == 32:
 
-        elif key == ord('f'):
-           
+            self.controller.SendLand()
+            rospy.logwarn("__________Landing Drone____________")
+
+
+        elif key == ord('q') or key == ord('t'):
+
+            # main algorithm components
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1300
+            flightAltitude = 1300 
             objectAltitude = 1300
-            self.captureRound+=0.5
 
-            orangePlatformErr = (ReturnToColorDirective('orange'), 4)
-            
             angles = 8
-            alg = [
-            ( OrientLineDirective( 'PARALLEL', 'green', 'orange', flightAltitude ), 10, orangePlatformErr ),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective2(self.droneRecordPath, 20, 0.07, self.objectName, angles, self.captureRound, objectAltitude), 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 )
-            ]
-            
-            
-            self.MachineSwitch( None, alg, angles, None, AUTO_CIRCLE_MACHINE)
-
-        elif key == ord('s'):
-
-            # does the entire circle algorithm, in order.
-
-            self.moveTime = 0.20
-            self.waitTime = 0.10
-            flightAltitude = 1380 
-            objectAltitude = 1380
-                        
-            init = [
-            ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
-            ( FlatTrimDirective(), 1), ( IdleDirective("Pause for flat trim"), 10 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
-            ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
-            ( ReturnToOriginDirective('orange',50), 7 ),
-            ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
-            ]
-            
             orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue", speedModifier = 0.85), 4)
             orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink", speedModifier = 0.85), 4)
             blueLineErr = (ReturnToLineDirective('blue', speedModifier = 0.85), 6)
-
-            angles = 8
-            #30
-            photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.04, self.objectName, angles, objectAltitude)
+            photoDirective = CapturePhotoDirective(self.droneRecordPath, 40, 0.02, self.objectName, angles, objectAltitude)
 
             alg = [
             ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 2, orangePlatformErrParallel ),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
             ( photoDirective, 1 ),
             ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( ResumePlatformDirective('orange', speedModifier = 0), 2),
+            #( ResumePlatformDirective('orange', speedModifier = 0), 2),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 5, orangePlatformErrHoriz ),
             ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]
@@ -193,56 +130,38 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # land on the 8th angle
             end = [
             ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude ), 3, orangePlatformErrParallel ),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
-            ( photoDirective, 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ),
-            ( LandDirective(), 1)
+            ( LandDirective(), 1), ( IdleDirective("Pause for land"), 25 ),
+            ( photoDirective, 1, None, "SavePhotos")
             ]
 
-            self.MachineSwitch( None, alg, angles-1, end, AUTO_CIRCLE_MACHINE)
 
-        elif key == ord('a'):
+            if key == ord('q'):
+                
+                #used for testing main alg; doesn't auto takeoff
 
-            self.moveTime = 0.1
-            self.waitTime = 0.01
+                #pauseInit = [( IdleDirective("Pause"), 280 )]
+                init = [( SetCameraDirective("BOTTOM"), 1 ),
+                ( IdleDirective(" Pause for seting camera"), 10 )
+                ]
 
-            orangePlatformErr= (ReturnToColorDirective('orange', speedModifier = 0.4), 10)
+                self.MachineSwitch( init, alg, angles, end, AUTO_CIRCLE_MACHINE)
 
-            alg = [
-            ( PIDHoverColorDirective('orange', self.settingsPath), 10, orangePlatformErr),
-            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 10, orangePlatformErr),
-            ( SetCameraDirective("FRONT"), 1 ), 
-            ( IdleDirective("Pause for setting camera"), 25 ),
-            ( CapturePhotoDirective(self.droneRecordPath), 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
-            ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, orangePlatformErr),
-            ( FollowLineDirective('blue'), 14 )
-            ]
-            algCycles = 6
 
-            end = [
-            ( PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath ), 4, orangePlatformErr),
-            ( LandDirective(), 1)
-            ]
+            if key == ord('t'):
 
-            self.MachineSwitch(None, alg, algCycles, None , PID_AUTO_CIRCLE_MACHINE)
-    
-        elif key == ord('p'):
+                # does the entire circle algorithm, in order.
 
-            
-            #pidAlg = PIDOrientLineDirective( 'PARALLEL', 'green', 'orange', self.settingsPath)
-            #pidAlg = PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath)
-            pidAlg = PIDHoverColorDirective('orange',self.settingsPath)
+                init = [
+                ( SetupDirective(), 1), ( IdleDirective("Pause for setup"), 10 ),
+                ( FlatTrimDirective(), 1), ( IdleDirective("Pause for flat trim"), 10 ),
+                ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
+                ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
+                ( ReturnToOriginDirective('orange',50), 7 ),
+                ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
+                ]
 
-            orangePlatformError = (ReturnToColorDirective('orange', speedModifier = 0.5), 10)
+                self.MachineSwitch( init, alg, angles, end, AUTO_CIRCLE_MACHINE)
 
-            alg = [(pidAlg, 10, orangePlatformError)]
-
-            p,i,d = pidAlg.GetSettings(self.settingsPath)
-            pidAlg.pid.ResetPID(p,i,d)
-
-            algCycles = -1
-            self.MachineSwitch( None, alg, algCycles, None, PID_HOVER_ORANGE_MACHINE )
         
         # just contains a machine to test any particular directive
         elif key == ord('b'):
@@ -259,9 +178,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             #testalg = ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', 500 ), 10, orangePlatformErr )
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
-            testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, orangePlatformErrHoriz)
+            #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, orangePlatformErrHoriz)
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            #testalg = ( MultiCenterTestDirective("orange"), 6)
+            testalg = ( MultiCenterTestDirective("orange"), 6)
 
             algCycles = -1
 
@@ -301,13 +220,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
     def ReceivedVideo(self):
         
         # checks altitude; if it is higher than allowed, then drone will land
-        currHeight = self.flightInfo["altitude"][1]
-        if currHeight != "?" and currHeight > self.maxHeight:
+        currHeightReg = self.flightInfo["altitude"][1]
+        if currHeightReg == '?':
+            currHeightReg = 0
+
+        currHeightCalc = self.flightInfo["SVCLAltitude"][1]
+        
+        if currHeightCalc != -1:
+            height = currHeightCalc
+        else:
+            height = currHeightReg
+
+        #rospy.logwarn( "reg: " + str(currHeightReg) + " Calc: " + str(currHeightCalc) +
+        #" avg: " + str(height))
+
+
+        if height > self.maxHeight:
             self.controller.SendLand()
             self.emergency = True
 
         if self.emergency:
-            rospy.logwarn("***** EMERGENCY LANDING: DRONE'S ALTITUDE IS " + str(currHeight) +" mm; MAX IS " +
+            rospy.logwarn("***** EMERGENCY LANDING: DRONE'S ALTITUDE IS " + str(height) +" mm; MAX IS " +
             str(self.maxHeight) + " mm *****")
   
         # If no machine is loaded, then drone master does nothing 
@@ -324,7 +257,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
             droneInstructions[2], droneInstructions[3], moveTime, waitTime)
         
-        # draws battery display
+        # draws battery display and height for info Window
+
         color = (255,255,255)
         if self.flightInfo["batteryPercent"][1] != "?":
 
@@ -345,11 +279,15 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             batteryPercent = str(batteryPercent) + "%"
 
-        else:
-            batteryPercent = str((self.flightInfo["batteryPercent"][1]))+"%"
+            if self.flightInfo["batteryPercent"][1] != self.oldBattery:
+                self.oldBattery = self.flightInfo["batteryPercent"][1] 
+                self.info = np.zeros((70,100,3), np.uint8)
+                cv2.putText(self.info, batteryPercent,
+                (10,40), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
 
-        cv2.putText(self.cv_image, batteryPercent,
-        (560,345), cv2.FONT_HERSHEY_SIMPLEX, 1, color,1,cv2.LINE_AA)
+        #cv2.putText(self.info, str(int(height)) + " mm",
+        #(50,120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255),1,cv2.LINE_AA)
+
 
 
     # this function will go a certain speed for a set amount of time, then rest for wait_time # of cycles
@@ -375,9 +313,9 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.controller.SetCommand(xSetSpeed, ySetSpeed, yawSetSpeed, zSetSpeed)
 
         # logs info
-        self.logger.Log(
-        " altitude: " + str(self.flightInfo["altitude"]) +
-        " yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
+        #self.logger.Log(
+        #" altitude: " + str(self.flightInfo["altitude"]) +
+        #" yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
 
 
     # this is called by ROS when the node shuts down

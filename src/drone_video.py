@@ -2,6 +2,7 @@
 
 import sys
 import rospy
+import numpy as np
 
 #Import messages we want for recieving video feed
 from sensor_msgs.msg import Image 
@@ -24,6 +25,8 @@ class DroneVideo(object):
         self.bridge=CvBridge()
         self.cv_image=None
         self.windowName = "Live AR.Drone Video Stream"
+        self.infoWindow = "Flight Info"
+        self.info = np.zeros((70,100,3), np.uint8)
 
         #Subscribe to the drones video feed
         self.video=rospy.Subscriber('/ardrone/image_raw', Image, self.ROStoCVImage )
@@ -34,22 +37,25 @@ class DroneVideo(object):
     def ROStoCVImage(self,data):
         
         #convert ROS Image to OpenCV Image
-        self.cv_image=self.bridge.imgmsg_to_cv2(data, "bgr8")
+        self.cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         self.ShowVideo()
 
 
     def ShowVideo(self):
         
+        self.KeyListener()
+
         self.ReceivedVideo()
 
-        self.KeyListener()
     
         cv2.imshow(self.windowName, self.cv_image)
+        cv2.imshow(self.infoWindow, self.info)
         cv2.waitKey(3)
 
         # move the GUI into the middle of the screenbefore the first frame is shown
         if self.moved == False :
             cv2.moveWindow(self.windowName, 750, 500)
+            cv2.moveWindow(self.infoWindow, 750, 500)
             self.moved = True
         
 

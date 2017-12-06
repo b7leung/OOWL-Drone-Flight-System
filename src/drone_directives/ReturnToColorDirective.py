@@ -141,7 +141,7 @@ class ReturnToColorDirective(AbstractDroneDirective):
         else:
             rospy.logwarn("Returning to platform -- last angle seen was "+ str(lastAngle))
             directiveStatus = 0
-            zspeed = 0.5
+            zspeed = 0.2
 
         xspeed, yspeed, _ = self.processVideo.ApproximateSpeed(image.copy(), cx, cy,
         ytolerance = 50, xtolerance = 50)

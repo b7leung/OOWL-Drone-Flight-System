@@ -78,7 +78,7 @@ class ReturnToLineDirective(AbstractDroneDirective):
         else:
             rospy.logwarn("Returning to "+ self.lineColor + " line")
             directiveStatus = 0
-            zspeed = 0.3
+            zspeed = 0.1
 
         if cx == None or cy == None:
             rospy.logwarn("Returning -- no " + self.lineColor + " detected @ this altitude, increasing altitude")

@@ -191,9 +191,9 @@ class OrientLineDirective(AbstractDroneDirective):
             xWindowSize = 80
             yWindowSize = 80
             xWindowOffset = 0
-            yWindowOffset = -50
+            yWindowOffset = 0
             altLowerTolerance = 10
-            altUpperTolerance = 65
+            altUpperTolerance = 10
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
             xReturnSize = 185
@@ -243,7 +243,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 yawspeed = -1*yawspeed
             xWindowSize = 295
             yWindowSize = 95
-            xWindowOffset = -100
+            xWindowOffset = 0
             yWindowOffset = 0
             altLowerTolerance = 200
             altUpperTolerance = 250

@@ -20,7 +20,8 @@ class StateMachine(object):
     # Then, the machine is considered "finished".
     #
     # "Instructions" are an array of tuples. Each tuple represents a phase's instruction set and duration
-    # in the format (directive, stateduration, errordirective). directive must subclass AbstractDroneDirective
+    # in the format (directive, stateduration, errordirective, method). directive must subclass AbstractDroneDirective
+    # method is optional, and can be used to specifically call some metohd in the directive
     # errordirectives are optional, and can specify a directive to switch to when the main directive has "errored".
     # It must also subclass AbstractDroneDirective
 
@@ -70,8 +71,14 @@ class StateMachine(object):
                 self.currPhase += 1
                 return (0,0,0,0), image, 0, 0
 
+            # edge case: if we want to just call one method
+            if len(self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]) == 4:
+                currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex]
+                currStateDuration = currState[1]
+                status, droneInstructions, _, coordinate, self.moveTime, self.waitTime, newCenter  = getattr(currState[0], currState[3])(image, navdata)
+
             # if the error flag was set, use it as the current state instead of the normal one
-            if self.errorFlag:
+            elif self.errorFlag:
                 # to do: none edge case
                 currState = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][0]
                 currStateDuration = self.stateMachineDef[self.currPhase][0][self.currPhaseIndex][2][1]
