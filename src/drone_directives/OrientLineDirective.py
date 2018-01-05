@@ -19,7 +19,7 @@ class OrientLineDirective(AbstractDroneDirective):
     #   > color of the platform to orient to
     # hoverAltitude: 
     #   > how high to hover over the platform
-    def __init__(self, orientation, lineColor, platformColor, hoverAltitude):
+    def __init__(self, orientation, lineColor, platformColor, hoverAltitude, heightTolerance = 50):
 
         if orientation != "PARALLEL" and orientation != "PERPENDICULAR":
             raise Exception("Orientation not recognized.")
@@ -33,6 +33,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.prevCenter = None
         self.forceCenter = None
         self.prevAngle = None
+        self.heightTolerance = heightTolerance
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -47,7 +48,7 @@ class OrientLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        self.moveTime=0.27
+        self.moveTime=0.2
         self.waitTime=0.1
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
@@ -76,11 +77,10 @@ class OrientLineDirective(AbstractDroneDirective):
                         rightmostCenter = centers[i]
                 self.forceCenter = rightmostCenter
             else:
-                # pick the center that is left of most horizontal blue line
+                # pick the center that is left of most vertical pink line
                 # finding most vertical line
-                objectLineImg = self.processVideo.DetectColor(image, "blue")
+                objectLineImg = self.processVideo.DetectColor(image, "pink")
                 objectLines, objectLineImg= self.processVideo.MultiShowLine(objectLineImg, sort = False)
-                #mostHorizontal = None
                 mostVertical = None
                 for line in objectLines:
                     if line != None:
@@ -183,16 +183,16 @@ class OrientLineDirective(AbstractDroneDirective):
                 else:
                     angle = angle - 90
 
-            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 6, yawspeed = 0.50)
+            yawspeed = self.processVideo.ObjectOrientation(segLineImage, angle, 4, yawspeed = 0.50)
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 100
-            yWindowSize = 110
+            xWindowSize = 75
+            yWindowSize = 95
             xWindowOffset = 0
-            yWindowOffset = 45
-            altLowerTolerance = 30
-            altUpperTolerance = 30
+            yWindowOffset = +20
+            altLowerTolerance = self.heightTolerance
+            altUpperTolerance = self.heightTolerance-20
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
             xReturnSize = xWindowSize
@@ -241,15 +241,15 @@ class OrientLineDirective(AbstractDroneDirective):
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 295
-            yWindowSize = 95
+            yWindowSize = 70
             xWindowOffset = 0
             yWindowOffset = 0
             altLowerTolerance = 200
             altUpperTolerance = 250
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
-            xReturnSize = 295
-            yReturnSize = 95
+            xReturnSize = xWindowSize
+            yReturnSize = yWindowSize
 
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
         navdata["SVCLAltitude"][1], self.hoverAltitude, 
@@ -298,7 +298,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 2)
                 rospy.logwarn("Too far out; only MOVING drone back to center")
                 yawspeed = 0
-                zspeed = 0
+                zspeed = 0.1
 
             # if drone isn't perpendicular yet and is "near" the center (defined by a box),
             # just turn the drone; no need move drone

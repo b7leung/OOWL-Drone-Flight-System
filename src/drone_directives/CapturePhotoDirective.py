@@ -16,7 +16,7 @@ class CapturePhotoDirective(AbstractDroneDirective):
     # objectName: name of picture to be taken (will be appended to picture filename
     # angles: Number of angles that is being used for the circle
     # objectAltitude: how high off the ground the object being taken is
-    def __init__(self, picturePath, picturesToTake = 1, pause = 0.5, objectName = "", angles = 0, objectAltitude = None):
+    def __init__(self, picturePath, picturesToTake = 1, pause = 0.5, objectName = "", angles = 0, objectAltitude = None, startingAngle = 0):
 
         self.pictureManager = PictureManager(picturePath)
         self.picturesToTake = picturesToTake
@@ -24,6 +24,7 @@ class CapturePhotoDirective(AbstractDroneDirective):
         self.objectName = objectName
         self.angles = angles
         self.objectAltitude = objectAltitude
+        self.startingAngle = startingAngle
 
         # describes the nth time this class has been called in the state machine
         self.captureRound = 1
@@ -58,7 +59,7 @@ class CapturePhotoDirective(AbstractDroneDirective):
                 
                 # creating the filename for this particular picture
                 if self.angles != 0:
-                    currAngle = 360/self.angles * (self.captureRound - 1)
+                    currAngle = ( 360/self.angles * (self.captureRound - 1) ) + self.startingAngle
                 else:
                     currAngle = 0
                 if self.objectAltitude == None:
