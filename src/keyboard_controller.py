@@ -18,7 +18,7 @@ class KeyboardController(object):
         self.screen = pygame.display.set_mode((640, 480))
         pygame.display.set_caption("Keyboard Controller")
         (self.screen).fill(GREY)
-        background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands3.png")
+        background = pygame.image.load(expanduser("~")+"/drone_workspace/src/ardrone_lab/src/resources/KeyboardCommands4.png")
         self.screen.blit(background,[0,0])
         pygame.display.update()
 
@@ -45,7 +45,7 @@ class KeyboardController(object):
                         self.controller.SendTakeoff()
                         self.controller.SwitchCamera(1)
                         print( "Takeoff")
-                    elif event.key == pygame.K_SPACE:
+                    elif event.key == pygame.K_g:
                         self.controller.SendLand()
                         rospy.logwarn("-------- LANDING DRONE --------") 
                         print ("Land")

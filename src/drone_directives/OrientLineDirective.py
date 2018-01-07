@@ -19,7 +19,7 @@ class OrientLineDirective(AbstractDroneDirective):
     #   > color of the platform to orient to
     # hoverAltitude: 
     #   > how high to hover over the platform
-    def __init__(self, orientation, lineColor, platformColor, hoverAltitude, heightTolerance = 50):
+    def __init__(self, orientation, lineColor, platformColor, hoverAltitude, heightTolerance = 50, yOffset = 0):
 
         if orientation != "PARALLEL" and orientation != "PERPENDICULAR":
             raise Exception("Orientation not recognized.")
@@ -34,6 +34,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.forceCenter = None
         self.prevAngle = None
         self.heightTolerance = heightTolerance
+        self.yOffset = yOffset
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -65,6 +66,8 @@ class OrientLineDirective(AbstractDroneDirective):
 
         # when directive first starts, it latches onto the first correct orange platform it sees
         if self.prevCenter == None:
+            
+            rospy.logwarn("FINDING INITAL CENTER---")
 
             if cx != None and cy != None:
                 self.prevCenter = (cx,cy)
@@ -77,19 +80,23 @@ class OrientLineDirective(AbstractDroneDirective):
                         rightmostCenter = centers[i]
                 self.forceCenter = rightmostCenter
             else:
-                # pick the center that is left of most vertical pink line
+                # pick the center that is closest to the most vertical pink line
                 # finding most vertical line
                 objectLineImg = self.processVideo.DetectColor(image, "pink")
                 objectLines, objectLineImg= self.processVideo.MultiShowLine(objectLineImg, sort = False)
                 mostVertical = None
+                rospy.logwarn(" All pink lines: ")
                 for line in objectLines:
                     if line != None:
+                        rospy.logwarn("@: " + str(line[1]) + ", " + str(line[0]) + " degrees")
                         if mostVertical == None or ((abs(90-line[0]) < abs(90 - mostVertical[0])) and line[4] > 30):
                         #if ( mostHorizontal == None or
                         #( min(mostHorizontal[0], 180 - mostHorizontal[0] ) > (min(line[0], 180 - line[0] ) )
                         #and line[4] > 30 ) ):
                             #mostHorizontal = line
                             mostVertical = line
+                
+                rospy.logwarn("Found most vertical pink line @: " + str(mostVertical[1]) + ", with angle " + str(mostVertical[0]))
 
                 """
                 # finding center closest to the left endpoint of that vertical line
@@ -101,6 +108,7 @@ class OrientLineDirective(AbstractDroneDirective):
 
                 correctCenter = centers[0]
 
+                rospy.logwarn("All centers: ")
                 for i in range(len(centers)):
                     """
                     correctEndpointDist = math.sqrt( math.pow((correctCenter[1] - leftEndpoint[1]),2) 
@@ -112,10 +120,12 @@ class OrientLineDirective(AbstractDroneDirective):
                     if currEndpointDist < correctEndpointDist:
                         correctCenter = centers[i]
                     """
+                    rospy.logwarn("@: " + str(centers[i]))
                     if abs(mostVertical[1][0] - centers[i][0]) < abs(mostVertical[1][0] - correctCenter[0]):
                         correctCenter = centers[i]
 
                 self.forceCenter = correctCenter
+                rospy.logwarn("Closest center to vertical pink line is @: " + str(correctCenter))
 
         elif cx != None and cy != None:
 
@@ -187,12 +197,12 @@ class OrientLineDirective(AbstractDroneDirective):
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 75
+            xWindowSize = 65
             yWindowSize = 95
             xWindowOffset = 0
-            yWindowOffset = +20
+            yWindowOffset = self.yOffset
             altLowerTolerance = self.heightTolerance
-            altUpperTolerance = self.heightTolerance-20
+            altUpperTolerance = self.heightTolerance-15
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
             xReturnSize = xWindowSize
@@ -298,7 +308,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 cv2.rectangle(segLineImage, (xLower, yLower), (xUpper, yUpper), (0,0,255), 2)
                 rospy.logwarn("Too far out; only MOVING drone back to center")
                 yawspeed = 0
-                zspeed = 0.1
+                zspeed = zspeed * 0.2
 
             # if drone isn't perpendicular yet and is "near" the center (defined by a box),
             # just turn the drone; no need move drone

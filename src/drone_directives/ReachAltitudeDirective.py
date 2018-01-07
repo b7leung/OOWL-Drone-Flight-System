@@ -28,8 +28,8 @@ class ReachAltitudeDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
         
-        currAltitude = navdata["altitude"][1]
-        climbspeed = 0.25
+        currAltitude = navdata["SVCLAltitude"][1]
+        climbspeed = 1
 
         if currAltitude < self.desiredAltitude - self.tolerance:
             zVel = climbspeed

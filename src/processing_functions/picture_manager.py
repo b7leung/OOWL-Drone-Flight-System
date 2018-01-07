@@ -2,6 +2,7 @@
 import rospy
 import datetime
 import cv2
+from pathlib2 import Path
 
 class PictureManager(object):
 
@@ -22,7 +23,17 @@ class PictureManager(object):
 
         if imageName is None:
             imageName = datetime.datetime.now().isoformat()
+        
+        path = self.savePath + imageName + ".png"
+        pathFile = Path(path)
+        index = 1
+        while pathFile.is_file():
+            degIndex = path.find("_ Picture")
+            path = path[:degIndex] + "_" + str(index) + path[degIndex:]
+            rospy.logwarn(path)
+            pathFile = Path(path)
+            index += 1
 
-        cv2.imwrite(self.savePath + imageName + ".png", image)
+        cv2.imwrite( path, image)
 
-        return imageName 
+        return imageName, path 

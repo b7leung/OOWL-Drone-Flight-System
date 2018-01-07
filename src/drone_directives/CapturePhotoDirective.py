@@ -102,8 +102,9 @@ class CapturePhotoDirective(AbstractDroneDirective):
         pictureNum = 1
         
         for image in self.imageCache:
-            pictureName = self.pictureManager.Capture(image[0], imageName = image[1])
+            pictureName, picturePath = self.pictureManager.Capture(image[0], imageName = image[1])
             rospy.logwarn( "Saving picture " + str(pictureNum) + "/" + str(len(self.imageCache)) + " : " + pictureName)
+            rospy.logwarn( "@ Location: " + str(picturePath))
             pictureNum += 1
 
         rospy.logwarn(" ... Done")

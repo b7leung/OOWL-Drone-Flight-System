@@ -42,7 +42,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Blue Adidas Campus Sneakers"
+        self.objectName = "Montevina Skyland Ridge Zinfandel Wine Bottle"
+        self.startingAngle = 180
+        # +65 for tall objects, +10 for shorter objects. (Modifies how close drone is to object; smaller # > closer)
+        self.yOffset = 65
+        # +40 for tall objects, 0 for shorter objects. (Modifies how high the drone should fly; smaller # > lower)
+        self.zOffset = 40
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -103,41 +108,43 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.controller.SendLand()
             rospy.logwarn("***______--______-_***Landing Drone***_-______--_____***")
             # if there is a photo directive running, save pictures just in case
-            if self.photoDirective != None:
-                self.photoDirective.SavePhotos(None,None)
-                self.photoDirective = None
+            self.SaveCachePictures()
 
-
+        # save all pictures in cache
+        elif key == ord('s'):
+            self.SaveCachePictures()
 
         elif key == ord('q') or key == ord('t'):
 
             # main algorithm components
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1295
-            objectAltitude = 1295
+            flightAltitude = 1350 + self.zOffset
+            objectAltitude = 1350 + self.zOffset
 
             angles = 8
-            startingAngle = 0
-            # ~30 for big objects, ~45 for small objects (can-sized)
-            heightTolerance = 45
+            # ~30 for big objects, ~ for small objects (can-sized)
+            heightTolerance = 25
             orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue", speedModifier = 0.85), 4)
             orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink", speedModifier = 0.85), 4)
             blueLineErr = (ReturnToLineDirective('blue', speedModifier = 0.85), 6)
-            self.photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.02, self.objectName, angles, objectAltitude, startingAngle)
+            self.SaveCachePictures()
+            self.photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.02, self.objectName, angles, objectAltitude, self.startingAngle)
 
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance), 2, orangePlatformErrParallel),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera"), 15 ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset), 2, orangePlatformErrParallel),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera to bottom"), 25 ),
             ( self.photoDirective, 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera"), 25 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera to front"), 25 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 5, orangePlatformErrHoriz),
             ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]
             
             # land on the 8th angle
             end = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance), 3, orangePlatformErrParallel),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset), 2, orangePlatformErrParallel),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera to bottom"), 25 ),
+            ( self.photoDirective, 1 ),
             ( LandDirective(), 1), ( IdleDirective("Pause for land"), 25 ),
             ( self.photoDirective, 1, None, "SavePhotos")
             ]
@@ -147,8 +154,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
                 
                 #doesn't auto takeoff
 
-
-                self.MachineSwitch( None, alg, angles, end, AUTO_CIRCLE_MACHINE)
+                self.MachineSwitch( None, alg, angles-1, end, AUTO_CIRCLE_MACHINE)
 
 
             if key == ord('t'):
@@ -161,10 +167,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
                 ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective(" Pause for seting camera"), 10 ),
                 ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
                 ( ReturnToOriginDirective('orange',50), 7 ),
-                ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5)
+                ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5),
+                ( ReachAltitudeDirective(flightAltitude, 85), 2)
                 ]
 
-                self.MachineSwitch( init, alg, angles, end, AUTO_CIRCLE_MACHINE)
+                self.MachineSwitch( init, alg, angles-1, end, AUTO_CIRCLE_MACHINE)
 
         
         # just contains a machine to test any particular directive
@@ -213,6 +220,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.stateMachine.DefineMachine(newMachineInit, newMachineAlg,
             newMachineAlgCycles, newMachineEnd, self )
             self.currMachine = newMachineName
+
         
         rospy.logwarn('======= Drone Master: Changing from the "' + str(oldMachine) +
         '" machine to the "' + str(self.currMachine) + '" machine =======')
@@ -246,6 +254,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         if self.emergency:
             rospy.logwarn("***** EMERGENCY LANDING: DRONE'S ALTITUDE IS " + str(height) +" mm; MAX IS " +
             str(self.maxHeight) + " mm *****")
+            rospy.logwarn("***______--______-_***Landing Drone***_-______--_____***")
+            # if there is a photo directive running, save pictures just in case
+            if self.photoDirective != None:
+                self.photoDirective.SavePhotos(None,None)
+                self.photoDirective = None
+
   
         # If no machine is loaded, then drone master does nothing 
         # (so that the drone may be controlled with the keyboard)
@@ -320,6 +334,16 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         #self.logger.Log(
         #" altitude: " + str(self.flightInfo["altitude"]) +
         #" yawSpeed: " + str(yawSetSpeed) + " zSpeed: " + str(zSetSpeed) )
+
+
+    # if there is a photo directive running, save pictures
+    def SaveCachePictures(self):
+        rospy.logwarn("saving cache pictures")
+        if self.photoDirective != None:
+            self.photoDirective.SavePhotos(None,None)
+            self.photoDirective = None
+        else:
+            rospy.logwarn("none")
 
 
     # this is called by ROS when the node shuts down
