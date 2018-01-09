@@ -19,7 +19,7 @@ class OrientLineDirective(AbstractDroneDirective):
     #   > color of the platform to orient to
     # hoverAltitude: 
     #   > how high to hover over the platform
-    def __init__(self, orientation, lineColor, platformColor, hoverAltitude, heightTolerance = 50, yOffset = 0):
+    def __init__(self, orientation, lineColor, platformColor, hoverAltitude, heightTolerance = 50, yOffset = 0, ySizeOffset = 0):
 
         if orientation != "PARALLEL" and orientation != "PERPENDICULAR":
             raise Exception("Orientation not recognized.")
@@ -35,6 +35,7 @@ class OrientLineDirective(AbstractDroneDirective):
         self.prevAngle = None
         self.heightTolerance = heightTolerance
         self.yOffset = yOffset
+        self.ySizeOffset = ySizeOffset
 
 
     # Given the image and navdata of the drone, returns the following in order:
@@ -49,7 +50,7 @@ class OrientLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        self.moveTime=0.2
+        self.moveTime=0.3
         self.waitTime=0.1
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
@@ -198,7 +199,7 @@ class OrientLineDirective(AbstractDroneDirective):
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
             xWindowSize = 65
-            yWindowSize = 95
+            yWindowSize = 95 + self.ySizeOffset
             xWindowOffset = 0
             yWindowOffset = self.yOffset
             altLowerTolerance = self.heightTolerance
