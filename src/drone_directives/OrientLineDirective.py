@@ -50,7 +50,7 @@ class OrientLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        self.moveTime=0.3
+        self.moveTime=0.23
         self.waitTime=0.1
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
@@ -198,7 +198,7 @@ class OrientLineDirective(AbstractDroneDirective):
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 65
+            xWindowSize = 50
             yWindowSize = 95 + self.ySizeOffset
             xWindowOffset = 0
             yWindowOffset = self.yOffset
@@ -206,8 +206,8 @@ class OrientLineDirective(AbstractDroneDirective):
             altUpperTolerance = self.heightTolerance-15
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
-            xReturnSize = xWindowSize
-            yReturnSize = yWindowSize
+            xReturnSize = xWindowSize + 165
+            yReturnSize = yWindowSize + 50
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -318,7 +318,7 @@ class OrientLineDirective(AbstractDroneDirective):
                 self.moveTime = 3.5
                 xspeed = 0
                 yspeed = 0
-                zspeed = 0
+                zspeed = zspeed*0.45
             
             # if the drone is aligned to the line and is near the center, 
             # keep moving it to the center and adjusting the height until the 

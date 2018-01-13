@@ -42,13 +42,14 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Black Fedora"
-        self.startingAngle = 0
-        # +90 for tall objects, +10 for shorter objects. (Modifies how close drone is to object; smaller # > closer)
-        self.yOffset = 10
-        # -25 for tall objects, 0 for shorter objects. (Modifies how close drone is to object; larger # > closer)
-        self.ySizeOffset = 0
-        # +90 for tall objects, 0 for shorter objects. (Modifies how high the drone should fly; smaller # > lower)
+        self.objectName = "Ito En Sweetened Milk Tea Can"
+        self.startingAngle = 135
+
+        # +90 for tall objects, +50 for shorter objects. (Modifies how close drone is to object; smaller # > closer)
+        self.yOffset = 50
+        # -25 for tall objects, -15 for shorter objects. (Modifies how close drone is to object; larger # > closer)
+        self.ySizeOffset = -15
+        # +100 for tall objects, 0 for shorter objects. (Modifies how high the drone should fly; smaller # > lower)
         self.zOffset = 0
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
@@ -121,8 +122,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # main algorithm components
             self.moveTime = 0.20
             self.waitTime = 0.10
-            flightAltitude = 1350 + self.zOffset
-            objectAltitude = 1350 + self.zOffset
+            flightAltitude = 1360 + self.zOffset
+            objectAltitude = 1360 + self.zOffset
 
             angles = 8
             # ~30 for big objects, ~ for small objects (can-sized)
@@ -170,7 +171,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
                 ( TakeoffDirective(), 1), ( IdleDirective("Pause for takeoff"), 120 ),
                 ( ReturnToOriginDirective('orange',50), 7 ),
                 ( FindPlatformAltitudeDirective('orange', flightAltitude + 200), 5),
-                ( ReachAltitudeDirective(flightAltitude, 85), 2)
+                #( ReachAltitudeDirective(flightAltitude, 85), 2)
                 ]
 
                 self.MachineSwitch( init, alg, angles-1, end, AUTO_CIRCLE_MACHINE)
