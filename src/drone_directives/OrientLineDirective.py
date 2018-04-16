@@ -50,7 +50,8 @@ class OrientLineDirective(AbstractDroneDirective):
     # An image reflecting what is being done as part of the algorithm
     def RetrieveNextInstruction(self, image, navdata):
 
-        self.moveTime=0.23
+        self.moveTime=0.17
+        #self.moveTime=0.23
         self.waitTime=0.1
 
         segLineImage = self.processVideo.DetectColor(image, self.lineColor)
@@ -198,16 +199,16 @@ class OrientLineDirective(AbstractDroneDirective):
             #.42
             if yawspeed!=None:
                 yawspeed = -1*yawspeed
-            xWindowSize = 50
-            yWindowSize = 95 + self.ySizeOffset
+            xWindowSize = 60
+            yWindowSize = 105 + self.ySizeOffset
             xWindowOffset = 0
             yWindowOffset = self.yOffset
             altLowerTolerance = self.heightTolerance
             altUpperTolerance = self.heightTolerance-15
             # defines window to make the drone focus on moving away from the edges and back into
             # the center; yaw will be turned off
-            xReturnSize = xWindowSize + 165
-            yReturnSize = yWindowSize + 50
+            xReturnSize = xWindowSize + 210
+            yReturnSize = yWindowSize + 110
 
         elif self.orientation == "PERPENDICULAR":
             
@@ -262,22 +263,20 @@ class OrientLineDirective(AbstractDroneDirective):
             xReturnSize = xWindowSize
             yReturnSize = yWindowSize
 
-        xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+        numRows, numCols, _ = image.shape
+        centerx = numCols/2 - xWindowOffset
+        centery = numRows/2 - yWindowOffset
+
+        xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, centerx, centery,
         navdata["SVCLAltitude"][1], self.hoverAltitude, 
         xtolerance = xWindowSize, ytolerance = yWindowSize, ztolerance = (altLowerTolerance, altUpperTolerance),
         xOffset = xWindowOffset, yOffset = yWindowOffset)
 
-        #draws center of circle on image
-        
-        numRows, numCols, _ = image.shape
-        centerx = numCols/2
-        centery = numRows/2
-
         # box defines when the directive is finished
-        xLower = centerx-xReturnSize + xWindowOffset
-        yLower = centery-yReturnSize - yWindowOffset
-        xUpper = centerx+xReturnSize + xWindowOffset
-        yUpper = centery+yReturnSize - yWindowOffset
+        xLower = (numCols/2) - xReturnSize
+        yLower = (numRows/2) - yReturnSize
+        xUpper = (numCols/2) + xReturnSize
+        yUpper = (numRows/2) + yReturnSize
 
         # perpendicular can disregard height
         #if self.orientation == "PERPENDICULAR":
@@ -285,11 +284,6 @@ class OrientLineDirective(AbstractDroneDirective):
 
         if ( yawspeed == 0 and xspeed == 0 and yspeed == 0 and zspeed == 0 and cx != None and cy != None ):
             
-            # Double check
-            xLowerC = centerx-xWindowSize
-            yLowerC = centery-yWindowSize
-            xUpperC = centerx+xWindowSize
-            yUpperC = centery+yWindowSize
             rospy.logwarn("Oriented " + self.orientation + " to " + self.lineColor + " line")
             directiveStatus = 1
 

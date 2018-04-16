@@ -34,7 +34,7 @@ TEST_MACHINE = 'test_machine'
 # A class that has access to the drone video feed and navdata. It uses this information to feed into
 # any one of its defined state machines, which will tell this class how to control the drone.
 # The particular state machine to use can be changed at run time.
-class DroneMaster(DroneVideo, FlightstatsReceiver):
+class DroneMaster(DroneVideo, FlightstatsReceiver): 
 
 
     def __init__(self):
@@ -42,15 +42,18 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         # getting access to elements in DroneVideo and FlightstatsReciever
         super(DroneMaster,self).__init__()
         
-        self.objectName = "Ito En Sweetened Milk Tea Can"
-        self.startingAngle = 135
+        self.objectName = "NASA Airplane"
+        self.startingAngle = 0
+        
+        # backpack: 120/-55/95
+        # +100 for big objects, +50 for shorter objects. (Modifies how close drone is to object; smaller # > closer)
+        # +10 for very small objects.
+        self.yOffset = 0
+        # -30 for big objects, -15 for shorter objects. (Modifies how close drone is to object; larger # > closer)
+        self.ySizeOffset = -30
+        # +75 for tall objects or using cube, 0 for shorter objects. (Modifies how high the drone should fly; smaller # > lower
+        self.zOffset = 25
 
-        # +90 for tall objects, +50 for shorter objects. (Modifies how close drone is to object; smaller # > closer)
-        self.yOffset = 50
-        # -25 for tall objects, -15 for shorter objects. (Modifies how close drone is to object; larger # > closer)
-        self.ySizeOffset = -15
-        # +100 for tall objects, 0 for shorter objects. (Modifies how high the drone should fly; smaller # > lower)
-        self.zOffset = 0
 
         # Seting up a timestamped folder inside Flight_Info that will have the pictures & log of this flight
         self.droneRecordPath= (expanduser("~")+"/drone_workspace/src/ardrone_lab/src/Flight_Info/"
@@ -75,7 +78,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         self.controller = BasicDroneController("TraceCircle")
         self.startTimer = time.clock()
         # max height of drone, in mm; any higher and the drone will auto-land
-        self.maxHeight = 2230
+        self.maxHeight = 2530
+        self.enableEmergency = False
         self.emergency = False
         self.captureRound = 0.5
         self.oldBattery = -1
@@ -93,11 +97,26 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
         key=cv2.waitKey(1) & 0xFF
         
+        # hover over orange
+        if key == ord('1'):
+            
+            self.moveTime = 0.04
+            self.waitTime = 0
+
+            testalg = ( PIDHoverColorDirective2("orange"), 6)
+
+            algCycles = -1
+
+            alg = [testalg]
+
+            self.MachineSwitch( None, alg, algCycles, None, HOVER_ORANGE_MACHINE)
+
+
         # take picture
         if key == ord('3'):
 
             pictureName = self.pictureManager.Capture(self.cv_image)
-            rospy.logwarn("Saved picture as " + pictureName)
+            rospy.logwarn("Saved picture")
 
         # toggle camera
         elif key == ord('c'):
@@ -127,25 +146,27 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
 
             angles = 8
             # ~30 for big objects, ~ for small objects (can-sized)
-            heightTolerance = 25
+            heightTolerance = 32
             orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue", speedModifier = 0.85), 4)
             orangePlatformErrParallel= (ReturnToColorDirective('orange', "pink", speedModifier = 0.85), 4)
             blueLineErr = (ReturnToLineDirective('blue', speedModifier = 0.85), 6)
             self.SaveCachePictures()
-            self.photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.02, self.objectName, angles, objectAltitude, self.startingAngle)
+            self.photoDirective = CapturePhotoDirective(self.droneRecordPath, 30, 0.014, self.objectName, angles, objectAltitude, self.startingAngle)
+
+            # 0.018
 
             alg = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset, self.ySizeOffset), 2, orangePlatformErrParallel),
-            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera to bottom"), 25 ),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset, self.ySizeOffset), 1, orangePlatformErrParallel),
+            ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera to front"), 25 ),
             ( self.photoDirective, 1 ),
-            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera to front"), 25 ),
+            ( SetCameraDirective("BOTTOM"), 1 ), ( IdleDirective("Pause for setting camera to bottom"), 25 ),
             ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', flightAltitude), 5, orangePlatformErrHoriz),
             ( FollowLineDirective('blue', speed = 0.09), 6, blueLineErr )
             ]
             
             # land on the 8th angle
             end = [
-            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset, self.ySizeOffset), 2, orangePlatformErrParallel),
+            ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', flightAltitude, heightTolerance, self.yOffset, self.ySizeOffset), 1, orangePlatformErrParallel),
             ( SetCameraDirective("FRONT"), 1 ), ( IdleDirective("Pause for setting camera to bottom"), 25 ),
             ( self.photoDirective, 1 ),
             ( LandDirective(), 1), ( IdleDirective("Pause for land"), 25 ),
@@ -189,12 +210,12 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             orangePlatformErr = None
             orangePlatformErrHoriz= (ReturnToColorDirective('orange', "blue"), 10)
 
-            testalg = ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', 500 ), 10, orangePlatformErr )
+            #testalg = ( OrientLineDirective( 'PARALLEL', 'pink', 'orange', 1360, 150, self.yOffset, self.ySizeOffset), 1, orangePlatformErr)
             #testalg = ( PIDOrientLineDirective( 'PERPENDICULAR', 'blue', 'orange', self.settingsPath ), 4, error)
             #testalg = ( FollowLineDirective('blue', speed = 0.25), 6, blueLineErr)
             #testalg = ( OrientLineDirective('PERPENDICULAR', 'blue', 'orange', 700), 8, orangePlatformErrHoriz)
             #testalg = ( CapturePhotoDirective(self.droneRecordPath, 10, 0.3), 1 )
-            #testalg = ( MultiCenterTestDirective("orange"), 6)
+            testalg = ( MultiCenterTestDirective("orange"), 6)
 
             algCycles = -1
 
@@ -250,7 +271,7 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
         #" avg: " + str(height))
 
 
-        if height > self.maxHeight:
+        if self.enableEmergency and height > self.maxHeight:
             self.controller.SendLand()
             self.emergency = True
 
@@ -275,8 +296,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # and commanding the drone to move accordingly
             droneInstructions, segImage, moveTime, waitTime = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
-            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], moveTime, waitTime)
+            #self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
+            #droneInstructions[2], droneInstructions[3], moveTime, waitTime)
         
         # draws battery display and height for info Window
 

@@ -54,7 +54,7 @@ class FollowLineDirective(AbstractDroneDirective):
 
         cx = lines[1][1][0]
         cy = lines[1][1][1]
-        _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, 
+        _, yspeed, _ = self.processVideo.ApproximateSpeed(segLineImage, cx, cy, None,None, 
         navdata["SVCLAltitude"][1], 0, xtolerance = 80, ytolerance = 95)
 
         newCenter = None

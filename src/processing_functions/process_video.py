@@ -542,21 +542,22 @@ class ProcessVideo(object):
     # object stays in middle, within +/- tolerance pixels of the center
     # ztolerance is a tuple of (lower bound tolerance, upper bound tolerance)
     
-    def ApproximateSpeed(self, image, cx, cy, currAltitude = None, desiredAltitude = None,
+    def ApproximateSpeed(self, image, cx, cy, centerx=None, centery=None, currAltitude = None, desiredAltitude = None,
     xtolerance = 20, ytolerance = 20, ztolerance = (75,75), xOffset = 0, yOffset = 0):
 
         numrows,numcols,channels = image.shape
 
-        centerx = numcols/2
-        centery = numrows/2
+        if centerx is None or centery is None:
+            centerx = numcols/2
+            centery = numrows/2
 
         #create a "window" for desired center of mass position
         width = xtolerance 
         height = ytolerance
-        xlower = centerx-width + xOffset #left xvalue
-        ylower = centery-height - yOffset #"top" yvalue
-        xupper = centerx+width + xOffset #right xvalue
-        yupper = centery+height - yOffset #"bottom" yvalue
+        xlower = centerx-width  #left xvalue
+        ylower = centery-height  #"top" yvalue
+        xupper = centerx+width  #right xvalue
+        yupper = centery+height #"bottom" yvalue
 
         # alpha changes depending on if (cx,cy) is in blue box or not
         zoneLeft = centerx - centerx/2
@@ -577,7 +578,7 @@ class ProcessVideo(object):
             zVelocity = 0
             
         #Draws a rectangle for the center part of the drone desired to hover over object
-        cv2.rectangle(image, (xlower, ylower), (xupper, yupper), (255,255,255), 3)
+        cv2.rectangle(image, (int(xlower), int(ylower)), (int(xupper), int(yupper)), (255,255,255), 3)
         #cv2.rectangle(image, (zoneLeft, zoneTop), (zoneRight, zoneBottom), (255,0,0), 2)
 
     
@@ -588,15 +589,16 @@ class ProcessVideo(object):
 
             # if it's out of horizontal close zone
             if cx < zoneLeft or cx > zoneRight:
-                alphax = 0.23
+                alphax = 0.2
             else:
-                alphax = 0.23
+                alphax = 0.2
         
             # if it's out of vertical close zone
             if cy < zoneTop or cy > zoneBottom:
-                alphay = 0.23
+                alphay = 0.2
             else:
-                alphay = 0.23
+                alphay = 0.2
+
 
        #calculate movement command values for moving up, down, left, right. normalized between -1:1.
        #if object is in desired area do not move (xspeed, yspeed == 0)
@@ -611,7 +613,7 @@ class ProcessVideo(object):
         
             if (cy < ylower) or (cy > yupper):
                 #pos val means object is above, neg means object is below
-                yspeed = (centery-cy)/float(centery)
+                yspeed = (centery-cy)/float(numrows/2)
                 yspeed = alphay*yspeed
             else:
                 yspeed = 0
@@ -622,7 +624,7 @@ class ProcessVideo(object):
         #draw the command speed as a vector point to center for visualization purposes
         dx=int((-100*xspeed)+centerx)
         dy=int((-100*yspeed)+centery)
-        cv2.arrowedLine(image,(dx,dy),(centerx,centery),(255,0,0),3)
+        cv2.arrowedLine(image,(dx,dy),(int(centerx),int(centery)),(255,0,0),3)
 
         return (xspeed, yspeed, zVelocity)
 

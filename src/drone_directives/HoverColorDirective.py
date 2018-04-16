@@ -16,7 +16,7 @@ class HoverColorDirective(AbstractDroneDirective):
         self.platformColor = platformColor 
         self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-        self.moveTime = 0.20
+        self.moveTime = 0
         self.waitTime = 0.10
     
 

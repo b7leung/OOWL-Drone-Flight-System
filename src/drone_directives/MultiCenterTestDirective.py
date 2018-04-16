@@ -33,10 +33,10 @@ class MultiCenterTestDirective(AbstractDroneDirective):
             rospy.logwarn("**************************************************")
 
         
-        #cx, cy = navdata["center"][1][0], navdata["center"][1][1]
+        cx, cy = navdata["center"][1][0], navdata["center"][1][1]
 
-        #if cx != None and cy != None:
-            #cv2.circle(image, (cx,cy), 6, (255,255,255), -1)
+        if cx != None and cy != None:
+            cv2.circle(image, (cx,cy), 6, (255,255,255), -1)
 
             
         return 1, (0, 0, 0, 0), image, (None, None), 0, 0, None
