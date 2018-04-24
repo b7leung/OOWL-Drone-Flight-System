@@ -30,7 +30,7 @@ class MultiCenterTestDirective(AbstractDroneDirective):
         rospy.logwarn("Curr Altitude = " + str(alt))
         if alt == -1:
             rospy.logwarn("**************************************************")
-            rospy.logwarn("**************************************************")
+            rospy.logwarn("asdfasdf")
 
         
         cx, cy = navdata["center"][1][0], navdata["center"][1][1]

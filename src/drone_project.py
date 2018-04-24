@@ -103,14 +103,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.04
             self.waitTime = 0
 
-            #pidDirective= PIDHoverColorDirective2("orange")
-            #pidDirective.Reset()
-            #alg = [(pidDirective,6)]
-            rospy.logwarn("test3")
-            alg = [(HoverColorDirective("orange"),6)]
+            testalg = ( PIDHoverColorDirective2("orange"), 6)
 
             algCycles = -1
 
+            alg = [testalg]
 
             self.MachineSwitch( None, alg, algCycles, None, HOVER_ORANGE_MACHINE)
 
@@ -299,8 +296,8 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             # and commanding the drone to move accordingly
             droneInstructions, segImage, moveTime, waitTime = self.stateMachine.GetUpdate(self.cv_image, self.flightInfo)
             self.cv_image = segImage
-            self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
-            droneInstructions[2], droneInstructions[3], moveTime, waitTime)
+            #self.MoveFixedTime(droneInstructions[0], droneInstructions[1],
+            #droneInstructions[2], droneInstructions[3], moveTime, waitTime)
         
         # draws battery display and height for info Window
 

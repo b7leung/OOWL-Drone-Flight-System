@@ -11,14 +11,13 @@ class HoverColorDirective(AbstractDroneDirective):
     # sets up this directive
     # platformColor: color to hover over
     # hoverAltitude: how high to hover over the color, in mm
-    def __init__(self, platformColor ):
+    def __init__(self, platformColor, hoverAltitude):
 
         self.platformColor = platformColor 
         self.hoverAltitude = hoverAltitude
         self.processVideo = ProcessVideo()
-        self.moveTime = 0.2
-        self.waitTime = 0
-        rospy.logwarn("test4")
+        self.moveTime = 0
+        self.waitTime = 0.10
     
 
     # given the image and navdata of the drone, returns the following in order:
@@ -43,7 +42,6 @@ class HoverColorDirective(AbstractDroneDirective):
         cx, cy = self.processVideo.CenterOfMass(segImage)
         xspeed, yspeed, zspeed = self.processVideo.ApproximateSpeed(segImage, cx, cy,
         navdata["altitude"][1], self.hoverAltitude, xtolerance = 55, ytolerance = 55)
-        rospy.logwarn("test1")
 
         # if there is orange in the screen, and the drone is in the middle, return true
         if cx != None and cy != None and xspeed == 0 and yspeed == 0 and zspeed == 0:
@@ -59,10 +57,7 @@ class HoverColorDirective(AbstractDroneDirective):
         else:
 
             rospy.logwarn("Trying to Hover on " + self.platformColor)
-            rospy.logwarn("test")
             directiveStatus = 0
-        zspeed = 0
-        rospy.logwarn("Xspeed = " + str(xspeed) +" Yspeed = " + str(yspeed))
 
         return directiveStatus, (xspeed, yspeed, 0, zspeed), segImage, (cx,cy), self.moveTime, self.waitTime, None
 

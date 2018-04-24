@@ -18,8 +18,8 @@ class PIDHoverColorDirective2(AbstractDroneDirective):
         
         self.platformColor = platformColor 
         self.processVideo = ProcessVideo()
-        P,I,D = 1, 0, 0
-        self.pid = PIDController(360, 640, Kp = P, Ki = I, Kd = D)
+        P,I,D = 0.0025, 0.0001, 0
+        self.pid = PIDController(Kp = P, Ki = I, Kd = D)
         self.moveTime = 0.2
         self.waitTime = 0
         self.pub_pid_xspeed = rospy.Publisher('pid_xspeed', Float32, queue_size = 10)
@@ -58,24 +58,30 @@ class PIDHoverColorDirective2(AbstractDroneDirective):
         yUpper = centery+windowSize  
         cv2.rectangle(image, (xLower, yLower), (xUpper, yUpper), (255,255,255), 3)
         
-        self.pid.UpdateDeltaTime()
-        self.pid.UpdateError(cx,cy,altitude)
-        self.pid.SetPIDTerms()
-        xspeed, yspeed = self.pid.GetPIDValues()
+        xspeed, yspeed = self.pid.getOutput(cx,cy,altitude)
+
+        #self.pid.UpdateDeltaTime()
+        #self.pid.UpdateError(cx,cy,altitude)
+        #self.pid.SetPIDTerms()
+
+        #xspeed, yspeed = self.pid.GetPIDValues()
         self.pub_pid_xspeed.publish(xspeed)
         self.pub_pid_yspeed.publish(yspeed)
 
+        yspeed = 0 
 
+        rospy.logwarn("Xspeed = " + str(xspeed) +" Yspeed = " + str(yspeed))
+        
         directiveStatus = 1
-        xspeed = 0
-        yspeed = 0
    
         return directiveStatus, (xspeed, yspeed, 0, 0), image, (cx,cy), self.moveTime, self.waitTime, None
 
 
     # This method is called by the state machine when it considers this directive finished
     def Finished(self):
-        rospy.logwarn("***** Resetting PID Values *****")
+        self.Reset()
+
+    def Reset(self):
         self.pid.ResetPID()
         
 

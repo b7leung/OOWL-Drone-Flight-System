@@ -3,17 +3,20 @@
 import rospy
 import numpy as np
 import cv2
+from std_msgs.msg import Int32, Float32
+
 
 class PIDController(object):
 
-    def __init__(self, imageHeight, imageWidth, Kp=0.138, Ki=0.018, Kd=0.048, moveTime = 0.0, waitTime = 0.00):
-
-        self.f = 715.6186
-        self.b = 5.1371
+    def __init__(self, Kp=0.138, Ki=0.0018, Kd=0.048):
+        
+        # units = M
+        self.f = 715.6186 
+        self.b = 5.1371 
         
         # Setting the desired window size for drone to hover in, relative to the center of the image
-        self.centery = imageHeight/2.0
-        self.centerx = imageWidth/2.0
+        self.centery = 360/2.0
+        self.centerx = 640/2.0
         windowSize = 1
         self.xLower = self.centerx-windowSize
         self.yLower = self.centery-windowSize
@@ -36,18 +39,76 @@ class PIDController(object):
         self.xD_error = 0.0
         self.yD_error = 0.0
 
-        self.dt = moveTime + waitTime
-        self.oldTime = rospy.Time.now()
+        #self.dt = moveTime + waitTime
+        self.oldTime = None
 
         self.InitializeGaussianFilter()
         self.InitializeMedianFilter()
+        self.pub_pid_xpcomp= rospy.Publisher('pid_xpcomp', Float32, queue_size = 10)
+        self.pub_pid_xicomp = rospy.Publisher('pid_xicomp', Float32, queue_size = 10)
+        self.pub_pid_xdcomp = rospy.Publisher('pid_xdcomp', Float32, queue_size = 10)
+        self.pub_pid_ypcomp= rospy.Publisher('pid_ypcomp', Float32, queue_size = 10)
+        self.pub_pid_yicomp = rospy.Publisher('pid_yicomp', Float32, queue_size = 10)
+        self.pub_pid_ydcomp = rospy.Publisher('pid_ydcomp', Float32, queue_size = 10)
+
+    # given error, gives output to reach setpoint
+    def getOutput(self, cx, cy, altitude):
+
+        if cx == None or cy == None:
+            return 0, 0
+
+        else:
+            dt = self.getDt()
+
+            # getting P error
+            xP_error = (self.centerx - cx) * (altitude - self.b) / self.f
+            yP_error = (self.centery - cy) * (altitude - self.b) / self.f
+            x_pTerm = self.Kp * xP_error
+            y_pTerm = self.Kp * yP_error
+            self.pub_pid_xpcomp.publish(x_pTerm)
+            self.pub_pid_ypcomp.publish(y_pTerm)
+            
+            #getting I error
+            xI_error, yI_error = xP_error, yP_error
+
+            self.xIntegral += xI_error * dt
+            self.yIntegral += yI_error * dt
+
+            x_iTerm = self.Ki * self.xIntegral
+            y_iTerm = self.Ki * self.yIntegral
+            self.pub_pid_xicomp.publish(x_iTerm)
+            self.pub_pid_yicomp.publish(y_iTerm)
+
+            #getting D error
+            xD_error, yD_error = xP_error, yP_error
+            if dt!=0:
+                x_dTerm = self.Kd*((xP_error - self.xDerivator)/dt)
+                y_dTerm = self.Kd*((yP_error - self.yDerivator)/dt)
+            else:
+                x_dTerm = 0
+                y_dTerm = 0
+            self.pub_pid_xdcomp.publish(x_dTerm)
+            self.pub_pid_ydcomp.publish(y_dTerm)
+            self.xDerivator = xP_error
+            self.yDerivator = yP_error
+
+            x_out = x_pTerm + x_iTerm + x_dTerm
+            y_out = y_pTerm + y_iTerm + y_dTerm
+            rospy.logwarn("X_P = " + str(x_pTerm) +" X_I= " + str(x_iTerm)+ " X_D= " + str(x_dTerm))
+            return x_out, y_out
 
 
-    def UpdateDeltaTime(self):
+    def getDt(self):
         
         timeNow = rospy.Time.now()
-        self.dt = timeNow - self.oldTime
+
+        if self.oldTime == None:
+            self.oldTime = timeNow
+            return 0
+
+        dt = timeNow - self.oldTime
         self.oldTime = timeNow
+        return dt.to_sec()
     
 
     # Calculate Error as a function of object's distance from desired setpoint (the center)
@@ -65,6 +126,7 @@ class PIDController(object):
             
             # for I
             self.xI_error, self.yI_error = self.GaussianFilter(self.xP_error, self.yP_error)
+            
 
             # for D
             xTemp = -self.cx * (altitude - self.b) / self.f
@@ -246,6 +308,7 @@ class PIDController(object):
 
 
     def ResetPID(self, P=None, I=None, D=None):
+        rospy.logwarn("***** Resetting PID Values *****")
         
         if P != None:
             self.Kp = P
@@ -255,9 +318,19 @@ class PIDController(object):
             self.Kd = D
         
         self.InitializeGaussianFilter()
-        self.oldTime = rospy.Time.now()
+        self.oldTime = None
+
+        self.xDerivator = 0.0
+        self.yDerivator = 0.0
         self.xIntegral = 0.0
         self.yIntegral = 0.0
+
+        self.xP_error = 0.0
+        self.yP_error = 0.0
+        self.xI_error = 0.0
+        self.yI_error = 0.0
+        self.xD_error = 0.0
+        self.yD_error = 0.0
 
 
     def DrawArrow(self,image,xspeed,yspeed):
