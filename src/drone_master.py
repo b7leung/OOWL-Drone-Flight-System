@@ -103,11 +103,11 @@ class DroneMaster(DroneVideo, FlightstatsReceiver):
             self.moveTime = 0.04
             self.waitTime = 0
 
-            #pidDirective= PIDHoverColorDirective2("orange")
-            #pidDirective.Reset()
-            #alg = [(pidDirective,6)]
-            rospy.logwarn("test3")
-            alg = [(HoverColorDirective("orange"),6)]
+            pidDirective= PIDHoverColorDirective2("orange")
+            pidDirective.Reset()
+            alg = [(pidDirective,6)]
+            #rospy.logwarn("test3")
+            #alg = [(HoverColorDirective("orange"),6)]
 
             algCycles = -1
 
