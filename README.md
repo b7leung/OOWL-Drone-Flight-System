@@ -2,7 +2,10 @@
 
 ![image](https://user-images.githubusercontent.com/20059131/130384861-5f35a913-eb3d-4386-a463-d616ef536d6c.png)
 
+The goal of this project is to develop the protocols and algorithms necessary that will particularly suit cost-effective, flexible image dataset collection through drones. They may be particularly advantageous due to their recent increase in accessibility and ability to take pictures in dangerous or difficult to navigate places. 
 
-Computer vision research over the last few years has shown that diverse training datasets are critical for designing robust image classification systems. Drones present an alternative new way to automate image collection. They may be particularly advantageous due to their recent increase in accessibility and ability to take pictures in dangerous or difficult to navigate places. Our goal is to develop the protocols and algorithms necessary that will particularly suit cost-effective, flexible image dataset collection through drones. In the process, we will also evaluate the advantages and current potential drawbacks of using drones in this context. Our research uses the AR.Drone – a commercially available drone whose excellent cost and performance make it a good candidate for our objectives. Development has been through the Robot Operating System framework, which integrates the AR.Drone’s drivers and OpenCV with C++ and Python code. Preliminary results indicates a flexible and scalable system suited for many different objects and backgrounds. We expect our development to produce large image datasets that demonstrate the use of drones to contribute towards computer vision training.
+The main requirements to run the code in this repo is Python, ROS, and OpenCV. Additionally, one will need a Parrot AR.Drone Quadricopter. Then, refer to drone_master.py to start flying the drone; the drone will automatically circle around objects, using tape on the floor as guidance. For a demo, please see the youtube video here:
+
+https://www.youtube.com/watch?v=WdvkxDUGUz0
 
 
